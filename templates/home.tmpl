@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+
+    <link rel="stylesheet" href="/assets/style.css">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/assets/bootstrap.min.css">
+
+    <!-- Font awesome -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+  </head>
+  <body>
+    <nav class="navbar navbar-top navbar-inverse bg-primary">
+      <h1 class="NavBar">Hello, tasks!</h1>
+    </nav>
+
+    <div class="container Page">
+      <div id="tasks_list" class="col-md-8 offset-md-2">
+          {{block "tasks.tmpl" .}}{{ end }}
+      </div>
+      <div class="col-md-8 offset-md-2">
+        <input
+          id="new_task_input"
+          type="text"
+          class="form-control list-group-item NewTaskInput"
+          placeholder="New task..."
+          aria-describedby=""
+        >
+      </div>
+
+      <div id="show_done_tasks" class="ShowDoneTasksDiv">
+        <button id="show_done_tasks_btn" class="btn btn-link">Show done tasks...</button>
+      </div>
+
+      <div id="done_tasks_list" class="col-md-8 offset-md-2">
+        <!-- Here will appear the done tasks -->
+      </div>
+    </div>
+
+    <!-- jQuery first, then Tether, then Bootstrap JS. -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.7.0/moment.min.js" type="text/javascript"></script>
+
+    <!-- Custom scripts -->
+    <script>
+      $("#tasks_list").on("click", ".TaskDone", function(event) {
+        event.preventDefault();
+
+        $.post(`/ui/tasks/${$(this).data("taskid")}`, function(data) {
+          $("#tasks_list ul").sortable("disable");
+          $("#tasks_list").html(data);
+          makeSortable();
+          updateDoneTasks();
+        })
+      });
+
+      $("#tasks_list").on("click", ".TaskDelete", function(event) {
+        event.preventDefault();
+
+        $.ajax({
+          url: `/ui/tasks/${$(this).data("taskid")}`,
+          type: "DELETE",
+          success: function(data) {
+            $("#tasks_list ul").sortable("disable");
+            $("#tasks_list").html(data);
+            makeSortable();
+          }
+        });
+      });
+
+      $("#new_task_input").on("keyup", function(event) {
+        if (event.keyCode === 13) {
+          event.preventDefault();
+
+          $.post("/ui/tasks", JSON.stringify({ content: $("#new_task_input").val() }), function(data) {
+            $("#new_task_input").val('');
+            $("#tasks_list ul").sortable("disable");
+            $("#tasks_list").html(data);
+            makeSortable();
+          })
+        }
+      });
+
+      let showDoneTasks = false;
+      function updateDoneTasks() {
+        if (showDoneTasks) {
+          $.get("/ui/done", function(data) {
+            $("#done_tasks_list").html(data);
+          })
+        } else {
+          $("#done_tasks_list").html('');
+        }
+      }
+
+      $("#show_done_tasks").on("click", "button", function(event) {
+        showDoneTasks = !showDoneTasks;
+        updateDoneTasks();
+
+        $("#show_done_tasks_btn").text(showDoneTasks ? "Hide done tasks..." : "Show done tasks...")
+      });
+
+      function makeSortable() {
+        $("#tasks_list ul").sortable({
+          // Taken from http://www.guillaumevoisin.fr/jquery/tutoriel-drag-and-drop-jquery-exemple-avec-une-liste-des-taches
+          axis: "y", // Only on vertical axix
+          containment: "#tasks_list", // Bound to this element
+          handle: ".TaskDrag", // Only the .TaskDrag icon handles the drag
+          distance: 10, // Drag starts after 10 pixel
+          // When dropping
+
+          stop: function(event, ui){
+            // Pour chaque item de liste
+            const ranks = {};
+            $("#tasks_list ul").find("li").each(function(){
+              ranks[$(this).data("taskid")] = $(this).index()
+            });
+
+            $.post("/ui/ranks", JSON.stringify({ ranks: ranks }), function(data) {
+              $("#tasks_list ul").sortable("disable");
+              $("#tasks_list").html(data);
+              makeSortable();
+              updateDoneTasks();
+            });
+          }
+        });
+      }
+      makeSortable();
+    </script>
+  </body>
+</html>

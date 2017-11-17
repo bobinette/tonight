@@ -1,0 +1,17 @@
+<ul class="list-group Tasks">
+  {{- range .Tasks}}
+  <li class="list-group-item Task" data-taskid="{{ .ID }}">
+    <div class="w-100 TaskHeading">
+      <span class="TaskTitle">{{ .Title }}</span>
+      {{- if not .Done }}
+      <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
+      <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>
+      <i class="fa fa-bars TaskDrag"></i>
+      {{ else }}
+      <small class="text-muted">Done {{ formatDate .DoneAt }}</small>
+      {{- end }}
+    </div>
+    <p class="TaskDescription">{{ .Description }}</p>
+  </li>
+  {{- end }}
+</ul>

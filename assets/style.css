@@ -1,0 +1,116 @@
+h1.NavBar {
+    text-align: center;
+    color: white;
+}
+
+.navbar {
+    margin-bottom: 1rem;
+}
+
+li p {
+    margin-bottom: 0;
+}
+
+.Page {
+    margin-bottom: 2rem;
+}
+
+/*
+    Task list
+*/
+
+ul.Tasks {
+    margin-bottom: 0;
+}
+
+.Task .fa {
+    color: #999;
+    font-size: 1.1rem;
+    margin-left: 0.5rem;
+}
+
+.Task .btn.fa {
+    padding: 0;
+}
+
+.Task .btn.fa:hover {
+    text-decoration: none;
+}
+
+.Task .fa:hover {
+    color: #292b2c;
+}
+
+#tasks_list .Task.list-group-item:last-child {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.TaskHeading {
+    display: flex;
+    align-items: center;
+}
+
+.TaskTitle {
+    flex: 1;
+}
+
+.TaskDescription {
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+}
+
+input[type='checkbox'] {
+    margin-right: 0.2rem;
+}
+
+input.NewTaskInput {
+    border-top: none;
+}
+
+input.NewTaskInput.list-group-item {
+    border-radius: 0;
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+input.NewTaskInput:focus {
+    border-color: rgba(0, 0, 0, 0.125);
+}
+
+.TaskDrag {
+    cursor: move; /* fallback if grab cursor is unsupported */
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+
+.TaskDrag:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+}
+
+/*
+    Done tasks
+*/
+
+.ShowDoneTasksDiv {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0 0.5rem 0;
+}
+
+.btn {
+    cursor: pointer;
+}
+
+.btn-link.btn:focus,
+.btn-link.btn:active:focus,
+.btn-link.btn.active:focus,
+.btn-link.btn.focus,
+.btn-link.btn:active.focus,
+.btn-link.btn.active.focus {
+    outline: none;
+    box-shadow: none;
+}
