@@ -31,6 +31,10 @@ func main() {
 	// Create server + register routes
 	srv := echo.New()
 
+	echo.NotFoundHandler = func(c echo.Context) error {
+		return fmt.Errorf("route %s (method %s) not found", c.Request().URL, c.Request().Method)
+	}
+
 	if err := tonight.RegisterTemplateRenderer(srv, "templates"); err != nil {
 		log.Fatal(err)
 	}
