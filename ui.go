@@ -110,7 +110,14 @@ func (us *UIService) MarkDone(c echo.Context) error {
 		return err
 	}
 
-	if err := us.repo.MarkDone(c.Request().Context(), uint(taskID)); err != nil {
+	var body struct {
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&body); err != nil {
+		return err
+	}
+
+	if err := us.repo.MarkDone(c.Request().Context(), uint(taskID), body.Description); err != nil {
 		return err
 	}
 

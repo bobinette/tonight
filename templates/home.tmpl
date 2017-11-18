@@ -60,6 +60,7 @@
           $("#tasks_list ul").sortable("disable");
           $("#tasks_list").html(data);
           makeSortable();
+          watchTasks();
           updateDoneTasks();
         })
       });
@@ -73,6 +74,7 @@
           success: function(data) {
             $("#tasks_list ul").sortable("disable");
             $("#tasks_list").html(data);
+            watchTasks();
             makeSortable();
           }
         });
@@ -86,6 +88,7 @@
             $("#new_task_input").val('');
             $("#tasks_list ul").sortable("disable");
             $("#tasks_list").html(data);
+            watchTasks();
             makeSortable();
           })
         }
@@ -128,6 +131,7 @@
             $.post("/ui/ranks", JSON.stringify({ ranks: ranks }), function(data) {
               $("#tasks_list ul").sortable("disable");
               $("#tasks_list").html(data);
+              watchTasks();
               makeSortable();
               updateDoneTasks();
             });
@@ -135,6 +139,49 @@
         });
       }
       makeSortable();
+
+      $(window).on("click", function(event) {
+        $("#done_input").remove();
+      });
+
+      function watchTasks() {
+        $("#tasks_list").on("click", ".Task", function(event) {
+          event.stopPropagation();
+
+          if (!$(this).find("#done_input").length) {
+            // Check if it is somewhere else
+            if ($("#done_input").length) {
+              $("#done_input").remove();
+            }
+
+            // Add it where it belongs
+            $(this).find(".TaskDoneInputPlaceholder").html(`
+              <input
+                id="done_input"
+                type="text"
+                class="form-control "
+                placeholder="How did you do that? (enter to mark as done)"
+                data-taskid="${$(this).data("taskid")}"
+              >
+            `);
+            $("#done_input").on("keyup", function(event) {
+              if (event.keyCode === 13) {
+                event.preventDefault();
+                $.post(`/ui/tasks/${$(this).data("taskid")}`, JSON.stringify({ description: $("#done_input").val() }), function(data) {
+                  $("#tasks_list ul").sortable("disable");
+                  $("#tasks_list").html(data);
+                  makeSortable();
+                  watchTasks();
+                  updateDoneTasks();
+                })
+              } else if (event.keyCode === 27) {
+                $("#done_input").remove();
+              }
+            });
+          }
+        });
+      };
+      watchTasks();
     </script>
   </body>
 </html>

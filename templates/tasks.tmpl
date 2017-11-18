@@ -18,13 +18,16 @@
         <span class="badge badge-pill badge-primary">#{{ . }}</span>
       {{- end }}
       </div>
-      {{- if .Duration }}
       <div class="TaskDuration">
+        {{- if .Duration }}
         {{ .Duration }}
+        {{- else }}
+        <em>-</em>
+        {{- end }}
         <i class="fa fa-clock-o TaskDurationIcon"></i>
       </div>
-      {{- end }}
     </div>
+    <div class="w-100 TaskDoneInputPlaceholder"></div>
   </li>
   {{- end }}
 </ul>

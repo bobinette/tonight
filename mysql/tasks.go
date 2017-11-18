@@ -33,11 +33,11 @@ func (r *TaskRepository) Close() error {
 func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, error) {
 	orderBy := "rank"
 	if done {
-		orderBy = "doneAt DESC"
+		orderBy = "done_at DESC"
 	}
 
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, duration, done, doneAt, created_at
+		SELECT id, title, description, duration, done, done_at, created_at
 		  FROM tasks
 		 WHERE done = ?
 		   AND deleted = ?
@@ -168,12 +168,12 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 	return nil
 }
 
-func (r *TaskRepository) MarkDone(ctx context.Context, taskID uint) error {
+func (r *TaskRepository) MarkDone(ctx context.Context, taskID uint, description string) error {
 	now := time.Now()
 	_, err := r.db.ExecContext(
 		ctx,
-		"UPDATE tasks SET done = ?, doneAt = ?, updated_at = ? WHERE id = ?",
-		true, now, now, taskID,
+		"UPDATE tasks SET done = ?, done_description = ?, done_at = ?, updated_at = ? WHERE id = ?",
+		true, description, now, now, taskID,
 	)
 	return err
 }
