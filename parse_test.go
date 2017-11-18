@@ -42,6 +42,19 @@ func TestParse(t *testing.T) {
 				Tags:        []string{"tag1", "tag2", "tag3"},
 			},
 		},
+		"with a duration": {
+			content:  "This is a title ~2h30m",
+			expected: Task{Title: "This is a title", Duration: "2h30"},
+		},
+		"with a description, 2 tags and the duration": {
+			content: "This is a title: now is the description #tag1 #tag2 ~45m",
+			expected: Task{
+				Title:       "This is a title",
+				Description: "now is the description",
+				Tags:        []string{"tag1", "tag2"},
+				Duration:    "45m",
+			},
+		},
 	}
 
 	for name, test := range tests {

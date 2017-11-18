@@ -6,16 +6,17 @@ import (
 )
 
 type Task struct {
-	ID          uint   `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	ID          uint
+	Title       string
+	Description string
 
-	Tags []string `json:"tags"`
+	Tags     []string
+	Duration string
 
-	Done   bool       `json:"done"`
-	DoneAt *time.Time `json:"doneAt"`
+	Done   bool
+	DoneAt *time.Time
 
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt time.Time
 }
 
 type TaskRepository interface {

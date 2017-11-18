@@ -37,7 +37,7 @@ func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, e
 	}
 
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, done, doneAt, created_at
+		SELECT id, title, description, duration, done, doneAt, created_at
 		  FROM tasks
 		 WHERE done = ?
 		   AND deleted = ?
@@ -54,10 +54,11 @@ func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, e
 		var id uint
 		var title string
 		var description string
+		var duration string
 		var done bool
 		var doneAt *time.Time
 		var createdAt time.Time
-		if err := rows.Scan(&id, &title, &description, &done, &doneAt, &createdAt); err != nil {
+		if err := rows.Scan(&id, &title, &description, &duration, &done, &doneAt, &createdAt); err != nil {
 			return nil, err
 		}
 
@@ -65,6 +66,8 @@ func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, e
 			ID:          id,
 			Title:       title,
 			Description: description,
+
+			Duration: duration,
 
 			Done:   done,
 			DoneAt: doneAt,
@@ -129,11 +132,10 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 	}
 
 	now := time.Now()
-	res, err := r.db.ExecContext(
-		ctx,
-		"INSERT INTO tasks (title, description, rank, done, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-		t.Title, t.Description, 999, t.Done, now, now,
-	)
+	res, err := r.db.ExecContext(ctx, `
+		INSERT INTO tasks (title, description, duration, rank, done, created_at, updated_at)
+		     VALUES (?, ?, ?, ?, ?, ?, ?)
+	`, t.Title, t.Description, t.Duration, 999, t.Done, now, now)
 	if err != nil {
 		return err
 	}

@@ -41,6 +41,15 @@ ul.Tasks {
     color: #292b2c;
 }
 
+.TaskDuration {
+    color: #636c72;
+}
+
+.Task .TaskDurationIcon.fa {
+    margin-left: 0;
+    color: #636c72;
+}
+
 #tasks_list .Task.list-group-item:last-child {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
@@ -89,6 +98,12 @@ input.NewTaskInput:focus {
     cursor: grabbing;
     cursor: -moz-grabbing;
     cursor: -webkit-grabbing;
+}
+
+.TaskFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;;
 }
 
 /*

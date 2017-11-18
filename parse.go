@@ -11,7 +11,7 @@ func parse(content string) Task {
 		// extract the title: everything before any of the following symbols:
 		// [:, #]
 		func(s string) string {
-			if idx := strings.IndexAny(s, ":#"); idx >= 0 {
+			if idx := strings.IndexAny(s, ":#~"); idx >= 0 {
 				task.Title = strings.TrimSpace(s[:idx])
 				return s[idx:]
 			}
@@ -27,7 +27,7 @@ func parse(content string) Task {
 
 			s = s[1:] // Remove ':'
 
-			if idx := strings.IndexAny(s, "#"); idx >= 0 {
+			if idx := strings.IndexAny(s, "#~"); idx >= 0 {
 				task.Description = strings.TrimSpace(s[:idx])
 				return s[idx:]
 			}
@@ -41,7 +41,7 @@ func parse(content string) Task {
 				s = s[1:] // Remove '#'
 
 				remaining := ""
-				if idx := strings.IndexAny(s, " #"); idx >= 0 {
+				if idx := strings.IndexAny(s, " #~"); idx >= 0 {
 					remaining = strings.TrimSpace(s[idx:])
 					s = s[:idx]
 				}
@@ -51,11 +51,27 @@ func parse(content string) Task {
 			}
 			return s
 		},
+		// save description: starting with ':'
+		func(s string) string {
+			if !strings.HasPrefix(s, "~") {
+				return s
+			}
+
+			s = s[1:] // Remove '~'
+
+			remaining := ""
+			if idx := strings.Index(s, " "); idx >= 0 {
+				remaining = strings.TrimSpace(s[idx:])
+				s = s[:idx]
+			}
+
+			task.Duration = strings.TrimSpace(s)
+			return remaining
+		},
 	}
 
-	remaining := content
-	for i := 0; len(remaining) > 0 && i < len(parseFunctions); i++ {
-		remaining = parseFunctions[i](remaining)
+	for i := 0; len(content) > 0 && i < len(parseFunctions); i++ {
+		content = parseFunctions[i](content)
 	}
 
 	// Clean fields
