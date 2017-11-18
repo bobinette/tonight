@@ -1,6 +1,6 @@
 <ul class="list-group Tasks">
   {{- range .Tasks}}
-  <li class="list-group-item Task" data-taskid="{{ .ID }}">
+  <li class="list-group-item flex-column align-items-start Task" data-taskid="{{ .ID }}">
     <div class="w-100 TaskHeading">
       <span class="TaskTitle">{{ .Title }}</span>
       {{- if not .Done }}
@@ -11,7 +11,12 @@
       <small class="text-muted">Done {{ formatDate .DoneAt }}</small>
       {{- end }}
     </div>
-    <p class="TaskDescription">{{ .Description }}</p>
+    <div><p class="TaskDescription">{{ .Description }}</p></div>
+    <div>
+      {{- range .Tags }}
+        <span class="badge badge-pill badge-primary">#{{ . }}</span>
+      {{- end }}
+    </div>
   </li>
   {{- end }}
 </ul>

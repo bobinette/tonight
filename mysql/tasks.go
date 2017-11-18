@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -47,7 +48,8 @@ func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, e
 	}
 	defer rows.Close()
 
-	tasks := make([]tonight.Task, 0)
+	taskMap := make(map[uint]tonight.Task, 0)
+	ids := make([]uint, 0)
 	for rows.Next() {
 		var id uint
 		var title string
@@ -69,11 +71,53 @@ func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, e
 
 			CreatedAt: createdAt,
 		}
-		tasks = append(tasks, task)
+		taskMap[task.ID] = task
+		ids = append(ids, task.ID)
 	}
 
 	if err := rows.Close(); err != nil {
 		return nil, err
+	}
+
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	marks := make([]string, len(ids))
+	params := make([]interface{}, len(ids))
+	for i, id := range ids {
+		marks[i] = "?"
+		params[i] = id
+	}
+	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(
+		fmt.Sprintf("SELECT task_id, tag FROM tags WHERE task_id IN (%s)", strings.Join(marks, ",")),
+	), params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tags := make(map[uint][]string)
+	for rows.Next() {
+		var taskID uint
+		var tag string
+		if err := rows.Scan(&taskID, &tag); err != nil {
+			return nil, err
+		}
+
+		tags[taskID] = append(tags[taskID], tag)
+	}
+
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	tasks := make([]tonight.Task, len(ids))
+	for i, id := range ids {
+		task := taskMap[id]
+		task.Tags = tags[task.ID]
+
+		tasks[i] = task
 	}
 
 	return tasks, nil
@@ -98,8 +142,27 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 	if err != nil {
 		return err
 	}
+	taskID := uint(id)
 
-	t.ID = uint(id)
+	if len(t.Tags) > 0 {
+		values := make([]string, len(t.Tags))
+		params := make([]interface{}, 2*len(t.Tags))
+		for i, tag := range t.Tags {
+			values[i] = "(?, ?)"
+			params[i*2] = taskID
+			params[i*2+1] = tag
+		}
+		res, err = r.db.ExecContext(
+			ctx,
+			fmt.Sprintf("INSERT INTO tags (task_id, tag) VALUES %s", strings.Join(values, ",")),
+			params...,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	t.ID = taskID
 	return nil
 }
 
