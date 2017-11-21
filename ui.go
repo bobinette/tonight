@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"path"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/labstack/echo"
@@ -25,6 +27,9 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 
 	funcMap := map[string]interface{}{
 		"formatDate": humanize.Time,
+		"formatPriority": func(p int) string {
+			return strings.Repeat("!", p)
+		},
 	}
 
 	renderer := &templateRenderer{
@@ -183,4 +188,34 @@ func (us *UIService) UpdateRanks(c echo.Context) error {
 	}
 
 	return us.tasks(c)
+}
+
+func (us *UIService) Plan(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	var body struct {
+		Duration string `json:"duration"`
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&body); err != nil {
+		return err
+	}
+
+	d, err := time.ParseDuration(body.Duration)
+	if err != nil {
+		return err
+	}
+
+	ctx := c.Request().Context()
+	tasks, err := us.repo.List(ctx, false)
+	if err != nil {
+		return err
+	}
+
+	planned, totalDuration := plan(tasks, d)
+	fmt.Println(totalDuration)
+	return c.Render(http.StatusOK, "tasks", struct {
+		Tasks []Task
+	}{
+		Tasks: planned,
+	})
 }

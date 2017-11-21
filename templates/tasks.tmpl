@@ -2,7 +2,10 @@
   {{- range .Tasks}}
   <li class="list-group-item flex-column align-items-start Task" data-taskid="{{ .ID }}">
     <div class="w-100 TaskHeading">
-      <span class="TaskTitle">{{ .Title }}</span>
+      <span class="TaskTitle">
+      {{ .Title }}
+      <span class="TaskPriority">{{ formatPriority .Priority }}</span>
+      </span>
       {{- if not .Done }}
       <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
       <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>

@@ -51,11 +51,14 @@ func main() {
 	srv.GET("/ui/done", uiService.DoneTasks)
 	srv.POST("/ui/ranks", uiService.UpdateRanks)
 
+	srv.POST("/ui/plan", uiService.Plan)
+
 	// Ping
 	srv.GET("/api/ping", tonight.Ping)
 
 	// Assets
 	srv.Static("/assets", "assets")
+	srv.Static("/fonts", "fonts")
 
 	if err := srv.Start(":9090"); err != nil {
 		log.Fatal(err)

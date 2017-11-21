@@ -8,6 +8,15 @@ func parse(content string) Task {
 	task := Task{}
 
 	parseFunctions := []func(s string) string{
+		// extract the priority
+		func(s string) string {
+			for strings.HasPrefix(s, "!") && task.Priority <= 5 {
+				task.Priority++
+				s = s[1:]
+			}
+
+			return s
+		},
 		// extract the title: everything before any of the following symbols:
 		// [:, #]
 		func(s string) string {

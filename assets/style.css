@@ -16,6 +16,31 @@ li p {
 }
 
 /*
+    Planning
+*/
+
+.flex {
+    display: flex;
+    align-items: center;
+}
+
+.flex > *:not(:last-child) {
+    margin-right: 0.25rem;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.flex.flex-space-between {
+    justify-content: space-between;
+}
+
+#current_planning {
+    margin-bottom: 1rem;
+}
+
+/*
     Task list
 */
 
@@ -103,7 +128,15 @@ input.NewTaskInput:focus {
 .TaskFooter {
     display: flex;
     justify-content: space-between;
-    align-items: center;;
+    align-items: center;
+}
+
+#done_input {
+    margin-top: 0.5rem;
+}
+
+.TaskPriority {
+    color: #d9534f;
 }
 
 /*

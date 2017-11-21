@@ -10,6 +10,7 @@ type Task struct {
 	Title       string
 	Description string
 
+	Priority int
 	Tags     []string
 	Duration string
 
