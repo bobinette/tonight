@@ -1,17 +1,20 @@
 <ul class="list-group Tasks">
+  {{ $out := . }}
   {{- range .Tasks}}
-  <li class="list-group-item flex-column align-items-start Task" data-taskid="{{ .ID }}">
+  <li class="list-group-item flex-column align-items-start Task {{ if not .Done }}TaskPending{{ end }}" data-taskid="{{ .ID }}">
     <div class="w-100 TaskHeading">
       <span class="TaskTitle">
-      {{ .Title }}
+        {{ .Title }}
       <span class="TaskPriority">{{ formatPriority .Priority }}</span>
       </span>
       {{- if not .Done }}
-      <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
-      <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>
-      <i class="fa fa-bars TaskDrag"></i>
+        <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
+        <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>
+        {{- if $out.Sortable }}
+          <i class="fa fa-bars TaskDrag"></i>
+        {{- end }}
       {{ else }}
-      <small class="text-muted">Done {{ formatDate .DoneAt }}</small>
+        <small class="text-muted">Done {{ formatDate .DoneAt }}</small>
       {{- end }}
     </div>
     <div class="w-100 "><p class="TaskDescription">{{ .Description }}</p></div>
@@ -23,9 +26,9 @@
       </div>
       <div class="TaskDuration">
         {{- if .Duration }}
-        {{ .Duration }}
+          {{ .Duration }}
         {{- else }}
-        <em>-</em>
+          <em>(1h)</em>
         {{- end }}
         <i class="fa fa-clock-o TaskDurationIcon"></i>
       </div>

@@ -21,7 +21,11 @@ type templateRenderer struct {
 
 func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 	tmpls := map[string][]string{
-		"home":  {"home.tmpl", "tasks.tmpl"},
+		"home": {
+			"home.tmpl", "tasks.tmpl",
+			// JS files
+			"tasksList.js", "sort.js", "delete.js", "new.js", "doneTasksList.js", "plan.js",
+		},
 		"tasks": {"tasks.tmpl"},
 	}
 
@@ -80,9 +84,11 @@ func (us *UIService) Home(c echo.Context) error {
 	}
 
 	data := struct {
-		Tasks []Task
+		Tasks    []Task
+		Sortable bool
 	}{
-		Tasks: tasks,
+		Tasks:    tasks,
+		Sortable: true,
 	}
 	return c.Render(http.StatusOK, "home", data)
 }
@@ -103,7 +109,7 @@ func (us *UIService) CreateTask(c echo.Context) error {
 		return err
 	}
 
-	return us.tasks(c)
+	return us.pendingTasks(c)
 }
 
 func (us *UIService) MarkDone(c echo.Context) error {
@@ -126,19 +132,21 @@ func (us *UIService) MarkDone(c echo.Context) error {
 		return err
 	}
 
-	return us.tasks(c)
+	return us.pendingTasks(c)
 }
 
-func (us *UIService) tasks(c echo.Context) error {
+func (us *UIService) pendingTasks(c echo.Context) error {
 	tasks, err := us.repo.List(c.Request().Context(), false)
 	if err != nil {
 		return err
 	}
 
 	data := struct {
-		Tasks []Task
+		Tasks    []Task
+		Sortable bool
 	}{
-		Tasks: tasks,
+		Tasks:    tasks,
+		Sortable: true,
 	}
 	return c.Render(http.StatusOK, "tasks", data)
 }
@@ -150,9 +158,11 @@ func (us *UIService) DoneTasks(c echo.Context) error {
 	}
 
 	data := struct {
-		Tasks []Task
+		Tasks    []Task
+		Sortable bool
 	}{
-		Tasks: tasks,
+		Tasks:    tasks,
+		Sortable: false,
 	}
 	return c.Render(http.StatusOK, "tasks", data)
 }
@@ -170,7 +180,7 @@ func (us *UIService) Delete(c echo.Context) error {
 		return err
 	}
 
-	return us.tasks(c)
+	return us.pendingTasks(c)
 }
 
 func (us *UIService) UpdateRanks(c echo.Context) error {
@@ -187,7 +197,7 @@ func (us *UIService) UpdateRanks(c echo.Context) error {
 		return err
 	}
 
-	return us.tasks(c)
+	return us.pendingTasks(c)
 }
 
 func (us *UIService) Plan(c echo.Context) error {
@@ -214,8 +224,10 @@ func (us *UIService) Plan(c echo.Context) error {
 	planned, totalDuration := plan(tasks, d)
 	fmt.Println(totalDuration)
 	return c.Render(http.StatusOK, "tasks", struct {
-		Tasks []Task
+		Tasks    []Task
+		Sortable bool
 	}{
-		Tasks: planned,
+		Tasks:    planned,
+		Sortable: false,
 	})
 }

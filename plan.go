@@ -1,7 +1,6 @@
 package tonight
 
 import (
-	"log"
 	"sort"
 	"time"
 )
@@ -18,7 +17,6 @@ func plan(tasks []Task, d time.Duration) ([]Task, time.Duration) {
 	for i, task := range tasks {
 		td, err := time.ParseDuration(task.Duration)
 		if err != nil {
-			log.Printf("error parsing durationg for task %d: %v. Arbitrarily using 1h", task.ID, err)
 			td = 1 * time.Hour
 		}
 
@@ -36,7 +34,6 @@ func plan(tasks []Task, d time.Duration) ([]Task, time.Duration) {
 	planned := make([]Task, 0)
 	for _, task := range durations {
 		if cumDur+task.Duration > d {
-			log.Printf("not using task %d because %d > %d", task.ID, cumDur+task.Duration, d)
 			continue
 		}
 

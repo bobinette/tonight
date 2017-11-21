@@ -23,11 +23,13 @@
     <script src="/assets/bootstrap.min.js"></script>
   </head>
   <body>
+    <!-- Nav bar -->
     <nav class="navbar navbar-top navbar-inverse bg-primary">
       <h1 class="NavBar">Hello, tasks!</h1>
     </nav>
 
     <div class="container Page">
+      <!-- Planning -->
       <div id="plan_duration" class="col-md-8 offset-md-2 row flex">
         <label for="plan_duration_input" class="col-form-label">Make a plan for the next</label>
         <div class="flex-1">
@@ -43,6 +45,8 @@
         <!-- Current planning will appear here -->
       </div>
 
+      <!-- Tasks still open -->
+      <div class="col-md-8 offset-md-2">Pending tasks:</div>
       <div id="tasks_list" class="col-md-8 offset-md-2">
           {{block "tasks.tmpl" .}}{{ end }}
       </div>
@@ -56,10 +60,10 @@
         >
       </div>
 
+      <!-- Done tasks -->
       <div id="show_done_tasks" class="ShowDoneTasksDiv">
         <button id="show_done_tasks_btn" class="btn btn-link">Show done tasks...</button>
       </div>
-
       <div id="done_tasks_list" class="col-md-8 offset-md-2">
         <!-- Here will appear the done tasks -->
       </div>
@@ -73,160 +77,11 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script> -->
 
     <!-- Custom scripts -->
-    <script>
-      $("#tasks_list").on("click", ".TaskDone", function(event) {
-        event.preventDefault();
-
-        $.post(`/ui/tasks/${$(this).data("taskid")}`, JSON.stringify({ description: $("#done_input").val() }), function(data) {
-          $("#tasks_list ul").sortable("disable");
-          $("#tasks_list").html(data);
-          makeSortable();
-          watchTasks();
-          updateDoneTasks();
-        })
-      });
-
-      $("#tasks_list").on("click", ".TaskDelete", function(event) {
-        event.preventDefault();
-
-        $.ajax({
-          url: `/ui/tasks/${$(this).data("taskid")}`,
-          type: "DELETE",
-          success: function(data) {
-            $("#tasks_list ul").sortable("disable");
-            $("#tasks_list").html(data);
-            watchTasks();
-            makeSortable();
-          }
-        });
-      });
-
-      $("#new_task_input").on("keyup", function(event) {
-        if (event.keyCode === 13) {
-          event.preventDefault();
-
-          $.post("/ui/tasks", JSON.stringify({ content: $("#new_task_input").val() }), function(data) {
-            $("#new_task_input").val('');
-            $("#tasks_list ul").sortable("disable");
-            $("#tasks_list").html(data);
-            watchTasks();
-            makeSortable();
-          })
-        }
-      });
-
-      $("#plan_duration_input").on("keyup", function(event) {
-        if (event.keyCode === 13) {
-          event.preventDefault();
-
-          const duration = $("#plan_duration_input").val();
-          $.post("/ui/plan", JSON.stringify({ duration }), function(data) {
-            $("#plan_duration").hide();
-            $("#current_planning").html(`
-              <div id="current_planning_header" class="flex flex-space-between">
-                <span>Current planning:</span>
-                <button id="dismiss_planning" class="btn btn-link">Dismiss</button>
-              </div>
-              ${data}
-            `);
-
-            $("#dismiss_planning").on("click", function(event) {
-              $("#plan_duration").show();
-              $("#current_planning").html("");
-            });
-          })
-        }
-      });
-
-      let showDoneTasks = false;
-      function updateDoneTasks() {
-        if (showDoneTasks) {
-          $.get("/ui/done", function(data) {
-            $("#done_tasks_list").html(data);
-          })
-        } else {
-          $("#done_tasks_list").html('');
-        }
-      }
-
-      $("#show_done_tasks").on("click", "button", function(event) {
-        showDoneTasks = !showDoneTasks;
-        updateDoneTasks();
-
-        $("#show_done_tasks_btn").text(showDoneTasks ? "Hide done tasks..." : "Show done tasks...")
-      });
-
-      function makeSortable() {
-        $("#tasks_list ul").sortable({
-          // Taken from http://www.guillaumevoisin.fr/jquery/tutoriel-drag-and-drop-jquery-exemple-avec-une-liste-des-taches
-          axis: "y", // Only on vertical axix
-          containment: "#tasks_list", // Bound to this element
-          handle: ".TaskDrag", // Only the .TaskDrag icon handles the drag
-          distance: 10, // Drag starts after 10 pixel
-          // When dropping
-
-          stop: function(event, ui){
-            // Pour chaque item de liste
-            const ranks = {};
-            $("#tasks_list ul").find("li").each(function(){
-              ranks[$(this).data("taskid")] = $(this).index()
-            });
-
-            $.post("/ui/ranks", JSON.stringify({ ranks: ranks }), function(data) {
-              $("#tasks_list ul").sortable("disable");
-              $("#tasks_list").html(data);
-              watchTasks();
-              makeSortable();
-              updateDoneTasks();
-            });
-          }
-        });
-      }
-      makeSortable();
-
-      $(window).on("click", function(event) {
-        $("#done_input").remove();
-      });
-
-      $("#tasks_list").on("keyup", "#done_input", function(event) {
-        if (event.keyCode === 13) {
-          event.preventDefault();
-          $.post(`/ui/tasks/${$(this).data("taskid")}`, JSON.stringify({ description: $("#done_input").val() }), function(data) {
-            $("#tasks_list ul").sortable("disable");
-            $("#tasks_list").html(data);
-            makeSortable();
-            watchTasks();
-            updateDoneTasks();
-          })
-        } else if (event.keyCode === 27) {
-          $("#done_input").remove();
-        }
-      });
-
-      function watchTasks() {
-        $("#tasks_list").on("click", ".Task", function(event) {
-          event.stopPropagation();
-
-          if (!$(this).find("#done_input").length) {
-            // Check if it is somewhere else
-            if ($("#done_input").length) {
-              $("#done_input").remove();
-            }
-
-            // Add it where it belongs
-            $(this).find(".TaskDoneInputPlaceholder").html(`
-              <input
-                id="done_input"
-                type="text"
-                class="form-control"
-                placeholder="How did you do that? (enter to mark as done)"
-                data-taskid="${$(this).data("taskid")}"
-              >
-            `);
-          }
-        });
-      };
-      watchTasks();
-    </script>
+    <script type="text/javascript">{{template "sort.js" .}}</script>
+    <script type="text/javascript">{{template "doneTasksList.js" .}}</script>
+    <script type="text/javascript">{{template "delete.js" .}}</script>
+    <script type="text/javascript">{{template "new.js" .}}</script>
+    <script type="text/javascript">{{template "tasksList.js" .}}</script>
+    <script type="text/javascript">{{template "plan.js" .}}</script>
   </body>
 </html>
