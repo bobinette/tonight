@@ -1,0 +1,59 @@
+{{- if not .Tasks }}
+<div id="plan_duration" class="flex">
+  <label for="plan_duration_input" class="col-form-label">Make a plan for the next</label>
+  <div class="flex-1">
+    <input
+      id="plan_duration_input"
+      type="text"
+      class="form-control"
+      placeholder="Available duration, e.g. 1h"
+    >
+  </div>
+</div>
+{{- else }}
+<div>
+  <div id="current_planning_header" class="flex flex-space-between">
+    <span>Current planning:</span>
+    <button id="dismiss_planning" class="btn btn-link">Dismiss</button>
+  </div>
+  <ul class="list-group Tasks">
+    {{- range .Tasks}}
+    <li class="list-group-item flex-column align-items-start Task {{ if not .Done }}TaskPending{{ end }}" data-taskid="{{ .ID }}">
+      <div class="w-100 TaskHeading">
+        <span class="TaskTitle">
+          {{ .Title }}
+        <span class="TaskPriority">{{ formatPriority .Priority }}</span>
+        </span>
+        {{- if not .Done }}
+          <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
+          <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>
+        {{ else }}
+          <span class="badge badge-pill badge-success">done</span>
+        {{- end }}
+      </div>
+      <div class="w-100 "><p class="TaskDescription">{{ .Description }}</p></div>
+      <div class="w-100 TaskFooter">
+        <div>
+        {{- range .Tags }}
+          <span class="badge badge-pill badge-primary">#{{ . }}</span>
+        {{- end }}
+        </div>
+        <div class="TaskDuration">
+          {{- if .Duration }}
+            {{ .Duration }}
+          {{- else }}
+            <em>(1h)</em>
+          {{- end }}
+          <i class="fa fa-clock-o TaskDurationIcon"></i>
+        </div>
+      </div>
+      <div class="w-100 TaskDoneInputPlaceholder"></div>
+    </li>
+    {{- end }}
+  </ul>
+  <div class="flex flex-space-between">
+    <small>Asked for: {{ .RequiredDuration }}</small>
+    <small>Total time: {{ .TotalDuration }}</small>
+  </div>
+</div>
+{{- end }}

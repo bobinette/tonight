@@ -48,6 +48,7 @@ function watchDoneButtons(identifier) {
       $('#tasks_list').html(data);
       makeSortable();
       updateDoneTasks();
+      refreshPlanning();
     });
   });
 }
@@ -64,6 +65,7 @@ function watchDoneWithDescription(identifier) {
         $('#tasks_list').html(data);
         makeSortable();
         updateDoneTasks();
+        refreshPlanning();
       });
     } else if (event.keyCode === 27) {
       $('#done_input').remove();

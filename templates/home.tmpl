@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+    <title>Tonight</title>
+    <link rel="icon" type="image/png" href="/assets/logo.png" />
 
     <link rel="stylesheet" href="/assets/style.css">
 
@@ -25,24 +27,13 @@
   <body>
     <!-- Nav bar -->
     <nav class="navbar navbar-top navbar-inverse bg-primary">
-      <h1 class="NavBar">Hello, tasks!</h1>
+      <h1 class="NavBar"><img src="/assets/logo-i.png" height="36" width="36">Tonight</h1>
     </nav>
 
     <div class="container Page">
       <!-- Planning -->
-      <div id="plan_duration" class="col-md-8 offset-md-2 row flex">
-        <label for="plan_duration_input" class="col-form-label">Make a plan for the next</label>
-        <div class="flex-1">
-          <input
-            id="plan_duration_input"
-            type="text"
-            class="form-control"
-            placeholder="Available duration, e.g. 1h"
-          >
-        </div>
-      </div>
       <div id="current_planning" class="col-md-8 offset-md-2">
-        <!-- Current planning will appear here -->
+        {{ block "plan.tmpl" .Planning }}{{ end }}
       </div>
 
       <!-- Tasks still open -->
@@ -77,11 +68,11 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script> -->
 
     <!-- Custom scripts -->
+    <script type="text/javascript">{{template "plan.js" .}}</script>
     <script type="text/javascript">{{template "sort.js" .}}</script>
     <script type="text/javascript">{{template "doneTasksList.js" .}}</script>
     <script type="text/javascript">{{template "delete.js" .}}</script>
     <script type="text/javascript">{{template "new.js" .}}</script>
     <script type="text/javascript">{{template "tasksList.js" .}}</script>
-    <script type="text/javascript">{{template "plan.js" .}}</script>
   </body>
 </html>

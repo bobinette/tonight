@@ -15,6 +15,12 @@ import (
 	"github.com/labstack/echo"
 )
 
+type planningForTemplate struct {
+	Tasks            []Task
+	RequiredDuration time.Duration
+	TotalDuration    time.Duration
+}
+
 type templateRenderer struct {
 	templates map[string]*template.Template
 }
@@ -22,11 +28,12 @@ type templateRenderer struct {
 func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 	tmpls := map[string][]string{
 		"home": {
-			"home.tmpl", "tasks.tmpl",
+			"home.tmpl", "tasks.tmpl", "plan.tmpl",
 			// JS files
 			"tasksList.js", "sort.js", "delete.js", "new.js", "doneTasksList.js", "plan.js",
 		},
 		"tasks": {"tasks.tmpl"},
+		"plan":  {"plan.tmpl"},
 	}
 
 	funcMap := map[string]interface{}{
@@ -78,17 +85,54 @@ func NewUIService(repo TaskRepository) *UIService {
 }
 
 func (us *UIService) Home(c echo.Context) error {
-	tasks, err := us.repo.List(c.Request().Context(), false)
+	ctx := c.Request().Context()
+	tasks, err := us.repo.List(ctx, false)
 	if err != nil {
 		return err
+	}
+
+	planning, err := us.repo.CurrentPlanning(ctx)
+	if err != nil {
+		return err
+	}
+
+	var totalDuration time.Duration = 0
+	hasPending := false
+
+	for _, task := range planning.Tasks {
+		hasPending = hasPending || !task.Done
+		if dur, err := time.ParseDuration(task.Duration); err == nil {
+			totalDuration += dur
+		} else {
+			fmt.Println("could not parse duration", dur, err)
+			totalDuration += 1 * time.Hour
+		}
+	}
+
+	var pft planningForTemplate
+	if hasPending {
+		var rd time.Duration
+		if dur, err := time.ParseDuration(planning.Duration); err == nil {
+			rd = dur
+		} else {
+			fmt.Println(planning.Duration, err)
+		}
+
+		pft = planningForTemplate{
+			Tasks:            planning.Tasks,
+			RequiredDuration: rd,
+			TotalDuration:    totalDuration,
+		}
 	}
 
 	data := struct {
 		Tasks    []Task
 		Sortable bool
+		Planning planningForTemplate
 	}{
 		Tasks:    tasks,
 		Sortable: true,
+		Planning: pft,
 	}
 	return c.Render(http.StatusOK, "home", data)
 }
@@ -222,12 +266,66 @@ func (us *UIService) Plan(c echo.Context) error {
 	}
 
 	planned, totalDuration := plan(tasks, d)
-	fmt.Println(totalDuration)
-	return c.Render(http.StatusOK, "tasks", struct {
-		Tasks    []Task
-		Sortable bool
-	}{
-		Tasks:    planned,
-		Sortable: false,
-	})
+
+	taskIDs := make([]uint, len(planned))
+	for i, task := range planned {
+		taskIDs[i] = task.ID
+	}
+
+	planning, err := us.repo.StartPlanning(ctx, body.Duration, taskIDs)
+	if err != nil {
+		return err
+	}
+
+	pft := planningForTemplate{
+		Tasks:            planning.Tasks,
+		RequiredDuration: d,
+		TotalDuration:    totalDuration,
+	}
+
+	return c.Render(http.StatusOK, "plan", pft)
+}
+
+func (us *UIService) CurrentPlanning(c echo.Context) error {
+	planning, err := us.repo.CurrentPlanning(c.Request().Context())
+	if err != nil {
+		return err
+	}
+
+	var totalDuration time.Duration = 0
+	hasPending := false
+
+	for _, task := range planning.Tasks {
+		hasPending = hasPending || !task.Done
+		if dur, err := time.ParseDuration(task.Duration); err == nil {
+			totalDuration += dur
+		} else {
+			fmt.Println("could not parse duration", dur, err)
+			totalDuration += 1 * time.Hour
+		}
+	}
+
+	var pft planningForTemplate
+	if hasPending {
+		var rd time.Duration
+		if dur, err := time.ParseDuration(planning.Duration); err == nil {
+			rd = dur
+		}
+
+		pft = planningForTemplate{
+			Tasks:            planning.Tasks,
+			RequiredDuration: rd,
+			TotalDuration:    totalDuration,
+		}
+	}
+
+	return c.Render(http.StatusOK, "plan", pft)
+}
+
+func (us *UIService) DismissPlanning(c echo.Context) error {
+	if err := us.repo.DismissPlanning(c.Request().Context()); err != nil {
+		return err
+	}
+
+	return c.Render(http.StatusOK, "plan", planningForTemplate{})
 }

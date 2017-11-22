@@ -5,14 +5,7 @@ function watchStartPlan() {
 
       const duration = $('#plan_duration_input').val();
       $.post('/ui/plan', JSON.stringify({ duration }), function(data) {
-        $('#plan_duration').hide();
-        $('#current_planning').html(`
-          <div id="current_planning_header" class="flex flex-space-between">
-            <span>Current planning:</span>
-            <button id="dismiss_planning" class="btn btn-link">Dismiss</button>
-          </div>
-          ${data}
-        `);
+        $('#current_planning').html(data);
       });
     }
   });
@@ -20,8 +13,19 @@ function watchStartPlan() {
 
 function watchDismissPlan() {
   $(document).on('click', '#dismiss_planning', function(event) {
-    $('#plan_duration').show();
-    $('#current_planning').html('');
+    $.ajax({
+      url: '/ui/plan',
+      type: 'DELETE',
+      success: function(data) {
+        $('#current_planning').html(data);
+      },
+    });
+  });
+}
+
+function refreshPlanning() {
+  $.get('/ui/plan', function(data) {
+    $('#current_planning').html(data);
   });
 }
 

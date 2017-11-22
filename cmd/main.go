@@ -52,6 +52,8 @@ func main() {
 	srv.POST("/ui/ranks", uiService.UpdateRanks)
 
 	srv.POST("/ui/plan", uiService.Plan)
+	srv.GET("/ui/plan", uiService.CurrentPlanning)
+	srv.DELETE("/ui/plan", uiService.DismissPlanning)
 
 	// Ping
 	srv.GET("/api/ping", tonight.Ping)

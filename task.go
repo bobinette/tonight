@@ -20,6 +20,17 @@ type Task struct {
 	CreatedAt time.Time
 }
 
+type Planning struct {
+	ID uint
+
+	Duration string
+
+	Dismissed bool
+	StartedAt time.Time
+
+	Tasks []Task
+}
+
 type TaskRepository interface {
 	List(ctx context.Context, done bool) ([]Task, error)
 	Create(ctx context.Context, t *Task) error
@@ -28,8 +39,8 @@ type TaskRepository interface {
 	UpdateRanks(ctx context.Context, ranks map[uint]uint) error
 
 	Delete(ctx context.Context, taskID uint) error
-}
 
-type TaskService struct {
-	repo TaskRepository
+	StartPlanning(ctx context.Context, duration string, taskIDs []uint) (Planning, error)
+	DismissPlanning(ctx context.Context) error
+	CurrentPlanning(ctx context.Context) (Planning, error)
 }
