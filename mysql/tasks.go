@@ -322,6 +322,10 @@ func (r *TaskRepository) DismissPlanning(ctx context.Context) error {
 }
 
 func (r *TaskRepository) tasks(ctx context.Context, ids []uint) ([]tonight.Task, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
 	params := make([]interface{}, len(ids))
 	for i, id := range ids {
 		params[i] = id
@@ -377,10 +381,6 @@ func (r *TaskRepository) tasks(ctx context.Context, ids []uint) ([]tonight.Task,
 
 	if err := rows.Close(); err != nil {
 		return nil, err
-	}
-
-	if len(ids) == 0 {
-		return nil, nil
 	}
 
 	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(
