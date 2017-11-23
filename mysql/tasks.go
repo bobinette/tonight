@@ -37,7 +37,7 @@ func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, e
 	}
 
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, priority, duration, done, done_at, created_at
+		SELECT id, title, description, priority, duration, deadline, done, done_at, created_at
 		  FROM tasks
 		 WHERE done = ?
 		   AND deleted = ?
@@ -56,10 +56,11 @@ func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, e
 		var description string
 		var priority int
 		var duration string
+		var deadline *time.Time
 		var done bool
 		var doneAt *time.Time
 		var createdAt time.Time
-		if err := rows.Scan(&id, &title, &description, &priority, &duration, &done, &doneAt, &createdAt); err != nil {
+		if err := rows.Scan(&id, &title, &description, &priority, &duration, &deadline, &done, &doneAt, &createdAt); err != nil {
 			return nil, err
 		}
 
@@ -69,7 +70,9 @@ func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, e
 			Description: description,
 
 			Priority: priority,
+
 			Duration: duration,
+			Deadline: deadline,
 
 			Done:   done,
 			DoneAt: doneAt,
@@ -135,9 +138,9 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 
 	now := time.Now()
 	res, err := r.db.ExecContext(ctx, `
-		INSERT INTO tasks (title, description, priority, duration, rank, done, created_at, updated_at)
-		     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`, t.Title, t.Description, t.Priority, t.Duration, 999, t.Done, now, now)
+		INSERT INTO tasks (title, description, priority, duration, deadline, rank, done, created_at, updated_at)
+		     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, 999, t.Done, now, now)
 	if err != nil {
 		return err
 	}

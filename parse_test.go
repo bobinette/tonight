@@ -2,11 +2,14 @@ package tonight
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestParse(t *testing.T) {
+	tomorrow := time.Date(2017, 11, 24, 23, 59, 59, 0, time.UTC)
+
 	tests := map[string]struct {
 		content  string
 		expected Task
@@ -64,6 +67,19 @@ func TestParse(t *testing.T) {
 				Priority: 2,
 				Tags:     []string{"tag"},
 				Duration: "2h30m",
+			},
+		},
+		"with a deadline": {
+			content: "This is a title >2017-11-24",
+			expected: Task{
+				Title: "This is a title",
+				// Description: "now is the description",
+
+				// Priority: 2,
+				// Tags:     []string{"tag"},
+
+				// Duration: "2h30m",
+				Deadline: &tomorrow,
 			},
 		},
 	}

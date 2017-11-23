@@ -2,6 +2,7 @@ package tonight
 
 import (
 	"strings"
+	"time"
 )
 
 func parse(content string) Task {
@@ -20,7 +21,7 @@ func parse(content string) Task {
 		// extract the title: everything before any of the following symbols:
 		// [:, #]
 		func(s string) string {
-			if idx := strings.IndexAny(s, ":#~"); idx >= 0 {
+			if idx := strings.IndexAny(s, ":#~>"); idx >= 0 {
 				task.Title = strings.TrimSpace(s[:idx])
 				return s[idx:]
 			}
@@ -60,7 +61,7 @@ func parse(content string) Task {
 			}
 			return s
 		},
-		// save description: starting with ':'
+		// save duration: starting with '~'
 		func(s string) string {
 			if !strings.HasPrefix(s, "~") {
 				return s
@@ -75,6 +76,30 @@ func parse(content string) Task {
 			}
 
 			task.Duration = strings.TrimSpace(s)
+			return remaining
+		},
+		// save deadline: starting with '>'
+		func(s string) string {
+			if !strings.HasPrefix(s, ">") {
+				return s
+			}
+
+			s = s[1:] // Remove '>'
+
+			remaining := ""
+			if idx := strings.Index(s, " "); idx >= 0 {
+				remaining = strings.TrimSpace(s[idx:])
+				s = s[:idx]
+			}
+
+			deadline, err := time.Parse("2006-1-2", s)
+			if err != nil {
+				// Fail early
+				return remaining
+			}
+
+			deadline = deadline.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+			task.Deadline = &deadline
 			return remaining
 		},
 	}

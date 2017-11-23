@@ -75,10 +75,10 @@ ul.Tasks {
 }
 
 .TaskDuration {
-    color: #636c72;
+    text-align: right;
 }
 
-.Task .TaskDurationIcon.fa {
+.Task .TaskDuration .fa {
     margin-left: 0;
     color: #636c72;
 }

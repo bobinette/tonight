@@ -12,7 +12,9 @@ type Task struct {
 
 	Priority int
 	Tags     []string
+
 	Duration string
+	Deadline *time.Time
 
 	Done   bool
 	DoneAt *time.Time
