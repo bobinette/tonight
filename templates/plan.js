@@ -29,7 +29,22 @@ function refreshPlanning() {
   });
 }
 
+function watchDateHover() {
+  $(document).on(
+    {
+      mouseenter: function(event) {
+        // @TODO: tooltip (maybe bootstrap can handle it itself)
+      },
+      mouseleave: function(event) {
+        // @TODO: tooltip (maybe bootstrap can handle it itself)
+      },
+    },
+    '.Date',
+  );
+}
+
 $(document).ready(function() {
   watchStartPlan();
   watchDismissPlan();
+  watchDateHover();
 });

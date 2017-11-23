@@ -17,6 +17,7 @@ import (
 
 type planningForTemplate struct {
 	Tasks            []Task
+	StartedAt        time.Time
 	RequiredDuration time.Duration
 	TotalDuration    time.Duration
 }
@@ -38,9 +39,12 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 	}
 
 	funcMap := map[string]interface{}{
-		"formatDate": humanize.Time,
+		"formatDateRelative": humanize.Time,
 		"formatPriority": func(p int) string {
 			return strings.Repeat("!", p)
+		},
+		"formatDate": func(d time.Time) string {
+			return d.Format("2006-1-2T15:04:05")
 		},
 	}
 
@@ -129,6 +133,7 @@ func (us *UIService) Home(c echo.Context) error {
 
 		pft = planningForTemplate{
 			Tasks:            planning.Tasks,
+			StartedAt:        planning.StartedAt,
 			RequiredDuration: rd,
 			TotalDuration:    totalDuration,
 		}
@@ -302,6 +307,7 @@ func (us *UIService) Plan(c echo.Context) error {
 
 	pft := planningForTemplate{
 		Tasks:            planning.Tasks,
+		StartedAt:        planning.StartedAt,
 		RequiredDuration: d,
 		TotalDuration:    totalDuration,
 	}
@@ -340,6 +346,7 @@ func (us *UIService) CurrentPlanning(c echo.Context) error {
 
 		pft = planningForTemplate{
 			Tasks:            planning.Tasks,
+			StartedAt:        planning.StartedAt,
 			RequiredDuration: rd,
 			TotalDuration:    totalDuration,
 		}

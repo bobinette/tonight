@@ -52,8 +52,13 @@
     {{- end }}
   </ul>
   <div class="flex flex-space-between">
-    <small>Asked for: {{ .RequiredDuration }}</small>
-    <small>Total time: {{ .TotalDuration }}</small>
+    <div>
+      <small class="Date" data-date="{{ formatDate .StartedAt }}">Started {{ formatDateRelative .StartedAt }}</small>
+    </div>
+    <div >
+      <div><small>Asked for: {{ .RequiredDuration }}</small></div>
+      <div><small>Total time: {{ .TotalDuration }}</small></div>
+    </div>
   </div>
 </div>
 {{- end }}
