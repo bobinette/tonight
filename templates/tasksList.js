@@ -4,7 +4,11 @@
 // how the task was done
 function watchClickOnTasks(identifier) {
   $(identifier).on('click', '.TaskPending', function(event) {
-    event.stopPropagation();
+    event.preventDefault();
+
+    if ($(event.target).closest('.TaskDelete').length !== 0 || $(event.target).closest('.TaskDone').length !== 0) {
+      return;
+    }
 
     if ($(this).find('#done_input').length) {
       return;
@@ -31,7 +35,9 @@ function watchClickOnTasks(identifier) {
 // Watch all clicks outside a task row to hide a potential done input
 function watchClickOutsideTask() {
   $(window).on('click', function(event) {
-    $('#done_input').remove();
+    if ($(event.target).closest('.TaskPending').length === 0) {
+      $('#done_input').remove();
+    }
   });
 }
 

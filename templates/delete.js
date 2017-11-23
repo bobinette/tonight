@@ -1,6 +1,6 @@
 function watchDeleteButtons(identifier) {
   $(identifier).on('click', '.TaskDelete', function(event) {
-    event.stopPropagation();
+    event.preventDefault();
 
     $.ajax({
       url: `/ui/tasks/${$(this).data('taskid')}`,
