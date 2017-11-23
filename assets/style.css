@@ -180,23 +180,31 @@ input.NewTaskInput:focus {
     position: fixed;
     right: 1rem;
     bottom: 1rem;
+
+    width: 15rem;
 }
 
 #add_task_input {
     display: none;
-    position: relative;
+
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 0.25rem;
+
+    margin-bottom: 0.2rem;
+}
+
+#add_task_input:focus-within {
+    border-color: #5cb3fd;
 }
 
 #add_task_input_textarea {
     max-height: 250px;
+
+    border: none;
 }
 
 #add_task_input_help {
-    display: none;
-
-    position: absolute;
-    bottom: 0;
-    right: 6px;
+    visibility: hidden;
 }
 
 .btn.btn-round {

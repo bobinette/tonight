@@ -1,3 +1,11 @@
+$.fn.visible = function() {
+  return this.css('visibility', 'visible');
+};
+
+$.fn.invisible = function() {
+  return this.css('visibility', 'hidden');
+};
+
 function watchNewTaskInput(identifer) {
   $(identifer).on('keyup', function(event) {
     if (event.keyCode === 13) {
@@ -51,9 +59,9 @@ function watchAddTaskInput() {
 
   $('#add_task_input_textarea').on('keyup', function(event) {
     if ($('#add_task_input_textarea').val().length) {
-      $('#add_task_input_help').show();
+      $('#add_task_input_help').visible();
     } else {
-      $('#add_task_input_help').hide();
+      $('#add_task_input_help').invisible();
     }
   });
 }

@@ -60,6 +60,7 @@ func main() {
 
 	// Assets
 	srv.Static("/assets", "assets")
+	srv.Static("/external", "external")
 	srv.Static("/fonts", "fonts")
 
 	if err := srv.Start(":9090"); err != nil {
