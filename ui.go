@@ -97,10 +97,15 @@ func (us *UIService) Home(c echo.Context) error {
 		return err
 	}
 
+	for i, task := range tasks {
+		task.DescriptionMD = template.HTML(formatDescription(task.Description))
+		tasks[i] = task
+	}
+
 	var totalDuration time.Duration = 0
 	hasPending := false
 
-	for _, task := range planning.Tasks {
+	for i, task := range planning.Tasks {
 		hasPending = hasPending || !task.Done
 		if dur, err := time.ParseDuration(task.Duration); err == nil {
 			totalDuration += dur
@@ -108,6 +113,9 @@ func (us *UIService) Home(c echo.Context) error {
 			fmt.Println("could not parse duration", dur, err)
 			totalDuration += 1 * time.Hour
 		}
+
+		task.DescriptionMD = template.HTML(formatDescription(task.Description))
+		planning.Tasks[i] = task
 	}
 
 	var pft planningForTemplate
@@ -186,6 +194,11 @@ func (us *UIService) pendingTasks(c echo.Context) error {
 		return err
 	}
 
+	for i, task := range tasks {
+		task.DescriptionMD = template.HTML(formatDescription(task.Description))
+		tasks[i] = task
+	}
+
 	data := struct {
 		Tasks    []Task
 		Sortable bool
@@ -200,6 +213,11 @@ func (us *UIService) DoneTasks(c echo.Context) error {
 	tasks, err := us.repo.List(c.Request().Context(), true)
 	if err != nil {
 		return err
+	}
+
+	for i, task := range tasks {
+		task.DescriptionMD = template.HTML(formatDescription(task.Description))
+		tasks[i] = task
 	}
 
 	data := struct {
@@ -278,6 +296,10 @@ func (us *UIService) Plan(c echo.Context) error {
 		return err
 	}
 
+	for _, task := range planning.Tasks {
+		task.DescriptionMD = template.HTML(formatDescription(task.Description))
+	}
+
 	pft := planningForTemplate{
 		Tasks:            planning.Tasks,
 		RequiredDuration: d,
@@ -296,7 +318,7 @@ func (us *UIService) CurrentPlanning(c echo.Context) error {
 	var totalDuration time.Duration = 0
 	hasPending := false
 
-	for _, task := range planning.Tasks {
+	for i, task := range planning.Tasks {
 		hasPending = hasPending || !task.Done
 		if dur, err := time.ParseDuration(task.Duration); err == nil {
 			totalDuration += dur
@@ -304,6 +326,9 @@ func (us *UIService) CurrentPlanning(c echo.Context) error {
 			fmt.Println("could not parse duration", dur, err)
 			totalDuration += 1 * time.Hour
 		}
+
+		task.DescriptionMD = template.HTML(formatDescription(task.Description))
+		planning.Tasks[i] = task
 	}
 
 	var pft planningForTemplate

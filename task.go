@@ -2,6 +2,7 @@ package tonight
 
 import (
 	"context"
+	"html/template"
 	"time"
 )
 
@@ -9,6 +10,8 @@ type Task struct {
 	ID          uint
 	Title       string
 	Description string
+
+	DescriptionMD template.HTML
 
 	Priority int
 	Tags     []string

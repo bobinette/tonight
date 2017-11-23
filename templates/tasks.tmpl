@@ -17,7 +17,7 @@
         <small class="text-muted">Done {{ formatDate .DoneAt }}</small>
       {{- end }}
     </div>
-    <div class="w-100 "><p class="TaskDescription">{{ .Description }}</p></div>
+    <div class="w-100 TaskDescription">{{ .DescriptionMD }}</div>
     <div class="w-100 TaskFooter">
       <div>
       {{- range .Tags }}
