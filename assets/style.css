@@ -16,8 +16,12 @@ li p {
 }
 
 /*
-    Planning
+    General
 */
+
+.grey {
+    color: #999;
+}
 
 .flex {
     display: flex;
@@ -35,6 +39,10 @@ li p {
 .flex.flex-space-between {
     justify-content: space-between;
 }
+
+/*
+    Planning
+*/
 
 #current_planning {
     margin-bottom: 1rem;
@@ -161,4 +169,38 @@ input.NewTaskInput:focus {
 .btn-link.btn.active.focus {
     outline: none;
     box-shadow: none;
+}
+
+/*
+    Add task button
+*/
+#add_task_fixed {
+    text-align: right;
+
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+}
+
+#add_task_input {
+    display: none;
+    position: relative;
+}
+
+#add_task_input_textarea {
+    max-height: 250px;
+}
+
+#add_task_input_help {
+    display: none;
+
+    position: absolute;
+    bottom: 0;
+    right: 6px;
+}
+
+.btn.btn-round {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
 }

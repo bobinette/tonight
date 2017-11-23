@@ -30,7 +30,8 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 		"home": {
 			"home.tmpl", "tasks.tmpl", "plan.tmpl",
 			// JS files
-			"tasksList.js", "sort.js", "delete.js", "new.js", "doneTasksList.js", "plan.js",
+			"tasksList.js", "sort.js", "delete.js", "new.js",
+			"doneTasksList.js", "plan.js",
 		},
 		"tasks": {"tasks.tmpl"},
 		"plan":  {"plan.tmpl"},

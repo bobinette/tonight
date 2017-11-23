@@ -23,6 +23,7 @@
 
     <script src="/assets/tether.min.js"></script>
     <script src="/assets/bootstrap.min.js"></script>
+    <script src="/assets/autosize.min.js"></script>
   </head>
   <body>
     <!-- Nav bar -->
@@ -58,6 +59,17 @@
       <div id="done_tasks_list" class="col-md-8 offset-md-2">
         <!-- Here will appear the done tasks -->
       </div>
+
+      <!-- Add task button -->
+      <div id="add_task_fixed">
+        <div id="add_task_input">
+          <textarea id="add_task_input_textarea" class="form-control" placeholder="New task..." rows="5"></textarea>
+          <small id="add_task_input_help" class="grey">Press enter to create <i class="fa fa-level-down fa-rotate-90"></i></small>
+        </div>
+        <button id="add_task_button" class="btn btn-success btn-round">
+          <i class="fa fa-plus"></i>
+        </button>
+      </div>
     </div>
 
     <!-- jQuery first, then Tether, then Bootstrap JS. -->
@@ -66,6 +78,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script> -->
+
+    <!-- <script src="https://raw.githubusercontent.com/jackmoore/autosize/master/dist/autosize.min.js"></script> -->
 
     <!-- Custom scripts -->
     <script type="text/javascript">{{template "plan.js" .}}</script>
