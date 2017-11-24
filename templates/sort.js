@@ -20,6 +20,10 @@ function makeSortable() {
         $('#tasks_list ul').sortable('disable');
         $('#tasks_list').html(data);
 
+        $(function() {
+          $('[data-toggle="tooltip"]').tooltip();
+        });
+
         makeSortable();
       });
     },

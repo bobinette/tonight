@@ -43,8 +43,11 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 		"formatPriority": func(p int) string {
 			return strings.Repeat("!", p)
 		},
-		"formatDate": func(d time.Time) string {
-			return d.Format("2006-1-2T15:04:05")
+		"formatDate": func(t time.Time) string {
+			return t.Format("2006-01-02")
+		},
+		"formatDateTime": func(dt time.Time) string {
+			return dt.Format("2006-01-02 15:03:04")
 		},
 	}
 

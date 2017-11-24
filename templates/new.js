@@ -11,11 +11,16 @@ function watchNewTaskInput(identifer) {
     if (event.keyCode === 13) {
       event.preventDefault();
 
-      $.post('/ui/tasks', JSON.stringify({ content: $('#new_task_input').val() }), function(data) {
+      $.post('/ui/tasks', JSON.stringify({ content: $('#new_task_input').val() })).done(function(data) {
         $('#new_task_input').val('');
         $('#tasks_list ul').sortable('disable');
         $('#tasks_list').html(data);
+
         makeSortable();
+
+        $(function() {
+          $('[data-toggle="tooltip"]').tooltip();
+        });
       });
     }
   });
@@ -49,8 +54,12 @@ function watchAddTaskInput() {
         $('#tasks_list').html(data);
         makeSortable();
 
-        $('#add_task_input').hide();
         $('#add_task_input_textarea').val('');
+        $('#add_task_input_help').invisible();
+
+        $(function() {
+          $('[data-toggle="tooltip"]').tooltip();
+        });
       });
     } else if (event.keyCode == 27) {
       $('#add_task_input').hide();

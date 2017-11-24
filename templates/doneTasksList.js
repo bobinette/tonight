@@ -4,6 +4,10 @@ function updateDoneTasks() {
   if (showDoneTasks) {
     $.get('/ui/done', function(data) {
       $('#done_tasks_list').html(data);
+
+      $(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+      });
     });
   } else {
     $('#done_tasks_list').html('');

@@ -9,6 +9,10 @@ function watchDeleteButtons(identifier) {
         $('#tasks_list ul').sortable('disable');
         $('#tasks_list').html(data);
         makeSortable();
+
+        $(function() {
+          $('[data-toggle="tooltip"]').tooltip();
+        });
       },
     });
   });

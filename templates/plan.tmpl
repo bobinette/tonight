@@ -53,7 +53,7 @@
   </ul>
   <div class="flex flex-space-between">
     <div>
-      <small class="Date" data-date="{{ formatDate .StartedAt }}">Started {{ formatDateRelative .StartedAt }}</small>
+      <small class="Date" data-toggle="tooltip" title="{{ formatDateTime .StartedAt }}">Started {{ formatDateRelative .StartedAt }}</small>
     </div>
     <div >
       <div><small>Asked for: {{ .RequiredDuration }}</small></div>

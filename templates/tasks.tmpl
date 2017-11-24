@@ -14,7 +14,7 @@
           <i class="fa fa-bars TaskDrag"></i>
         {{- end }}
       {{ else }}
-        <small class="text-muted Date" data-date="{{ formatDate .DoneAt }}">Done {{ formatDateRelative .DoneAt }}</small>
+        <small class="text-muted Date" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="{{ formatDateTime .DoneAt }}">Done {{ formatDateRelative .DoneAt }}</small>
       {{- end }}
     </div>
     <div class="w-100 TaskDescription">{{ .DescriptionMD }}</div>
@@ -34,7 +34,7 @@
           <i class="fa fa-clock-o TaskDurationIcon"></i>
         </div>
         {{- if .Deadline}}
-          <div class="Date" data-date="{{ formatDate .Deadline }}">
+          <div class="Date" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="{{ formatDate .Deadline }}">
             {{ formatDateRelative .Deadline }}
             <i class="fa fa-calendar-check-o"></i>
           </div>

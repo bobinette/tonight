@@ -69,6 +69,7 @@ function watchDoneWithDescription(identifier) {
       ) {
         $('#tasks_list ul').sortable('disable');
         $('#tasks_list').html(data);
+
         makeSortable();
         updateDoneTasks();
         refreshPlanning();
@@ -84,4 +85,8 @@ $(document).ready(function() {
   watchClickOnTasks(document);
   watchDoneWithDescription(document);
   watchClickOutsideTask();
+
+  $(function() {
+    $('[data-toggle="tooltip"]').tooltip();
+  });
 });
