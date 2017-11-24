@@ -57,10 +57,25 @@ function watchAddTaskInput() {
         $('#add_task_input_textarea').val('');
         $('#add_task_input_help').invisible();
 
+        $.notify(
+          {
+            title: '<strong>Success</strong>',
+            message: 'The task was successfully created.',
+          },
+          {
+            type: 'success',
+            newest_on_top: true,
+            animate: {
+              enter: 'animated fadeIn',
+              exit: 'animated fadeOut',
+            },
+          },
+        );
+
         $(function() {
           $('[data-toggle="tooltip"]').tooltip();
         });
-      });
+      }).fail(handleError);
     } else if (event.keyCode == 27) {
       $('#add_task_input').hide();
     }
