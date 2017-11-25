@@ -216,7 +216,8 @@ func (us *UIService) MarkDone(c echo.Context) error {
 		return err
 	}
 
-	if err := us.repo.MarkDone(c.Request().Context(), uint(taskID), body.Description); err != nil {
+	log := parseLog(body.Description)
+	if err := us.repo.MarkDone(c.Request().Context(), uint(taskID), log); err != nil {
 		return err
 	}
 

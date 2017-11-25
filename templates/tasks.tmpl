@@ -43,6 +43,14 @@
           {{- end }}
         </div>
       </div>
+      {{- if and (gt .Completion 0) (lt .Completion 100) }}
+        <div class="w-100 flex">
+          <span class="progress flex-1">
+            <span class="progress-bar" role="progressbar" aria-valuenow="{{ .Completion }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ .Completion }}%"></span>
+          </span>
+          <small><em class="grey">{{ .Completion }}%</em></small>
+        </div>
+      {{- end }}
       <div class="w-100 TaskDoneInputPlaceholder"></div>
     </div>
     <div class="w-100 TaskEditPlaceholder" data-taskid="{{ .ID }}" data-raw="{{ raw . }}"></div>

@@ -22,6 +22,16 @@ type Task struct {
 	Done   bool
 	DoneAt *time.Time
 
+	Completion int // max([log.Completion for log in Log])
+	Log        []Log
+
+	CreatedAt time.Time
+}
+
+type Log struct {
+	Completion  int
+	Description string
+
 	CreatedAt time.Time
 }
 
@@ -41,7 +51,7 @@ type TaskRepository interface {
 	Create(ctx context.Context, t *Task) error
 	Update(ctx context.Context, t *Task) error
 
-	MarkDone(ctx context.Context, taskID uint, description string) error
+	MarkDone(ctx context.Context, taskID uint, log Log) error
 	UpdateRanks(ctx context.Context, ranks map[uint]uint) error
 
 	Delete(ctx context.Context, taskID uint) error

@@ -48,87 +48,7 @@ func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, e
 	}
 	defer rows.Close()
 
-	taskMap := make(map[uint]tonight.Task, 0)
-	ids := make([]uint, 0)
-	for rows.Next() {
-		var id uint
-		var title string
-		var description string
-		var priority int
-		var duration string
-		var deadline *time.Time
-		var done bool
-		var doneAt *time.Time
-		var createdAt time.Time
-		if err := rows.Scan(&id, &title, &description, &priority, &duration, &deadline, &done, &doneAt, &createdAt); err != nil {
-			return nil, err
-		}
-
-		task := tonight.Task{
-			ID:          id,
-			Title:       title,
-			Description: description,
-
-			Priority: priority,
-
-			Duration: duration,
-			Deadline: deadline,
-
-			Done:   done,
-			DoneAt: doneAt,
-
-			CreatedAt: createdAt,
-		}
-		taskMap[task.ID] = task
-		ids = append(ids, task.ID)
-	}
-
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-
-	if len(ids) == 0 {
-		return nil, nil
-	}
-
-	marks := make([]string, len(ids))
-	params := make([]interface{}, len(ids))
-	for i, id := range ids {
-		marks[i] = "?"
-		params[i] = id
-	}
-	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(
-		fmt.Sprintf("SELECT task_id, tag FROM tags WHERE task_id IN (%s)", strings.Join(marks, ",")),
-	), params...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	tags := make(map[uint][]string)
-	for rows.Next() {
-		var taskID uint
-		var tag string
-		if err := rows.Scan(&taskID, &tag); err != nil {
-			return nil, err
-		}
-
-		tags[taskID] = append(tags[taskID], tag)
-	}
-
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-
-	tasks := make([]tonight.Task, len(ids))
-	for i, id := range ids {
-		task := taskMap[id]
-		task.Tags = tags[task.ID]
-
-		tasks[i] = task
-	}
-
-	return tasks, nil
+	return r.loadTasks(ctx, rows)
 }
 
 func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
@@ -219,14 +139,30 @@ func (r *TaskRepository) Update(ctx context.Context, t *tonight.Task) error {
 	return nil
 }
 
-func (r *TaskRepository) MarkDone(ctx context.Context, taskID uint, description string) error {
+func (r *TaskRepository) MarkDone(ctx context.Context, taskID uint, log tonight.Log) error {
 	now := time.Now()
 	_, err := r.db.ExecContext(
 		ctx,
-		"UPDATE tasks SET done = ?, done_description = ?, done_at = ?, updated_at = ? WHERE id = ?",
-		true, description, now, now, taskID,
+		`INSERT INTO task_log (task_id, completion, description, created_at)
+			VALUES (?, ?, ?, ?)`,
+		taskID, log.Completion, log.Description, now,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if log.Completion == 100 {
+		_, err := r.db.ExecContext(
+			ctx,
+			"UPDATE tasks SET done = ?, done_at = ?, updated_at = ? WHERE id = ?",
+			true, now, now, taskID,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *TaskRepository) Delete(ctx context.Context, taskID uint) error {
@@ -377,7 +313,7 @@ func (r *TaskRepository) tasks(ctx context.Context, ids []uint) ([]tonight.Task,
 		params[i] = id
 	}
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, priority, duration, done, done_at, created_at
+		SELECT id, title, description, priority, duration, deadline, done, done_at, created_at
 		  FROM tasks
 		 WHERE id IN (%s)
 `, join("?", ",", len(ids))), params...)
@@ -386,26 +322,23 @@ func (r *TaskRepository) tasks(ctx context.Context, ids []uint) ([]tonight.Task,
 	}
 	defer rows.Close()
 
+	return r.loadTasks(ctx, rows)
+}
+
+func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonight.Task, error) {
 	taskMap := make(map[uint]tonight.Task, 0)
+	ids := make([]uint, 0)
 	for rows.Next() {
 		var id uint
 		var title string
 		var description string
 		var priority int
 		var duration string
+		var deadline *time.Time
 		var done bool
 		var doneAt *time.Time
 		var createdAt time.Time
-		if err := rows.Scan(
-			&id,
-			&title,
-			&description,
-			&priority,
-			&duration,
-			&done,
-			&doneAt,
-			&createdAt,
-		); err != nil {
+		if err := rows.Scan(&id, &title, &description, &priority, &duration, &deadline, &done, &doneAt, &createdAt); err != nil {
 			return nil, err
 		}
 
@@ -415,7 +348,9 @@ func (r *TaskRepository) tasks(ctx context.Context, ids []uint) ([]tonight.Task,
 			Description: description,
 
 			Priority: priority,
+
 			Duration: duration,
+			Deadline: deadline,
 
 			Done:   done,
 			DoneAt: doneAt,
@@ -423,14 +358,28 @@ func (r *TaskRepository) tasks(ctx context.Context, ids []uint) ([]tonight.Task,
 			CreatedAt: createdAt,
 		}
 		taskMap[task.ID] = task
+		ids = append(ids, task.ID)
 	}
 
 	if err := rows.Close(); err != nil {
 		return nil, err
 	}
 
-	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(
-		fmt.Sprintf("SELECT task_id, tag FROM tags WHERE task_id IN (%s)", join("?", ",", len(ids))),
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	marks := make([]string, len(ids))
+	params := make([]interface{}, len(ids))
+	for i, id := range ids {
+		marks[i] = "?"
+		params[i] = id
+	}
+
+	// Fetch tags
+	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(
+		"SELECT task_id, tag FROM tags WHERE task_id IN (%s)",
+		strings.Join(marks, ","),
 	), params...)
 	if err != nil {
 		return nil, err
@@ -452,21 +401,60 @@ func (r *TaskRepository) tasks(ctx context.Context, ids []uint) ([]tonight.Task,
 		return nil, err
 	}
 
+	// Fetch logs
+	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT task_id, completion, description, created_at
+		FROM task_log
+		WHERE task_id IN (%s)
+		ORDER BY task_id, created_at DESC
+	`, strings.Join(marks, ","),
+	), params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	logs := make(map[uint][]tonight.Log)
+	for rows.Next() {
+		var taskID uint
+		var completion int
+		var description string
+		var createdAt time.Time
+		if err := rows.Scan(&taskID, &completion, &description, &createdAt); err != nil {
+			return nil, err
+		}
+
+		logs[taskID] = append(logs[taskID], tonight.Log{
+			Completion:  completion,
+			Description: description,
+			CreatedAt:   createdAt,
+		})
+	}
+
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
 	tasks := make([]tonight.Task, len(ids))
 	for i, id := range ids {
 		task := taskMap[id]
 		task.Tags = tags[task.ID]
+		task.Log = logs[task.ID]
+
+		for _, log := range task.Log {
+			if log.Completion > task.Completion {
+				task.Completion = log.Completion
+			}
+
+			if task.Completion == 100 {
+				task.Done = true
+				task.DoneAt = &log.CreatedAt
+				break
+			}
+		}
 
 		tasks[i] = task
 	}
 
 	return tasks, nil
-}
-
-func join(s, sep string, n int) string {
-	a := make([]string, n)
-	for i := 0; i < n; i++ {
-		a[i] = s
-	}
-	return strings.Join(a, sep)
 }

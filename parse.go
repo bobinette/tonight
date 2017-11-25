@@ -2,8 +2,14 @@ package tonight
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
+)
+
+var (
+	completionRE = regexp.MustCompile(`(?:([0-9]*)?% )?(.*)`)
 )
 
 func parse(content string) Task {
@@ -136,4 +142,22 @@ func formatRaw(t Task) string {
 	}
 
 	return out
+}
+
+func parseLog(desc string) Log {
+	matches := completionRE.FindStringSubmatch(desc)
+
+	log := Log{
+		Completion:  100,
+		Description: matches[2],
+	}
+
+	if len(matches[1]) > 0 {
+		log.Completion, _ = strconv.Atoi(matches[1])
+		if log.Completion > 100 {
+			log.Completion = 100
+		}
+	}
+
+	return log
 }

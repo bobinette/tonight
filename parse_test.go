@@ -89,3 +89,25 @@ func TestParse(t *testing.T) {
 		assert.Equal(t, test.expected, task, name)
 	}
 }
+
+func TestParseLog(t *testing.T) {
+	tests := map[string]struct {
+		content  string
+		expected Log
+	}{
+		"without completion: 100%% by default": {
+			content:  "this is the description",
+			expected: Log{Description: "this is the description", Completion: 100},
+		},
+		"with completion": {
+			content:  "25% this is the description",
+			expected: Log{Description: "this is the description", Completion: 25},
+		},
+	}
+
+	for name, test := range tests {
+		log := parseLog(test.content)
+		assert.Equal(t, test.expected.Completion, log.Completion, name)
+		assert.True(t, test.expected.Description == log.Description, name)
+	}
+}
