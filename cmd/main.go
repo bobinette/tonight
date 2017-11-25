@@ -46,7 +46,8 @@ func main() {
 
 	// -- Calls serving html to partially update the page
 	srv.POST("/ui/tasks", uiService.CreateTask)
-	srv.POST("/ui/tasks/:id", uiService.MarkDone)
+	srv.POST("/ui/tasks/:id", uiService.Update)
+	srv.POST("/ui/tasks/:id/done", uiService.MarkDone)
 	srv.DELETE("/ui/tasks/:id", uiService.Delete)
 	srv.GET("/ui/done", uiService.DoneTasks)
 	srv.POST("/ui/ranks", uiService.UpdateRanks)

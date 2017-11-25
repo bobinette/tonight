@@ -173,6 +173,52 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 	return nil
 }
 
+func (r *TaskRepository) Update(ctx context.Context, t *tonight.Task) error {
+	if t.ID == 0 {
+		return errors.New("cannot insert a task")
+	}
+
+	now := time.Now()
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE tasks
+		SET
+			title = ?,
+			description = ?,
+			priority = ?,
+			duration = ?,
+			deadline = ?,
+			updated_at = ?
+		WHERE id = ?
+	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, now, t.ID)
+	if err != nil {
+		return err
+	}
+
+	if _, err := r.db.ExecContext(ctx, "DELETE FROM tags WHERE task_id = ?", t.ID); err != nil {
+		return err
+	}
+
+	if len(t.Tags) > 0 {
+		values := make([]string, len(t.Tags))
+		params := make([]interface{}, 2*len(t.Tags))
+		for i, tag := range t.Tags {
+			values[i] = "(?, ?)"
+			params[i*2] = t.ID
+			params[i*2+1] = tag
+		}
+		_, err := r.db.ExecContext(
+			ctx,
+			fmt.Sprintf("INSERT INTO tags (task_id, tag) VALUES %s", strings.Join(values, ",")),
+			params...,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (r *TaskRepository) MarkDone(ctx context.Context, taskID uint, description string) error {
 	now := time.Now()
 	_, err := r.db.ExecContext(

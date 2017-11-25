@@ -40,6 +40,11 @@ li p {
     justify-content: space-between;
 }
 
+#edit_input {
+    border: none;
+    padding: 0;
+}
+
 /*
     Planning
 */
@@ -106,9 +111,16 @@ input[type='checkbox'] {
     margin-right: 0.2rem;
 }
 
-input.NewTaskInput {
+input.NewTaskInput:not(.NewTaskInputTop) {
     border-top: none;
 }
+
+/*
+input.NewTaskInput.list-group-item.NewTaskInputTop {
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+}
+*/
 
 input.NewTaskInput.list-group-item {
     border-radius: 0;
@@ -145,6 +157,10 @@ input.NewTaskInput:focus {
 
 .TaskPriority {
     color: #d9534f;
+}
+
+.TaskEditPlaceholder {
+    text-align: right;
 }
 
 /*
@@ -205,6 +221,7 @@ input.NewTaskInput:focus {
 
 #add_task_input_help {
     visibility: hidden;
+    margin-right: 0.3rem;
 }
 
 .btn.btn-round {

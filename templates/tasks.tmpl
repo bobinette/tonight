@@ -2,46 +2,50 @@
   {{ $out := . }}
   {{- range .Tasks}}
   <li class="list-group-item flex-column align-items-start Task {{ if not .Done }}TaskPending{{ end }}" data-taskid="{{ .ID }}">
-    <div class="w-100 TaskHeading">
-      <span class="TaskTitle">
-        {{ .Title }}
-      <span class="TaskPriority">{{ formatPriority .Priority }}</span>
-      </span>
-      {{- if not .Done }}
-        <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
-        <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>
-        {{- if $out.Sortable }}
-          <i class="fa fa-bars TaskDrag"></i>
-        {{- end }}
-      {{ else }}
-        <small class="text-muted Date" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="{{ formatDateTime .DoneAt }}">Done {{ formatDateRelative .DoneAt }}</small>
-      {{- end }}
-    </div>
-    <div class="w-100 TaskDescription">{{ .DescriptionMD }}</div>
-    <div class="w-100 TaskFooter">
-      <div>
-      {{- range .Tags }}
-        <span class="badge badge-pill badge-primary">#{{ . }}</span>
-      {{- end }}
-      </div>
-      <div class="grey TaskDuration">
-        <div>
-          {{- if .Duration }}
-            {{ .Duration }}
-          {{- else }}
-            <em>(1h)</em>
+    <div id="task_content_{{ .ID }}" class="w-100 TaskContent">
+      <div class="w-100 TaskHeading">
+        <span class="TaskTitle">
+          {{ .Title }}
+        <span class="TaskPriority">{{ formatPriority .Priority }}</span>
+        </span>
+        {{- if not .Done }}
+          <button class="btn btn-link fa fa-pencil TaskEdit" data-taskid="{{ .ID }}"></button>
+          <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
+          <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>
+          {{- if $out.Sortable }}
+            <i class="fa fa-bars TaskDrag"></i>
           {{- end }}
-          <i class="fa fa-clock-o TaskDurationIcon"></i>
-        </div>
-        {{- if .Deadline}}
-          <div class="Date" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="{{ formatDate .Deadline }}">
-            {{ formatDateRelative .Deadline }}
-            <i class="fa fa-calendar-check-o"></i>
-          </div>
+        {{ else }}
+          <small class="text-muted Date" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="{{ formatDateTime .DoneAt }}">Done {{ formatDateRelative .DoneAt }}</small>
         {{- end }}
       </div>
+      <div class="w-100 TaskDescription">{{ .DescriptionMD }}</div>
+      <div class="w-100 TaskFooter">
+        <div>
+        {{- range .Tags }}
+          <span class="badge badge-pill badge-primary">#{{ . }}</span>
+        {{- end }}
+        </div>
+        <div class="grey TaskDuration">
+          <div>
+            {{- if .Duration }}
+              {{ .Duration }}
+            {{- else }}
+              <em>(1h)</em>
+            {{- end }}
+            <i class="fa fa-clock-o TaskDurationIcon"></i>
+          </div>
+          {{- if .Deadline}}
+            <div class="Date" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="{{ formatDate .Deadline }}">
+              {{ formatDateRelative .Deadline }}
+              <i class="fa fa-calendar-check-o"></i>
+            </div>
+          {{- end }}
+        </div>
+      </div>
+      <div class="w-100 TaskDoneInputPlaceholder"></div>
     </div>
-    <div class="w-100 TaskDoneInputPlaceholder"></div>
+    <div class="w-100 TaskEditPlaceholder" data-taskid="{{ .ID }}" data-raw="{{ raw . }}"></div>
   </li>
   {{- end }}
 </ul>

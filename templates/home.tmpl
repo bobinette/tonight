@@ -49,7 +49,7 @@
         <input
           id="new_task_input"
           type="text"
-          class="form-control list-group-item NewTaskInput"
+          class="form-control list-group-item NewTaskInput {{ if not .Tasks }}NewTaskInputTop{{ end }}"
           placeholder="New task..."
           aria-describedby=""
         >

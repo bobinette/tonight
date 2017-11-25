@@ -1,6 +1,7 @@
 package tonight
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -92,7 +93,7 @@ func parse(content string) Task {
 				s = s[:idx]
 			}
 
-			deadline, err := time.Parse("2006-1-2", s)
+			deadline, err := time.Parse("2006-01-02", s)
 			if err != nil {
 				// Fail early
 				return remaining
@@ -113,4 +114,26 @@ func parse(content string) Task {
 	task.Description = strings.Trim(task.Description, " ")
 
 	return task
+}
+
+func formatRaw(t Task) string {
+	out := fmt.Sprintf("%s%s", strings.Repeat("!", t.Priority), t.Title)
+
+	if t.Description != "" {
+		out = fmt.Sprintf("%s: %s", out, t.Description)
+	}
+
+	for _, tag := range t.Tags {
+		out = fmt.Sprintf("%s #%s", out, tag)
+	}
+
+	if t.Duration != "" {
+		out = fmt.Sprintf("%s ~%s", out, t.Duration)
+	}
+
+	if t.Deadline != nil {
+		out = fmt.Sprintf("%s ~%s", out, t.Deadline.Format("2006-01-02"))
+	}
+
+	return out
 }

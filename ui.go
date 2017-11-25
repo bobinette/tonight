@@ -49,6 +49,7 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 		"formatDateTime": func(dt time.Time) string {
 			return dt.Format("2006-01-02 15:03:04")
 		},
+		"raw": formatRaw,
 	}
 
 	renderer := &templateRenderer{
@@ -167,6 +168,32 @@ func (us *UIService) CreateTask(c echo.Context) error {
 	task := parse(t.Content)
 
 	if err := us.repo.Create(c.Request().Context(), &task); err != nil {
+		return err
+	}
+
+	return us.pendingTasks(c)
+}
+
+func (us *UIService) Update(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	taskIDStr := c.Param("id")
+	taskID, err := strconv.ParseUint(taskIDStr, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	var t struct {
+		Content string `json:"content"`
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&t); err != nil {
+		return err
+	}
+
+	task := parse(t.Content)
+	task.ID = uint(taskID)
+
+	if err := us.repo.Update(c.Request().Context(), &task); err != nil {
 		return err
 	}
 
@@ -304,8 +331,9 @@ func (us *UIService) Plan(c echo.Context) error {
 		return err
 	}
 
-	for _, task := range planning.Tasks {
+	for i, task := range planning.Tasks {
 		task.DescriptionMD = template.HTML(formatDescription(task.Description))
+		planning.Tasks[i] = task
 	}
 
 	pft := planningForTemplate{
@@ -332,7 +360,6 @@ func (us *UIService) CurrentPlanning(c echo.Context) error {
 		if dur, err := time.ParseDuration(task.Duration); err == nil {
 			totalDuration += dur
 		} else {
-			fmt.Println("could not parse duration", dur, err)
 			totalDuration += 1 * time.Hour
 		}
 
