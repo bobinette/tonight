@@ -61,12 +61,6 @@ ul.Tasks {
     margin-bottom: 0;
 }
 
-.Task .fa {
-    color: #999;
-    font-size: 1.1rem;
-    margin-left: 0.5rem;
-}
-
 .Task .btn.fa {
     padding: 0;
 }
@@ -75,17 +69,12 @@ ul.Tasks {
     text-decoration: none;
 }
 
-.Task .fa:hover {
-    color: #292b2c;
-}
-
-.TaskDuration {
+.TaskDetails {
     text-align: right;
 }
 
-.Task .TaskDuration .fa {
+.TaskDetails .fa {
     margin-left: 0;
-    color: #636c72;
 }
 
 #tasks_list .Task.list-group-item:last-child {
@@ -93,9 +82,19 @@ ul.Tasks {
     border-bottom-right-radius: 0;
 }
 
-.TaskHeading {
+.TaskHeader {
     display: flex;
     align-items: center;
+}
+
+.TaskHeader .fa {
+    color: #999;
+    font-size: 1.1rem;
+    margin-left: 0.5rem;
+}
+
+.TaskHeader .fa:hover {
+    color: #292b2c;
 }
 
 .TaskTitle {

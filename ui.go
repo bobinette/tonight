@@ -50,6 +50,17 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 			return dt.Format("2006-01-02 15:03:04")
 		},
 		"raw": formatRaw,
+		"formatDependencies": func(dependencies []Dependency) string {
+			total := len(dependencies)
+			done := 0
+			for _, d := range dependencies {
+				if d.Done {
+					done++
+				}
+			}
+
+			return fmt.Sprintf("%d/%d", done, total)
+		},
 	}
 
 	renderer := &templateRenderer{

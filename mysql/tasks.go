@@ -79,10 +79,32 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 			params[i*2] = taskID
 			params[i*2+1] = tag
 		}
-		res, err = r.db.ExecContext(
+		_, err := r.db.ExecContext(
 			ctx,
 			fmt.Sprintf("INSERT INTO tags (task_id, tag) VALUES %s", strings.Join(values, ",")),
 			params...,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(t.Dependencies) > 0 {
+		values := join("(?, ?, ?)", ",", len(t.Dependencies))
+		params := make([]interface{}, 3*len(t.Dependencies))
+		for i, dep := range t.Dependencies {
+			params[i*3+0] = taskID
+			params[i*3+1] = dep.ID
+			params[i*3+2] = now
+		}
+
+		_, err := r.db.ExecContext(
+			ctx,
+			fmt.Sprintf(`
+				INSERT INTO task_dependencies (task_id, dependency_task_id, created_at)
+				VALUES %s`,
+				values,
+			), params...,
 		)
 		if err != nil {
 			return err
@@ -130,6 +152,32 @@ func (r *TaskRepository) Update(ctx context.Context, t *tonight.Task) error {
 			ctx,
 			fmt.Sprintf("INSERT INTO tags (task_id, tag) VALUES %s", strings.Join(values, ",")),
 			params...,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	if _, err := r.db.ExecContext(ctx, "DELETE FROM task_dependencies WHERE task_id = ?", t.ID); err != nil {
+		return err
+	}
+
+	if len(t.Dependencies) > 0 {
+		values := join("(?, ?, ?)", ",", len(t.Dependencies))
+		params := make([]interface{}, 3*len(t.Dependencies))
+		for i, dep := range t.Dependencies {
+			params[i*3+0] = t.ID
+			params[i*3+1] = dep.ID
+			params[i*3+2] = now
+		}
+
+		_, err := r.db.ExecContext(
+			ctx,
+			fmt.Sprintf(`
+				INSERT INTO task_dependencies (task_id, dependency_task_id, created_at)
+				VALUES %s`,
+				values,
+			), params...,
 		)
 		if err != nil {
 			return err
@@ -369,17 +417,16 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		return nil, nil
 	}
 
-	marks := make([]string, len(ids))
+	marks := join("?", ",", len(ids))
 	params := make([]interface{}, len(ids))
 	for i, id := range ids {
-		marks[i] = "?"
 		params[i] = id
 	}
 
 	// Fetch tags
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(
 		"SELECT task_id, tag FROM tags WHERE task_id IN (%s)",
-		strings.Join(marks, ","),
+		marks,
 	), params...)
 	if err != nil {
 		return nil, err
@@ -407,7 +454,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		FROM task_log
 		WHERE task_id IN (%s)
 		ORDER BY task_id, created_at DESC
-	`, strings.Join(marks, ","),
+	`, marks,
 	), params...)
 	if err != nil {
 		return nil, err
@@ -431,6 +478,30 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		})
 	}
 
+	// Fetch dependencies
+	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT task_id, dependency_task_id
+		FROM task_dependencies
+		JOIN tasks ON tasks.id = dependency_task_id
+		WHERE task_id IN (%s) AND tasks.deleted = ?
+	`, marks,
+	), append(params, false)...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	dependencies := make(map[uint][]uint)
+	for rows.Next() {
+		var taskID uint
+		var dependencyID uint
+		if err := rows.Scan(&taskID, &dependencyID); err != nil {
+			return nil, err
+		}
+
+		dependencies[taskID] = append(dependencies[taskID], dependencyID)
+	}
+
 	if err := rows.Close(); err != nil {
 		return nil, err
 	}
@@ -451,6 +522,19 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 				task.DoneAt = &log.CreatedAt
 				break
 			}
+		}
+
+		tasks[i] = task
+		taskMap[id] = task
+	}
+
+	// Wait for all the tasks to be effectively marked done
+	for i, task := range tasks {
+		for _, dependencyID := range dependencies[task.ID] {
+			task.Dependencies = append(task.Dependencies, tonight.Dependency{
+				ID:   dependencyID,
+				Done: taskMap[dependencyID].Done,
+			})
 		}
 
 		tasks[i] = task

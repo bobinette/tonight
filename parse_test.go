@@ -72,14 +72,17 @@ func TestParse(t *testing.T) {
 		"with a deadline": {
 			content: "This is a title >2017-11-24",
 			expected: Task{
-				Title: "This is a title",
-				// Description: "now is the description",
-
-				// Priority: 2,
-				// Tags:     []string{"tag"},
-
-				// Duration: "2h30m",
+				Title:    "This is a title",
 				Deadline: &tomorrow,
+			},
+		},
+		"with dependencies": {
+			content: "This is a title needs:1,2,3",
+			expected: Task{
+				Title: "This is a title",
+				Dependencies: []Dependency{
+					{ID: 1}, {ID: 2}, {ID: 3},
+				},
 			},
 		},
 	}

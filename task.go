@@ -25,6 +25,8 @@ type Task struct {
 	Completion int // max([log.Completion for log in Log])
 	Log        []Log
 
+	Dependencies []Dependency
+
 	CreatedAt time.Time
 }
 
@@ -33,6 +35,11 @@ type Log struct {
 	Description string
 
 	CreatedAt time.Time
+}
+
+type Dependency struct {
+	ID   uint
+	Done bool
 }
 
 type Planning struct {

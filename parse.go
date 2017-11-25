@@ -25,8 +25,28 @@ func parse(content string) Task {
 
 			return s
 		},
-		// extract the title: everything before any of the following symbols:
-		// [:, #]
+		// extract dependencies (should be last)
+		func(s string) string {
+			idx := strings.Index(s, "needs:")
+			if idx < 0 {
+				return s
+			}
+
+			var lastIdx int // len("needs:")
+			for lastIdx = idx + 6; lastIdx < len(s) && s[lastIdx] != ' '; lastIdx++ {
+			}
+
+			ids := strings.Split(s[idx+6:lastIdx], ",")
+			task.Dependencies = make([]Dependency, 0, len(ids))
+			for _, idStr := range ids {
+				if id, err := strconv.ParseUint(idStr, 10, 64); err == nil {
+					task.Dependencies = append(task.Dependencies, Dependency{ID: uint(id)})
+				}
+			}
+
+			return s[:idx]
+		},
+		// extract the title:
 		func(s string) string {
 			if idx := strings.IndexAny(s, ":#~>"); idx >= 0 {
 				task.Title = strings.TrimSpace(s[:idx])

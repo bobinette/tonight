@@ -11,17 +11,19 @@ function watchNewTaskInput(identifer) {
     if (event.keyCode === 13) {
       event.preventDefault();
 
-      $.post('/ui/tasks', JSON.stringify({ content: $('#new_task_input').val() })).done(function(data) {
-        $('#new_task_input').val('');
-        $('#tasks_list ul').sortable('disable');
-        $('#tasks_list').html(data);
+      $.post('/ui/tasks', JSON.stringify({ content: $('#new_task_input').val() }))
+        .done(function(data) {
+          $('#new_task_input').val('');
+          $('#tasks_list ul').sortable('disable');
+          $('#tasks_list').html(data);
 
-        makeSortable();
+          makeSortable();
 
-        $(function() {
-          $('[data-toggle="tooltip"]').tooltip();
-        });
-      });
+          $(function() {
+            $('[data-toggle="tooltip"]').tooltip();
+          });
+        })
+        .fail(handleError);
     }
   });
 }

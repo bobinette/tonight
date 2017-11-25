@@ -3,8 +3,8 @@
   {{- range .Tasks}}
   <li class="list-group-item flex-column align-items-start Task {{ if not .Done }}TaskPending{{ end }}" data-taskid="{{ .ID }}">
     <div id="task_content_{{ .ID }}" class="w-100 TaskContent">
-      <div class="w-100 TaskHeading">
-        <span class="TaskTitle">
+      <div class="w-100 TaskHeader">
+        <span class="TaskTitle" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="id: {{ .ID }}" data-placement="left" >
           {{ .Title }}
         <span class="TaskPriority">{{ formatPriority .Priority }}</span>
         </span>
@@ -26,19 +26,25 @@
           <span class="badge badge-pill badge-primary">#{{ . }}</span>
         {{- end }}
         </div>
-        <div class="grey TaskDuration">
+        <div class="grey TaskDetails">
           <div>
             {{- if .Duration }}
               {{ .Duration }}
             {{- else }}
               <em>(1h)</em>
             {{- end }}
-            <i class="fa fa-clock-o TaskDurationIcon"></i>
+            <i class="fa fa-clock-o TaskDetailsIcon"></i>
           </div>
           {{- if .Deadline}}
             <div class="Date" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="{{ formatDate .Deadline }}">
               {{ formatDateRelative .Deadline }}
               <i class="fa fa-calendar-check-o"></i>
+            </div>
+          {{- end }}
+          {{- if .Dependencies }}
+            <div>
+              {{ formatDependencies .Dependencies }}
+              <i class="fa fa-check-square-o"></i>
             </div>
           {{- end }}
         </div>
