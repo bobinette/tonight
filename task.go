@@ -11,6 +11,7 @@ type Task struct {
 	Description string
 
 	Priority int
+	Rank     uint
 	Tags     []string
 
 	Duration string

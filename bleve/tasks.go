@@ -65,6 +65,11 @@ func (s *Index) Index(ctx context.Context, task tonight.Task) error {
 		"description": task.Description,
 		"tags":        task.Tags,
 		"done":        task.Done,
+		"rank":        task.Rank,
+	}
+
+	if task.DoneAt != nil {
+		data["done_at"] = *task.DoneAt
 	}
 
 	return s.index.Index(fmt.Sprintf("%d", task.ID), data)
@@ -95,6 +100,9 @@ func (s *Index) Search(ctx context.Context, q string, done bool) ([]uint, error)
 	searchRequest := bleve.NewSearchRequest(query)
 	searchRequest.Size = total
 	searchRequest.SortBy([]string{"rank"})
+	if done {
+		searchRequest.SortBy([]string{"-done_at"})
+	}
 
 	// Activate for debugging
 	// searchRequest.Highlight = bleve.NewHighlight()

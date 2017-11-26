@@ -256,12 +256,21 @@ func (us *UIService) MarkDone(c echo.Context) error {
 		return err
 	}
 
+	ctx := c.Request().Context()
+
 	log := parseLog(body.Description)
-	if err := us.repo.MarkDone(c.Request().Context(), uint(taskID), log); err != nil {
+	if err := us.repo.MarkDone(ctx, uint(taskID), log); err != nil {
 		return err
 	}
 
-	// @TODO: reindex
+	tasks, err := us.repo.List(ctx, []uint{uint(taskID)})
+	if err != nil {
+		return err
+	}
+
+	if err := us.index.Index(ctx, tasks[0]); err != nil {
+		return err
+	}
 
 	return us.pendingTasks("", c)
 }
@@ -350,11 +359,23 @@ func (us *UIService) UpdateRanks(c echo.Context) error {
 		return err
 	}
 
-	if err := us.repo.UpdateRanks(c.Request().Context(), body.Ranks); err != nil {
+	ctx := c.Request().Context()
+
+	if err := us.repo.UpdateRanks(ctx, body.Ranks); err != nil {
 		return err
 	}
 
-	// @TODO: reindex?
+	for id := range body.Ranks {
+		// This could be improved by batching
+		tasks, err := us.repo.List(ctx, []uint{id})
+		if err != nil {
+			return err
+		}
+
+		if err := us.index.Index(ctx, tasks[0]); err != nil {
+			return err
+		}
+	}
 
 	return us.pendingTasks("", c)
 }
@@ -376,7 +397,7 @@ func (us *UIService) Plan(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	ids, err := us.index.Search(ctx, "", true)
+	ids, err := us.index.Search(ctx, "", false)
 	if err != nil {
 		return err
 	}

@@ -48,7 +48,7 @@
       },
       "tags": {
         "enabled": true,
-        "dynamic": true,
+        "dynamic": false,
         "fields": [
           {
             "type": "text",
@@ -56,6 +56,19 @@
             "store": true,
             "index": true,
             "include_term_vectors": true,
+            "include_in_all": true
+          }
+        ],
+        "default_analyzer": ""
+      },
+      "rank": {
+        "enabled": true,
+        "dynamic": false,
+        "fields": [
+          {
+            "type": "number",
+            "store": true,
+            "index": true,
             "include_in_all": true
           }
         ],
@@ -73,6 +86,19 @@
           }
         ],
         "default_analyzer": ""
+      },
+      "done_at": {
+        "enabled": true,
+        "dynamic": false,
+        "fields": [
+          {
+            "type": "datetime",
+            "store": true,
+            "index": true,
+            "include_in_all": true
+          }
+        ],
+        "default_analyzer": ""
       }
     },
     "default_analyzer": ""
@@ -82,7 +108,7 @@
   "default_analyzer": "standard",
   "default_datetime_parser": "dateTimeOptional",
   "default_field": "_all",
-  "store_dynamic": true,
-  "index_dynamic": true,
+  "store_dynamic": false,
+  "index_dynamic": false,
   "analysis": {}
 }

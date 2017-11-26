@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -35,11 +36,18 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 		return errors.New("cannot update a task")
 	}
 
+	row := r.db.QueryRowContext(ctx, "SELECT max(rank) FROM tasks WHERE deleted = ? AND done = ?", false, false)
+	var rank uint
+	if err := row.Scan(&rank); err != nil {
+		return err
+	}
+	rank++
+
 	now := time.Now()
 	res, err := r.db.ExecContext(ctx, `
 		INSERT INTO tasks (title, description, priority, duration, deadline, rank, done, created_at, updated_at)
 		     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, 999, t.Done, now, now)
+	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, rank, t.Done, now, now)
 	if err != nil {
 		return err
 	}
@@ -91,6 +99,7 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 	}
 
 	t.ID = taskID
+	t.Rank = rank
 	return nil
 }
 
@@ -331,6 +340,7 @@ func (r *TaskRepository) DismissPlanning(ctx context.Context) error {
 }
 
 func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, error) {
+	fmt.Println(ids)
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -340,7 +350,7 @@ func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, 
 		params[i] = id
 	}
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, priority, duration, deadline, done, done_at, created_at
+		SELECT id, title, description, priority, rank, duration, deadline, done, done_at, created_at
 		  FROM tasks
 		 WHERE id IN (%s)
 `, join("?", ",", len(ids))), params...)
@@ -349,7 +359,22 @@ func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, 
 	}
 	defer rows.Close()
 
-	return r.loadTasks(ctx, rows)
+	idOrder := make(map[uint]int)
+	for i, id := range ids {
+		idOrder[id] = i
+	}
+
+	tasks, err := r.loadTasks(ctx, rows)
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Sort(&keepOrder{
+		idOrder: idOrder,
+		tasks:   tasks,
+	})
+
+	return tasks, nil
 }
 
 func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonight.Task, error) {
@@ -360,12 +385,13 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		var title string
 		var description string
 		var priority int
+		var rank uint
 		var duration string
 		var deadline *time.Time
 		var done bool
 		var doneAt *time.Time
 		var createdAt time.Time
-		if err := rows.Scan(&id, &title, &description, &priority, &duration, &deadline, &done, &doneAt, &createdAt); err != nil {
+		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &done, &doneAt, &createdAt); err != nil {
 			return nil, err
 		}
 
@@ -375,6 +401,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 			Description: description,
 
 			Priority: priority,
+			Rank:     rank,
 
 			Duration: duration,
 			Deadline: deadline,
@@ -526,7 +553,7 @@ func (r *TaskRepository) All(ctx context.Context) ([]tonight.Task, error) {
 	rows, err := r.db.QueryContext(
 		ctx,
 		`
-		SELECT id, title, description, priority, duration, deadline, done, done_at, created_at
+		SELECT id, title, description, priority, rank, duration, deadline, done, done_at, created_at
 		  FROM tasks
 		  WHERE deleted = ?
 		`,
