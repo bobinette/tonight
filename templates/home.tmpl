@@ -41,18 +41,28 @@
       </div>
 
       <!-- Tasks still open -->
-      <div class="col-md-8 offset-md-2">Pending tasks:</div>
-      <div id="tasks_list" class="col-md-8 offset-md-2">
-          {{block "tasks.tmpl" .}}{{ end }}
-      </div>
       <div class="col-md-8 offset-md-2">
-        <textarea
-          id="new_task_input"
-          type="text"
-          class="form-control list-group-item NewTaskInput {{ if not .Tasks }}NewTaskInputTop{{ end }}"
-          placeholder="New task..."
-          aria-describedby=""
-        ></textarea>
+        <h4>Pending tasks</h4>
+        <div class="col-md-10 offset-md-1">
+          <input
+            id="search_input"
+            type="text"
+            class="form-control"
+            placeholder="Search..."
+          >
+        </div>
+        <div id="tasks_list">
+            {{block "tasks.tmpl" .}}{{ end }}
+        </div>
+        <div>
+          <textarea
+            id="new_task_input"
+            type="text"
+            class="form-control list-group-item NewTaskInput {{ if not .Tasks }}NewTaskInputTop{{ end }}"
+            placeholder="New task..."
+            aria-describedby=""
+          ></textarea>
+        </div>
       </div>
 
       <!-- Done tasks -->
@@ -85,6 +95,7 @@
     <!-- <script src="https://raw.githubusercontent.com/jackmoore/autosize/master/dist/autosize.min.js"></script> -->
 
     <!-- Custom scripts -->
+    <script type="text/javascript">{{template "home.js" .}}</script>
     <script type="text/javascript">{{template "plan.js" .}}</script>
     <script type="text/javascript">{{template "sort.js" .}}</script>
     <script type="text/javascript">{{template "doneTasksList.js" .}}</script>

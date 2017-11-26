@@ -32,13 +32,14 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 			"home.tmpl", "tasks.tmpl", "plan.tmpl",
 			// JS files
 			"tasksList.js", "sort.js", "delete.js", "new.js",
-			"doneTasksList.js", "plan.js", "utils.js",
+			"doneTasksList.js", "plan.js", "utils.js", "home.js",
 		},
 		"tasks": {"tasks.tmpl"},
 		"plan":  {"plan.tmpl"},
 	}
 
 	funcMap := map[string]interface{}{
+		"formatDuration":     formatDuration,
 		"formatDateRelative": humanize.Time,
 		"formatPriority": func(p int) string {
 			return strings.Repeat("!", p)
@@ -95,18 +96,26 @@ func (t *templateRenderer) Render(w io.Writer, name string, data interface{}, c 
 }
 
 type UIService struct {
-	repo TaskRepository
+	repo  TaskRepository
+	index TaskIndex
 }
 
-func NewUIService(repo TaskRepository) *UIService {
+func NewUIService(repo TaskRepository, index TaskIndex) *UIService {
 	return &UIService{
-		repo: repo,
+		repo:  repo,
+		index: index,
 	}
 }
 
 func (us *UIService) Home(c echo.Context) error {
 	ctx := c.Request().Context()
-	tasks, err := us.repo.List(ctx, false)
+
+	ids, err := us.index.Search(ctx, "", false)
+	if err != nil {
+		return err
+	}
+
+	tasks, err := us.repo.List(ctx, ids)
 	if err != nil {
 		return err
 	}
@@ -166,6 +175,11 @@ func (us *UIService) Home(c echo.Context) error {
 	return c.Render(http.StatusOK, "home", data)
 }
 
+func (us *UIService) Search(c echo.Context) error {
+	q := c.QueryParam("q")
+	return us.pendingTasks(q, c)
+}
+
 func (us *UIService) CreateTask(c echo.Context) error {
 	defer c.Request().Body.Close()
 
@@ -182,7 +196,11 @@ func (us *UIService) CreateTask(c echo.Context) error {
 		return err
 	}
 
-	return us.pendingTasks(c)
+	if err := us.index.Index(c.Request().Context(), task); err != nil {
+		return err
+	}
+
+	return us.pendingTasks("", c)
 }
 
 func (us *UIService) Update(c echo.Context) error {
@@ -208,7 +226,11 @@ func (us *UIService) Update(c echo.Context) error {
 		return err
 	}
 
-	return us.pendingTasks(c)
+	if err := us.index.Index(c.Request().Context(), task); err != nil {
+		return err
+	}
+
+	return us.pendingTasks("", c)
 }
 
 func (us *UIService) MarkDone(c echo.Context) error {
@@ -232,11 +254,20 @@ func (us *UIService) MarkDone(c echo.Context) error {
 		return err
 	}
 
-	return us.pendingTasks(c)
+	// @TODO: reindex
+
+	return us.pendingTasks("", c)
 }
 
-func (us *UIService) pendingTasks(c echo.Context) error {
-	tasks, err := us.repo.List(c.Request().Context(), false)
+func (us *UIService) pendingTasks(q string, c echo.Context) error {
+	ctx := c.Request().Context()
+
+	ids, err := us.index.Search(ctx, q, false)
+	if err != nil {
+		return err
+	}
+
+	tasks, err := us.repo.List(c.Request().Context(), ids)
 	if err != nil {
 		return err
 	}
@@ -251,13 +282,20 @@ func (us *UIService) pendingTasks(c echo.Context) error {
 		Sortable bool
 	}{
 		Tasks:    tasks,
-		Sortable: true,
+		Sortable: q == "",
 	}
 	return c.Render(http.StatusOK, "tasks", data)
 }
 
 func (us *UIService) DoneTasks(c echo.Context) error {
-	tasks, err := us.repo.List(c.Request().Context(), true)
+	ctx := c.Request().Context()
+
+	ids, err := us.index.Search(ctx, "", true)
+	if err != nil {
+		return err
+	}
+
+	tasks, err := us.repo.List(c.Request().Context(), ids)
 	if err != nil {
 		return err
 	}
@@ -290,7 +328,11 @@ func (us *UIService) Delete(c echo.Context) error {
 		return err
 	}
 
-	return us.pendingTasks(c)
+	if err := us.index.Delete(c.Request().Context(), uint(taskID)); err != nil {
+		return err
+	}
+
+	return us.pendingTasks("", c)
 }
 
 func (us *UIService) UpdateRanks(c echo.Context) error {
@@ -307,7 +349,9 @@ func (us *UIService) UpdateRanks(c echo.Context) error {
 		return err
 	}
 
-	return us.pendingTasks(c)
+	// @TODO: reindex?
+
+	return us.pendingTasks("", c)
 }
 
 func (us *UIService) Plan(c echo.Context) error {
@@ -326,7 +370,13 @@ func (us *UIService) Plan(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	tasks, err := us.repo.List(ctx, false)
+
+	ids, err := us.index.Search(ctx, "", true)
+	if err != nil {
+		return err
+	}
+
+	tasks, err := us.repo.List(c.Request().Context(), ids)
 	if err != nil {
 		return err
 	}

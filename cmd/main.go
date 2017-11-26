@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo"
 
 	"github.com/bobinette/tonight"
+	"github.com/bobinette/tonight/bleve"
 	"github.com/bobinette/tonight/mysql"
 )
 
@@ -26,7 +27,13 @@ func main() {
 	}
 	defer taskRepo.Close()
 
-	uiService := tonight.NewUIService(taskRepo)
+	index := &bleve.Index{}
+	if err := index.Open("./bleve/index"); err != nil {
+		log.Fatal(err)
+	}
+	defer index.Close()
+
+	uiService := tonight.NewUIService(taskRepo, index)
 
 	// Create server + register routes
 	srv := echo.New()
@@ -45,6 +52,7 @@ func main() {
 	srv.GET("/home", uiService.Home)
 
 	// -- Calls serving html to partially update the page
+	srv.GET("/ui/tasks", uiService.Search)
 	srv.POST("/ui/tasks", uiService.CreateTask)
 	srv.POST("/ui/tasks/:id", uiService.Update)
 	srv.POST("/ui/tasks/:id/done", uiService.MarkDone)
@@ -58,6 +66,13 @@ func main() {
 
 	// Ping
 	srv.GET("/api/ping", tonight.Ping)
+
+	// API
+	indexer := tonight.Indexer{
+		Repository: taskRepo,
+		Index:      index,
+	}
+	srv.POST("/api/reindex", indexer.IndexAll)
 
 	// Assets
 	srv.Static("/assets", "assets")

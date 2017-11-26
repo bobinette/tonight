@@ -75,6 +75,10 @@ li p {
     Task list
 */
 
+#search_input {
+    margin-bottom: 0.2rem;
+}
+
 ul.Tasks {
     margin-bottom: 0;
 }

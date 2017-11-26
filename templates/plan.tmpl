@@ -77,8 +77,8 @@
       <small class="Date" data-toggle="tooltip" title="{{ formatDateTime .StartedAt }}">Started {{ formatDateRelative .StartedAt }}</small>
     </div>
     <div >
-      <div><small>Asked for: {{ .RequiredDuration }}</small></div>
-      <div><small>Total time: {{ .TotalDuration }}</small></div>
+      <div><small>Asked for: {{ formatDuration .RequiredDuration }}</small></div>
+      <div><small>Total time: {{ formatDuration .TotalDuration }}</small></div>
     </div>
   </div>
 </div>

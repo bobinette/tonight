@@ -54,7 +54,7 @@ type Planning struct {
 }
 
 type TaskRepository interface {
-	List(ctx context.Context, done bool) ([]Task, error)
+	List(ctx context.Context, ids []uint) ([]Task, error)
 	Create(ctx context.Context, t *Task) error
 	Update(ctx context.Context, t *Task) error
 
@@ -66,4 +66,10 @@ type TaskRepository interface {
 	StartPlanning(ctx context.Context, duration string, taskIDs []uint) (Planning, error)
 	DismissPlanning(ctx context.Context) error
 	CurrentPlanning(ctx context.Context) (Planning, error)
+}
+
+type TaskIndex interface {
+	Search(ctx context.Context, q string, done bool) ([]uint, error)
+	Index(ctx context.Context, task Task) error
+	Delete(ctx context.Context, taskID uint) error
 }

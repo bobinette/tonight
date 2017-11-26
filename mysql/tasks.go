@@ -30,27 +30,6 @@ func (r *TaskRepository) Close() error {
 	return r.db.Close()
 }
 
-func (r *TaskRepository) List(ctx context.Context, done bool) ([]tonight.Task, error) {
-	orderBy := "rank"
-	if done {
-		orderBy = "done_at DESC"
-	}
-
-	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, priority, duration, deadline, done, done_at, created_at
-		  FROM tasks
-		 WHERE done = ?
-		   AND deleted = ?
-	  ORDER BY %s
-`, orderBy), done, false)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	return r.loadTasks(ctx, rows)
-}
-
 func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 	if t.ID != 0 {
 		return errors.New("cannot update a task")
@@ -257,7 +236,7 @@ func (r *TaskRepository) StartPlanning(ctx context.Context, duration string, tas
 		}
 	}
 
-	tasks, err := r.tasks(ctx, taskIDs)
+	tasks, err := r.List(ctx, taskIDs)
 	if err != nil {
 		return tonight.Planning{}, err
 	}
@@ -324,7 +303,7 @@ func (r *TaskRepository) CurrentPlanning(ctx context.Context) (tonight.Planning,
 		return tonight.Planning{}, err
 	}
 
-	tasks, err := r.tasks(ctx, taskIDs)
+	tasks, err := r.List(ctx, taskIDs)
 	if err != nil {
 		return tonight.Planning{}, err
 	}
@@ -351,7 +330,7 @@ func (r *TaskRepository) DismissPlanning(ctx context.Context) error {
 	return err
 }
 
-func (r *TaskRepository) tasks(ctx context.Context, ids []uint) ([]tonight.Task, error) {
+func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -541,4 +520,22 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 	}
 
 	return tasks, nil
+}
+
+func (r *TaskRepository) All(ctx context.Context) ([]tonight.Task, error) {
+	rows, err := r.db.QueryContext(
+		ctx,
+		`
+		SELECT id, title, description, priority, duration, deadline, done, done_at, created_at
+		  FROM tasks
+		  WHERE deleted = ?
+		`,
+		false,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return r.loadTasks(ctx, rows)
 }
