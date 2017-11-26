@@ -31,7 +31,7 @@ func TestTaskSorter(t *testing.T) {
 				{Priority: 2, Duration: 1 * time.Hour},
 			},
 		},
-		"Keep order": {
+		"keep order": {
 			tasks: []taskDuration{
 				{ID: 1, Priority: 2, Duration: 1 * time.Hour},
 				{ID: 2, Priority: 2, Duration: 1 * time.Hour},

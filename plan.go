@@ -12,19 +12,30 @@ type taskDuration struct {
 }
 
 func plan(tasks []Task, d time.Duration) ([]Task, time.Duration) {
-	durations := make([]taskDuration, len(tasks))
+	durations := make([]taskDuration, 0, len(tasks))
 	taskMapping := make(map[uint]Task)
-	for i, task := range tasks {
+	for _, task := range tasks {
+		ready := true
+		for _, dep := range task.Dependencies {
+			if !dep.Done {
+				ready = false
+				break
+			}
+		}
+		if !ready {
+			continue
+		}
+
 		td, err := time.ParseDuration(task.Duration)
 		if err != nil {
 			td = 1 * time.Hour
 		}
 
-		durations[i] = taskDuration{
+		durations = append(durations, taskDuration{
 			ID:       task.ID,
 			Priority: task.Priority,
 			Duration: td,
-		}
+		})
 
 		taskMapping[task.ID] = task
 	}
