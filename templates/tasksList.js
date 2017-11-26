@@ -21,14 +21,15 @@ function watchClickOnTasks(identifier) {
 
     // Add it where it belongs
     $(this).find('.TaskDoneInputPlaceholder').html(`
-      <input
+      <textarea
         id="done_input"
         type="text"
         class="form-control"
         placeholder="How did you do that? (enter to mark as done)"
         data-taskid="${$(this).data('taskid')}"
-      >
+      ></textarea>
     `);
+    autosize($('#done_input'));
   });
 }
 

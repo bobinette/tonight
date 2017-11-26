@@ -46,13 +46,13 @@
           {{block "tasks.tmpl" .}}{{ end }}
       </div>
       <div class="col-md-8 offset-md-2">
-        <input
+        <textarea
           id="new_task_input"
           type="text"
           class="form-control list-group-item NewTaskInput {{ if not .Tasks }}NewTaskInputTop{{ end }}"
           placeholder="New task..."
           aria-describedby=""
-        >
+        ></textarea>
       </div>
 
       <!-- Done tasks -->

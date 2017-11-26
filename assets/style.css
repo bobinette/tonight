@@ -106,7 +106,7 @@ ul.Tasks {
     font-size: 0.8rem;
 }
 
-input.NewTaskInput {
+#new_task_input {
     border-top: none;
 }
 
@@ -121,19 +121,19 @@ input.NewTaskInput {
 }
 
 /*
-input.NewTaskInput.list-group-item.NewTaskInputTop {
+#new_task_input.list-group-item.NewTaskInputTop {
     border-top-left-radius: 0.25rem;
     border-top-right-radius: 0.25rem;
 }
 */
 
-input.NewTaskInput.list-group-item {
+#new_task_input.list-group-item {
     border-radius: 0;
     border-bottom-left-radius: 0.25rem;
     border-bottom-right-radius: 0.25rem;
 }
 
-input.NewTaskInput:focus {
+#new_task_input:focus {
     border-color: rgba(0, 0, 0, 0.125);
 }
 

@@ -94,6 +94,7 @@ function watchAddTaskInput() {
 
 $(document).ready(function() {
   autosize($('#add_task_input_textarea'));
+  autosize($('#new_task_input'));
 
   watchNewTaskInput('#new_task_input');
 
