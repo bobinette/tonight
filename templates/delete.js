@@ -14,7 +14,7 @@ function watchDeleteButtons(identifier) {
           $('[data-toggle="tooltip"]').tooltip();
         });
       },
-    });
+    }).fail(handleError);
   });
 }
 

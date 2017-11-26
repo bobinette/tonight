@@ -67,7 +67,7 @@ function watchDoneButtons(identifier) {
         updateDoneTasks();
         refreshPlanning();
       },
-    );
+    ).fail(handleError);
   });
 }
 
@@ -87,7 +87,7 @@ function watchDoneWithDescription(identifier) {
           updateDoneTasks();
           refreshPlanning();
         },
-      );
+      ).fail(handleError);
     } else if (event.keyCode === 27) {
       $('#done_input').remove();
     }
@@ -144,7 +144,7 @@ function watchEditFinished() {
         makeSortable();
         updateDoneTasks();
         refreshPlanning();
-      });
+      }).fail(handleError);
     } else if (event.keyCode === 27) {
       $('#edit_input').remove();
       $('#edit_input_help').remove();

@@ -8,7 +8,7 @@ function updateDoneTasks() {
       $(function() {
         $('[data-toggle="tooltip"]').tooltip();
       });
-    });
+    }).fail(handleError);
   } else {
     $('#done_tasks_list').html('');
   }

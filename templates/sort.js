@@ -25,7 +25,7 @@ function makeSortable() {
         });
 
         makeSortable();
-      });
+      }).fail(handleError);
     },
   });
 }

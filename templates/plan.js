@@ -10,7 +10,7 @@ function watchStartPlan() {
         $(function() {
           $('[data-toggle="tooltip"]').tooltip();
         });
-      });
+      }).fail(handleError);
     }
   });
 }
@@ -23,7 +23,7 @@ function watchDismissPlan() {
       success: function(data) {
         $('#current_planning').html(data);
       },
-    });
+    }).fail(handleError);
   });
 }
 
@@ -34,7 +34,7 @@ function refreshPlanning() {
     $(function() {
       $('[data-toggle="tooltip"]').tooltip();
     });
-  });
+  }).fail(handleError);
 }
 
 $(document).ready(function() {
