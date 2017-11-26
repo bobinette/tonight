@@ -1,14 +1,13 @@
 {{- if not .Tasks }}
-<div id="plan_duration" class="flex">
-  <label for="plan_duration_input" class="col-form-label">Make a plan for the next</label>
-  <div class="flex-1">
-    <input
-      id="plan_duration_input"
-      type="text"
-      class="form-control"
-      placeholder="Available duration, e.g. 1h"
-    >
-  </div>
+<div id="new_planning">
+  <h5>No current planning</h5>
+  <div>Start a new planning by entering below how long you want to work:</div>
+  <input
+    id="plan_duration_input"
+    type="text"
+    class="form-control"
+    placeholder="Duration e.g. 1h..."
+  >
 </div>
 {{- else }}
 <div>
