@@ -9,7 +9,16 @@ import (
 )
 
 var (
-	completionRE = regexp.MustCompile(`(?:([0-9]*)?% )?(.*)`)
+	// Task
+	priorityRegex         = regexp.MustCompile(`^(!*)`)
+	dependenciesRegex     = regexp.MustCompile(`needs:((?:\d+,?)+)`)
+	tagsRegex             = regexp.MustCompile(`\B\#(\w+\b)`)
+	durationRegex         = regexp.MustCompile(`\B~([0-9hms]+)`)
+	deadlineRegex         = regexp.MustCompile(`\B>(\d{4}-\d{1,2}-\d{1,2})`)
+	titleDescriptionRegex = regexp.MustCompile(`([^:]*)(?::(.*))?`)
+
+	// Log
+	percentageCompletionRegex = regexp.MustCompile(`(?:([0-9]*)?% )?(.*)`)
 )
 
 func parse(content string) Task {
@@ -18,25 +27,22 @@ func parse(content string) Task {
 	parseFunctions := []func(s string) string{
 		// extract the priority
 		func(s string) string {
-			for strings.HasPrefix(s, "!") && task.Priority <= 5 {
-				task.Priority++
-				s = s[1:]
+			matches := priorityRegex.FindStringSubmatch(s)
+			task.Priority = len(matches[1])
+			if task.Priority > 5 {
+				task.Priority = 5
 			}
 
-			return s
+			return priorityRegex.ReplaceAllString(s, "")
 		},
-		// extract dependencies (should be last)
+		// extract dependencies
 		func(s string) string {
-			idx := strings.Index(s, "needs:")
-			if idx < 0 {
+			matches := dependenciesRegex.FindStringSubmatch(s)
+			if len(matches) == 0 {
 				return s
 			}
 
-			var lastIdx int // len("needs:")
-			for lastIdx = idx + 6; lastIdx < len(s) && s[lastIdx] != ' '; lastIdx++ {
-			}
-
-			ids := strings.Split(s[idx+6:lastIdx], ",")
+			ids := strings.Split(matches[1], ",")
 			task.Dependencies = make([]Dependency, 0, len(ids))
 			for _, idStr := range ids {
 				if id, err := strconv.ParseUint(idStr, 10, 64); err == nil {
@@ -44,90 +50,53 @@ func parse(content string) Task {
 				}
 			}
 
-			return s[:idx]
+			return dependenciesRegex.ReplaceAllString(s, "")
 		},
-		// extract the title:
+		// extract tags
 		func(s string) string {
-			if idx := strings.IndexAny(s, ":#~>"); idx >= 0 {
-				task.Title = strings.TrimSpace(s[:idx])
-				return s[idx:]
+			matches := tagsRegex.FindAllStringSubmatch(s, -1)
+			task.Tags = make([]string, len(matches))
+			for i, match := range matches {
+				task.Tags[i] = match[1]
 			}
-
-			task.Title = strings.TrimSpace(s)
-			return ""
-		},
-		// save description: starting with ':'
-		func(s string) string {
-			if !strings.HasPrefix(s, ":") {
-				return s
-			}
-
-			s = s[1:] // Remove ':'
-
-			if idx := strings.IndexAny(s, "#~"); idx >= 0 {
-				task.Description = strings.TrimSpace(s[:idx])
-				return s[idx:]
-			}
-
-			task.Description = strings.TrimSpace(s)
-			return ""
-		},
-		// save tags: starting with '#'
-		func(s string) string {
-			for strings.HasPrefix(s, "#") {
-				s = s[1:] // Remove '#'
-
-				remaining := ""
-				if idx := strings.IndexAny(s, " #~"); idx >= 0 {
-					remaining = strings.TrimSpace(s[idx:])
-					s = s[:idx]
-				}
-
-				task.Tags = append(task.Tags, strings.TrimSpace(s))
-				s = remaining
-			}
-			return s
+			return tagsRegex.ReplaceAllString(s, "")
 		},
 		// save duration: starting with '~'
 		func(s string) string {
-			if !strings.HasPrefix(s, "~") {
+			matches := durationRegex.FindStringSubmatch(s)
+			if len(matches) == 0 {
 				return s
 			}
 
-			s = s[1:] // Remove '~'
-
-			remaining := ""
-			if idx := strings.Index(s, " "); idx >= 0 {
-				remaining = strings.TrimSpace(s[idx:])
-				s = s[:idx]
-			}
-
-			task.Duration = strings.TrimSpace(s)
-			return remaining
+			task.Duration = matches[1]
+			return durationRegex.ReplaceAllString(s, "")
 		},
 		// save deadline: starting with '>'
 		func(s string) string {
-			if !strings.HasPrefix(s, ">") {
+			matches := deadlineRegex.FindStringSubmatch(s)
+			if len(matches) == 0 {
 				return s
 			}
 
-			s = s[1:] // Remove '>'
-
-			remaining := ""
-			if idx := strings.Index(s, " "); idx >= 0 {
-				remaining = strings.TrimSpace(s[idx:])
-				s = s[:idx]
+			if deadline, err := time.Parse("2006-01-02", matches[1]); err == nil {
+				deadline = deadline.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+				task.Deadline = &deadline
 			}
 
-			deadline, err := time.Parse("2006-01-02", s)
-			if err != nil {
-				// Fail early
-				return remaining
+			return deadlineRegex.ReplaceAllString(s, "")
+		},
+		// extract the title:
+		func(s string) string {
+			s = strings.TrimSpace(s)
+
+			matches := titleDescriptionRegex.FindStringSubmatch(s)
+			if len(matches) == 0 {
+				return s
 			}
 
-			deadline = deadline.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
-			task.Deadline = &deadline
-			return remaining
+			task.Title = matches[1]
+			task.Description = matches[2]
+			return deadlineRegex.ReplaceAllString(s, "")
 		},
 	}
 
@@ -165,7 +134,7 @@ func formatRaw(t Task) string {
 }
 
 func parseLog(desc string) Log {
-	matches := completionRE.FindStringSubmatch(desc)
+	matches := percentageCompletionRegex.FindStringSubmatch(desc)
 
 	log := Log{
 		Completion:  100,

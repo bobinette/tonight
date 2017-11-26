@@ -15,12 +15,27 @@ func TestParse(t *testing.T) {
 		expected Task
 	}{
 		"only a title": {
-			content:  "This is a title",
-			expected: Task{Title: "This is a title"},
+			content: "This is a title",
+			expected: Task{
+				Title: "This is a title",
+				Tags:  []string{},
+			},
 		},
 		"with a description": {
-			content:  "This is a title: now is the description",
-			expected: Task{Title: "This is a title", Description: "now is the description"},
+			content: "This is a title: now is the description",
+			expected: Task{
+				Title:       "This is a title",
+				Description: "now is the description",
+				Tags:        []string{},
+			},
+		},
+		"with a description that has a colon": {
+			content: "This is a title: now is the description: and some more",
+			expected: Task{
+				Title:       "This is a title",
+				Description: "now is the description: and some more",
+				Tags:        []string{},
+			},
 		},
 		"with a description and a tag": {
 			content: "This is a title: now is the description #tag",
@@ -46,8 +61,12 @@ func TestParse(t *testing.T) {
 			},
 		},
 		"with a duration": {
-			content:  "This is a title ~2h30m",
-			expected: Task{Title: "This is a title", Duration: "2h30m"},
+			content: "This is a title ~2h30m",
+			expected: Task{
+				Title:    "This is a title",
+				Duration: "2h30m",
+				Tags:     []string{},
+			},
 		},
 		"with a description, 2 tags and the duration": {
 			content: "This is a title: now is the description #tag1 #tag2 ~45m",
@@ -73,6 +92,7 @@ func TestParse(t *testing.T) {
 			content: "This is a title >2017-11-24",
 			expected: Task{
 				Title:    "This is a title",
+				Tags:     []string{},
 				Deadline: &tomorrow,
 			},
 		},
@@ -80,6 +100,7 @@ func TestParse(t *testing.T) {
 			content: "This is a title needs:1,2,3",
 			expected: Task{
 				Title: "This is a title",
+				Tags:  []string{},
 				Dependencies: []Dependency{
 					{ID: 1}, {ID: 2}, {ID: 3},
 				},
