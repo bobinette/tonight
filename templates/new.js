@@ -32,6 +32,7 @@ function watchAddTaskButton() {
   $(document).on('click', '#add_task_button', function(event) {
     event.preventDefault();
     $('#add_task_input').show();
+    $('#add_task_input_textarea').focus();
   });
 }
 

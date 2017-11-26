@@ -29,6 +29,7 @@ function watchClickOnTasks(identifier) {
         data-taskid="${$(this).data('taskid')}"
       ></textarea>
     `);
+    $('#done_input').focus();
     autosize($('#done_input'));
   });
 }
@@ -115,14 +116,15 @@ function watchEdit() {
 
     task.find('.TaskContent').hide();
     task.find('.TaskEditPlaceholder').html(`
-      <textarea id="edit_input" class="w-100 form-control no-border" data-taskid=${$(this).data(
-        'taskid',
-      )}>${task.find('.TaskEditPlaceholder').data('raw')}</textarea>
+      <textarea id="edit_input" class="w-100 form-control no-border" data-taskid=${$(this).data('taskid')}></textarea>
         <small id="edit_input_help" class="grey">
           Press enter to create <i class="fa fa-level-down fa-rotate-90"></i>
         </small>
     `);
     autosize($('#edit_input'));
+    $('#edit_input')
+      .focus()
+      .val(task.find('.TaskEditPlaceholder').data('raw'));
   });
 }
 
