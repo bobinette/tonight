@@ -50,7 +50,8 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 		"formatDateTime": func(dt time.Time) string {
 			return dt.Format("2006-01-02 15:03:04")
 		},
-		"raw": formatRaw,
+		"raw":            formatRaw,
+		"formatMarkDown": formatDescription,
 		"formatDependencies": func(dependencies []Dependency) string {
 			total := len(dependencies)
 			done := 0
@@ -61,6 +62,14 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 			}
 
 			return fmt.Sprintf("%d/%d", done, total)
+		},
+		"reverseLog": func(a []Log) []Log {
+			reversed := make([]Log, len(a))
+			l := len(reversed) - 1
+			for i, e := range a {
+				reversed[l-i] = e
+			}
+			return reversed
 		},
 	}
 
@@ -126,7 +135,6 @@ func (us *UIService) Home(c echo.Context) error {
 	}
 
 	for i, task := range tasks {
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
 		tasks[i] = task
 	}
 
@@ -142,7 +150,6 @@ func (us *UIService) Home(c echo.Context) error {
 			totalDuration += 1 * time.Hour
 		}
 
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
 		planning.Tasks[i] = task
 	}
 
@@ -273,7 +280,6 @@ func (us *UIService) pendingTasks(q string, c echo.Context) error {
 	}
 
 	for i, task := range tasks {
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
 		tasks[i] = task
 	}
 
@@ -301,7 +307,6 @@ func (us *UIService) DoneTasks(c echo.Context) error {
 	}
 
 	for i, task := range tasks {
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
 		tasks[i] = task
 	}
 
@@ -394,7 +399,6 @@ func (us *UIService) Plan(c echo.Context) error {
 	}
 
 	for i, task := range planning.Tasks {
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
 		planning.Tasks[i] = task
 	}
 
@@ -425,7 +429,6 @@ func (us *UIService) CurrentPlanning(c echo.Context) error {
 			totalDuration += 1 * time.Hour
 		}
 
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
 		planning.Tasks[i] = task
 	}
 

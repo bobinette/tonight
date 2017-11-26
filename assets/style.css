@@ -125,7 +125,7 @@ ul.Tasks {
 
 .TaskDescription {
     margin-top: 0.25rem;
-    font-size: 0.8rem;
+    /*font-size: 0.8rem;*/
 }
 
 #new_task_input {
@@ -188,6 +188,14 @@ ul.Tasks {
 
 .TaskEditPlaceholder {
     text-align: right;
+}
+
+.TaskLogProgressBar {
+    cursor: pointer;
+}
+
+.TaskLog {
+    display: none;
 }
 
 /*

@@ -37,7 +37,7 @@ function watchClickOnTasks(identifier) {
 // Watch all clicks outside a task row to hide a potential done input
 function watchClickOutsideTask() {
   $(window).on('click', function(event) {
-    if ($(event.target).closest('.TaskPending').length === 0) {
+    if ($(event.target).closest('.Task').length === 0) {
       $('#done_input').remove();
 
       // Check if it is somewhere else
@@ -48,6 +48,8 @@ function watchClickOutsideTask() {
           $(elt).show();
         });
       }
+
+      $('.TaskLog').hide();
     }
   });
 }
@@ -157,6 +159,20 @@ function watchEditFinished() {
   });
 }
 
+function watchProgressBarClick() {
+  $(document).on('click', '.TaskLogProgressBar', function(event) {
+    event.preventDefault();
+
+    const task = $(this).closest('.Task');
+    const log = task.find('.TaskLog');
+    if (log.is(':visible')) {
+      log.hide();
+    } else {
+      log.show();
+    }
+  });
+}
+
 $(document).ready(function() {
   watchEdit();
   watchDoneButtons(document);
@@ -164,6 +180,7 @@ $(document).ready(function() {
   watchDoneWithDescription(document);
   watchClickOutsideTask();
   watchEditFinished();
+  watchProgressBarClick();
 
   $(function() {
     $('[data-toggle="tooltip"]').tooltip();
