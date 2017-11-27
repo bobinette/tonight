@@ -228,12 +228,17 @@ func (us *UIService) Update(c echo.Context) error {
 
 	task := parse(t.Content)
 	task.ID = uint(taskID)
-
-	if err := us.repo.Update(c.Request().Context(), &task); err != nil {
+	ctx := c.Request().Context()
+	if err := us.repo.Update(ctx, &task); err != nil {
 		return err
 	}
 
-	if err := us.index.Index(c.Request().Context(), task); err != nil {
+	tasks, err := us.repo.List(ctx, []uint{uint(taskID)})
+	if err != nil {
+		return err
+	}
+
+	if err := us.index.Index(ctx, tasks[0]); err != nil {
 		return err
 	}
 
