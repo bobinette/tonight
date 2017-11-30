@@ -121,6 +121,7 @@ func (s *Index) Search(ctx context.Context, q string, done bool) ([]uint, error)
 		ids[i] = uint(id64)
 
 		// Activate for debugging
+		// fmt.Printf("%s: %f\n", hit.ID, hit.Score)
 		// fmt.Println(hit.Fragments)
 		// fmt.Println(hit.Expl)
 	}

@@ -28,7 +28,16 @@ type Task struct {
 	CreatedAt time.Time
 }
 
+type LogType string
+
+const (
+	LogTypeCompletion LogType = "COMPLETION"
+	LogTypePause              = "PAUSE"
+	LogTypeStart              = "START"
+)
+
 type Log struct {
+	Type        LogType
 	Completion  int
 	Description string
 

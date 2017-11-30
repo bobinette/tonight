@@ -1,9 +1,12 @@
+let searchQ = '';
+
 function watchSearchInput() {
   $('#search_input').on('keydown', function(event) {
     if (event.keyCode == 13) {
       event.preventDefault();
 
-      $.get(`/ui/tasks?q=${$('#search_input').val()}`, function(data) {
+      searchQ = $('#search_input').val();
+      $.get(`/ui/tasks?q=${searchQ || ''}`, function(data) {
         $('#tasks_list ul').sortable('disable');
         $('#tasks_list').html(data);
         makeSortable();

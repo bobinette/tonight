@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo"
 
@@ -13,14 +14,49 @@ import (
 )
 
 func main() {
+	mysqlConfig := struct {
+		User     string
+		Password string
+		Host     string
+		Port     string
+		Database string
+	}{
+		User:     "root",
+		Password: "root",
+		Host:     "192.168.50.4",
+		Port:     "3306",
+		Database: "tonight",
+	}
+
+	if user := os.Getenv("MYSQL_USER"); user != "" {
+		mysqlConfig.User = user
+	}
+
+	if password := os.Getenv("MYSQL_PASSWORD"); password != "" {
+		mysqlConfig.Password = password
+	}
+
+	if host := os.Getenv("MYSQL_HOST"); host != "" {
+		mysqlConfig.Host = host
+	}
+
+	if port := os.Getenv("MYSQL_PORT"); port != "" {
+		mysqlConfig.Port = port
+	}
+
+	if database := os.Getenv("MYSQL_DATABASE"); database != "" {
+		mysqlConfig.Database = database
+	}
+
 	mysqlAddr := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
-		"root",         //username
-		"root",         //password
-		"192.168.50.4", //host
-		"3306",         //port
-		"tonight",      //database
+		mysqlConfig.User,
+		mysqlConfig.Password,
+		mysqlConfig.Host,
+		mysqlConfig.Port,
+		mysqlConfig.Database,
 	)
+	fmt.Println(mysqlAddr)
 	taskRepo, err := mysql.NewTaskRepository(mysqlAddr)
 	if err != nil {
 		log.Fatal(err)

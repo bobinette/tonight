@@ -6,7 +6,7 @@ function watchClickOnTasks(identifier) {
   $(identifier).on('click', '.TaskPending', function(event) {
     event.preventDefault();
 
-    if ($(event.target).closest('.TaskDelete, .TaskDone, .TaskEdit', '#edit_input').length !== 0) {
+    if ($(event.target).closest('.TaskDelete, .TaskDone, .TaskEdit, #edit_input, .TaskProgress').length !== 0) {
       return;
     }
 
@@ -61,7 +61,7 @@ function watchDoneButtons(identifier) {
     event.stopPropagation();
 
     $.post(
-      `/ui/tasks/${$(this).data('taskid')}/done`,
+      `/ui/tasks/${$(this).data('taskid')}/done?q=${searchQ || ''}`,
       JSON.stringify({ description: $('#done_input').val() }),
       function(data) {
         $('#tasks_list ul').sortable('disable');
@@ -80,7 +80,7 @@ function watchDoneWithDescription(identifier) {
     if (event.keyCode === 13) {
       event.preventDefault();
       $.post(
-        `/ui/tasks/${$(this).data('taskid')}/done`,
+        `/ui/tasks/${$(this).data('taskid')}/done?q=${searchQ || ''}`,
         JSON.stringify({ description: $('#done_input').val() }),
         function(data) {
           $('#tasks_list ul').sortable('disable');
@@ -136,19 +136,21 @@ function watchEditFinished() {
     if (event.keyCode === 13) {
       event.preventDefault();
 
-      $.post(`/ui/tasks/${$(this).data('taskid')}`, JSON.stringify({ content: $('#edit_input').val() }), function(
-        data,
-      ) {
-        $('#tasks_list ul').sortable('disable');
-        $('#tasks_list').html(data);
+      $.post(
+        `/ui/tasks/${$(this).data('taskid')}?q=${searchQ || ''}`,
+        JSON.stringify({ content: $('#edit_input').val() }),
+        function(data) {
+          $('#tasks_list ul').sortable('disable');
+          $('#tasks_list').html(data);
 
-        $('#edit_input').remove();
-        $('#edit_input_help').remove();
+          $('#edit_input').remove();
+          $('#edit_input_help').remove();
 
-        makeSortable();
-        updateDoneTasks();
-        refreshPlanning();
-      }).fail(handleError);
+          makeSortable();
+          updateDoneTasks();
+          refreshPlanning();
+        },
+      ).fail(handleError);
     } else if (event.keyCode === 27) {
       $('#edit_input').remove();
       $('#edit_input_help').remove();

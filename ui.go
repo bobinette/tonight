@@ -119,7 +119,8 @@ func NewUIService(repo TaskRepository, index TaskIndex) *UIService {
 func (us *UIService) Home(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	ids, err := us.index.Search(ctx, "", false)
+	q := c.QueryParam("q")
+	ids, err := us.index.Search(ctx, q, false)
 	if err != nil {
 		return err
 	}
@@ -132,10 +133,6 @@ func (us *UIService) Home(c echo.Context) error {
 	planning, err := us.repo.CurrentPlanning(ctx)
 	if err != nil {
 		return err
-	}
-
-	for i, task := range tasks {
-		tasks[i] = task
 	}
 
 	var totalDuration time.Duration = 0
@@ -207,7 +204,7 @@ func (us *UIService) CreateTask(c echo.Context) error {
 		return err
 	}
 
-	return us.pendingTasks("", c)
+	return us.Search(c)
 }
 
 func (us *UIService) Update(c echo.Context) error {
@@ -242,7 +239,7 @@ func (us *UIService) Update(c echo.Context) error {
 		return err
 	}
 
-	return us.pendingTasks("", c)
+	return us.Search(c)
 }
 
 func (us *UIService) MarkDone(c echo.Context) error {
@@ -277,7 +274,7 @@ func (us *UIService) MarkDone(c echo.Context) error {
 		return err
 	}
 
-	return us.pendingTasks("", c)
+	return us.Search(c)
 }
 
 func (us *UIService) pendingTasks(q string, c echo.Context) error {
@@ -351,7 +348,7 @@ func (us *UIService) Delete(c echo.Context) error {
 		return err
 	}
 
-	return us.pendingTasks("", c)
+	return us.Search(c)
 }
 
 func (us *UIService) UpdateRanks(c echo.Context) error {
@@ -382,7 +379,7 @@ func (us *UIService) UpdateRanks(c echo.Context) error {
 		}
 	}
 
-	return us.pendingTasks("", c)
+	return us.Search(c)
 }
 
 func (us *UIService) Plan(c echo.Context) error {
@@ -402,7 +399,8 @@ func (us *UIService) Plan(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	ids, err := us.index.Search(ctx, "", false)
+	q := c.QueryParam("q")
+	ids, err := us.index.Search(ctx, q, false)
 	if err != nil {
 		return err
 	}

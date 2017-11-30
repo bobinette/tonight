@@ -60,8 +60,8 @@
           {{- end }}
         </div>
       </div>
-      {{- if gt .Completion 0 }}
-        <div class="w-100">
+      {{- if .Log }}
+        <div class="w-100 TaskProgress">
           <div class="w-100 flex TaskLogProgressBar" data-taskid="{{ .ID }}">
             <span class="progress flex-1">
               <span class="progress-bar" role="progressbar" aria-valuenow="{{ .Completion }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ .Completion }}%"></span>

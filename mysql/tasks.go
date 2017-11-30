@@ -179,9 +179,9 @@ func (r *TaskRepository) MarkDone(ctx context.Context, taskID uint, log tonight.
 	now := time.Now()
 	_, err := r.db.ExecContext(
 		ctx,
-		`INSERT INTO task_log (task_id, completion, description, created_at)
-			VALUES (?, ?, ?, ?)`,
-		taskID, log.Completion, log.Description, now,
+		`INSERT INTO task_log (task_id, type, completion, description, created_at)
+			VALUES (?, ?, ?, ?, ?)`,
+		taskID, string(log.Type), log.Completion, log.Description, now,
 	)
 	if err != nil {
 		return err
@@ -340,7 +340,6 @@ func (r *TaskRepository) DismissPlanning(ctx context.Context) error {
 }
 
 func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, error) {
-	fmt.Println(ids)
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -456,7 +455,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 
 	// Fetch logs
 	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT task_id, completion, description, created_at
+		SELECT task_id, type, completion, description, created_at
 		FROM task_log
 		WHERE task_id IN (%s)
 		ORDER BY task_id, created_at DESC
@@ -470,14 +469,16 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 	logs := make(map[uint][]tonight.Log)
 	for rows.Next() {
 		var taskID uint
+		var logType tonight.LogType
 		var completion int
 		var description string
 		var createdAt time.Time
-		if err := rows.Scan(&taskID, &completion, &description, &createdAt); err != nil {
+		if err := rows.Scan(&taskID, &logType, &completion, &description, &createdAt); err != nil {
 			return nil, err
 		}
 
 		logs[taskID] = append(logs[taskID], tonight.Log{
+			Type:        logType,
 			Completion:  completion,
 			Description: description,
 			CreatedAt:   createdAt,

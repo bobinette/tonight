@@ -127,11 +127,15 @@ func TestParseLog(t *testing.T) {
 			content:  "25% this is the description",
 			expected: Log{Description: "this is the description", Completion: 25},
 		},
+		"0%% should work": {
+			content:  "0% this is the description",
+			expected: Log{Description: "this is the description", Completion: 0},
+		},
 	}
 
 	for name, test := range tests {
 		log := parseLog(test.content)
 		assert.Equal(t, test.expected.Completion, log.Completion, name)
-		assert.True(t, test.expected.Description == log.Description, name)
+		assert.True(t, test.expected.Description == log.Description, "%s - %s != %s", name, test.expected.Description, log.Description)
 	}
 }

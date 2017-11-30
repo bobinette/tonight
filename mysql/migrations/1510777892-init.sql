@@ -23,4 +23,6 @@ COMMIT;
 
 BEGIN;
 
+DROP TABLE IF EXISTS `tasks`;
+
 COMMIT;

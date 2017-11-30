@@ -18,7 +18,7 @@ var (
 	titleDescriptionRegex = regexp.MustCompile(`([^:]*)(?::(.*))?`)
 
 	// Log
-	percentageCompletionRegex = regexp.MustCompile(`(?:([0-9]*)?% )?(.*)`)
+	percentageCompletionRegex = regexp.MustCompile(`(?:([0-9]*%|pause|stop|start|resume))?(.*)`)
 )
 
 func parse(content string) Task {
@@ -137,15 +137,28 @@ func parseLog(desc string) Log {
 	matches := percentageCompletionRegex.FindStringSubmatch(desc)
 
 	log := Log{
-		Completion:  100,
-		Description: matches[2],
+		Type:        LogTypeCompletion,
+		Completion:  0,
+		Description: strings.TrimSpace(matches[2]),
 	}
 
 	if len(matches[1]) > 0 {
-		log.Completion, _ = strconv.Atoi(matches[1])
-		if log.Completion > 100 {
-			log.Completion = 100
+		v := matches[1]
+		if v == "pause" || v == "stop" {
+			log.Type = LogTypePause
+		} else if v == "start" || v == "resume" {
+			log.Type = LogTypeStart
+		} else {
+			v = v[:len(v)-1]
+			log.Completion, _ = strconv.Atoi(v)
+			if log.Completion > 100 {
+				log.Completion = 100
+			} else if log.Completion == 0 {
+				log.Type = LogTypeStart
+			}
 		}
+	} else {
+		log.Completion = 100
 	}
 
 	return log

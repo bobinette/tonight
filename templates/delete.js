@@ -3,7 +3,7 @@ function watchDeleteButtons(identifier) {
     event.preventDefault();
 
     $.ajax({
-      url: `/ui/tasks/${$(this).data('taskid')}`,
+      url: `/ui/tasks/${$(this).data('taskid')}?q=${searchQ || ''}`,
       type: 'DELETE',
       success: function(data) {
         $('#tasks_list ul').sortable('disable');

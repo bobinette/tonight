@@ -16,7 +16,7 @@ function makeSortable() {
           ranks[$(this).data('taskid')] = $(this).index();
         });
 
-      $.post('/ui/ranks', JSON.stringify({ ranks: ranks }), function(data) {
+      $.post(`/ui/ranks?q=${searchQ || ''}`, JSON.stringify({ ranks: ranks }), function(data) {
         $('#tasks_list ul').sortable('disable');
         $('#tasks_list').html(data);
 
