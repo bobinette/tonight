@@ -18,7 +18,16 @@ var (
 	titleDescriptionRegex = regexp.MustCompile(`([^:]*)(?::(.*))?`)
 
 	// Log
-	percentageCompletionRegex = regexp.MustCompile(`(?:([0-9]*%|pause|stop|start|resume))?(.*)`)
+	logKeywordRegex    = regexp.MustCompile(`^(pause|stop|start|resume)`)
+	logCompletionRegex = regexp.MustCompile(`^(\d+)%`)
+	logFractionRegex   = regexp.MustCompile(`^(\d+)/([1-9]\d*)`)
+
+	logKeywordMapping = map[string]LogType{
+		"pause":  LogTypePause,
+		"stop":   LogTypePause,
+		"start":  LogTypeStart,
+		"resume": LogTypeStart,
+	}
 )
 
 func parse(content string) Task {
@@ -134,32 +143,31 @@ func formatRaw(t Task) string {
 }
 
 func parseLog(desc string) Log {
-	matches := percentageCompletionRegex.FindStringSubmatch(desc)
-
 	log := Log{
-		Type:        LogTypeCompletion,
-		Completion:  0,
-		Description: strings.TrimSpace(matches[2]),
+		Type:       LogTypeCompletion,
+		Completion: 0,
 	}
 
-	if len(matches[1]) > 0 {
-		v := matches[1]
-		if v == "pause" || v == "stop" {
-			log.Type = LogTypePause
-		} else if v == "start" || v == "resume" {
-			log.Type = LogTypeStart
-		} else {
-			v = v[:len(v)-1]
-			log.Completion, _ = strconv.Atoi(v)
-			if log.Completion > 100 {
-				log.Completion = 100
-			} else if log.Completion == 0 {
-				log.Type = LogTypeStart
-			}
-		}
+	if keywordMatch := logKeywordRegex.FindStringSubmatch(desc); len(keywordMatch) > 0 {
+		log.Type = logKeywordMapping[keywordMatch[1]]
+		desc = logKeywordRegex.ReplaceAllString(desc, "")
+	} else if completionMatch := logCompletionRegex.FindStringSubmatch(desc); len(completionMatch) > 0 {
+		log.Completion, _ = strconv.Atoi(completionMatch[1])
+		desc = logCompletionRegex.ReplaceAllString(desc, "")
+	} else if fractionMatch := logFractionRegex.FindStringSubmatch(desc); len(fractionMatch) > 0 {
+		num, _ := strconv.Atoi(fractionMatch[1])
+		den, _ := strconv.Atoi(fractionMatch[2])
+		log.Completion = (num * 100) / den
+		desc = logFractionRegex.ReplaceAllString(desc, "")
 	} else {
 		log.Completion = 100
 	}
+
+	if log.Completion > 100 {
+		log.Completion = 100
+	}
+
+	log.Description = strings.TrimSpace(desc)
 
 	return log
 }
