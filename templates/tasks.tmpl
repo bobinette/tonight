@@ -57,13 +57,7 @@
             </span>
             <small><em class="grey">{{ .Completion }}%</em></small>
           </div>
-          {{- if .Log }}
-          <ul class="TaskLog">
-            {{- range reverseLog .Log }}
-              <li>{{ .Completion }}% - {{ formatDateTime .CreatedAt }}:{{ formatMarkDown .Description }}</li>
-            {{- end }}
-          </ul>
-          {{- end }}
+          {{ template "timeline.tmpl" .Log }}
         </div>
       {{- end }}
       <div class="w-100 TaskDoneInputPlaceholder"></div>

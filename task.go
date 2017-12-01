@@ -34,6 +34,7 @@ const (
 	LogTypeCompletion LogType = "COMPLETION"
 	LogTypePause              = "PAUSE"
 	LogTypeStart              = "START"
+	LogTypeLog                = "LOG"
 )
 
 type Log struct {

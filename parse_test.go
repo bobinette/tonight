@@ -122,7 +122,7 @@ func TestParseLog(t *testing.T) {
 	}{
 		"without completion: 100%% by default": {
 			content:  "this is the description",
-			expected: Log{Type: LogTypeCompletion, Description: "this is the description", Completion: 100},
+			expected: Log{Type: LogTypeLog, Description: "this is the description", Completion: 0},
 		},
 		"with completion": {
 			content:  "25% this is the description",
@@ -139,6 +139,10 @@ func TestParseLog(t *testing.T) {
 		"fractions again": {
 			content:  "2/7 is truncated to 28%%",
 			expected: Log{Type: LogTypeCompletion, Description: "is truncated to 28%%", Completion: 28},
+		},
+		"done": {
+			content:  "done c'est fini",
+			expected: Log{Type: LogTypeCompletion, Description: "c'est fini", Completion: 100},
 		},
 	}
 

@@ -29,13 +29,13 @@ type templateRenderer struct {
 func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 	tmpls := map[string][]string{
 		"home": {
-			"home.tmpl", "tasks.tmpl", "plan.tmpl",
+			"home.tmpl", "tasks.tmpl", "plan.tmpl", "timeline.tmpl",
 			// JS files
 			"tasksList.js", "sort.js", "delete.js", "new.js",
 			"doneTasksList.js", "plan.js", "utils.js", "home.js",
 		},
-		"tasks": {"tasks.tmpl"},
-		"plan":  {"plan.tmpl"},
+		"tasks": {"tasks.tmpl", "timeline.tmpl"},
+		"plan":  {"plan.tmpl", "timeline.tmpl"},
 	}
 
 	funcMap := map[string]interface{}{
@@ -261,16 +261,31 @@ func (us *UIService) MarkDone(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	log := parseLog(body.Description)
-	if err := us.repo.MarkDone(ctx, uint(taskID), log); err != nil {
-		return err
-	}
 
 	tasks, err := us.repo.List(ctx, []uint{uint(taskID)})
 	if err != nil {
 		return err
 	}
 
-	if err := us.index.Index(ctx, tasks[0]); err != nil {
+	task := tasks[0]
+	maxCompletion := 0
+	if len(task.Log) > 0 {
+		for _, l := range task.Log {
+			if l.Completion > maxCompletion {
+				maxCompletion = l.Completion
+			}
+		}
+	}
+
+	if log.Completion < maxCompletion {
+		log.Completion = maxCompletion
+	}
+
+	if err := us.repo.MarkDone(ctx, uint(taskID), log); err != nil {
+		return err
+	}
+
+	if err := us.index.Index(ctx, task); err != nil {
 		return err
 	}
 
