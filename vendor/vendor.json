@@ -226,6 +226,12 @@
 			"revisionTime": "2017-01-30T11:31:45Z"
 		},
 		{
+			"checksumSHA1": "+TKtBzv23ywvmmqRiGEjUba4YmI=",
+			"path": "github.com/dgrijalva/jwt-go",
+			"revision": "dbeaa9332f19a944acb5736b4456cfcc02140e29",
+			"revisionTime": "2017-10-19T21:57:19Z"
+		},
+		{
 			"checksumSHA1": "tJd2T/eyW6ejAev7WzGxTeUVOPQ=",
 			"path": "github.com/dustin/go-humanize",
 			"revision": "bb3d318650d48840a39aa21a027c6630e198e626",
@@ -250,6 +256,18 @@
 			"revisionTime": "2017-10-01T21:56:42Z"
 		},
 		{
+			"checksumSHA1": "hufFzLTirEONuqATPqDqsY1+PEw=",
+			"path": "github.com/labstack/echo/middleware",
+			"revision": "b28538b2e3f5446fe6e0e47ee34cd74b662ca2ab",
+			"revisionTime": "2017-10-01T21:56:42Z"
+		},
+		{
+			"checksumSHA1": "NvfQq6Y6kh9cMw+y1m00ivEd5b4=",
+			"path": "github.com/labstack/gommon/bytes",
+			"revision": "57409ada9da0f2afad6664c49502f8c50fbd8476",
+			"revisionTime": "2017-09-25T05:28:17Z"
+		},
+		{
 			"checksumSHA1": "R6DzcBLEP0BONPpsyr+11N7xh5w=",
 			"path": "github.com/labstack/gommon/color",
 			"revision": "57409ada9da0f2afad6664c49502f8c50fbd8476",
@@ -258,6 +276,12 @@
 		{
 			"checksumSHA1": "uHA6zbtxzJce4r+6uk8zu11qkuk=",
 			"path": "github.com/labstack/gommon/log",
+			"revision": "57409ada9da0f2afad6664c49502f8c50fbd8476",
+			"revisionTime": "2017-09-25T05:28:17Z"
+		},
+		{
+			"checksumSHA1": "lW02E/TGpV59u9q49TsK0Cmva0c=",
+			"path": "github.com/labstack/gommon/random",
 			"revision": "57409ada9da0f2afad6664c49502f8c50fbd8476",
 			"revisionTime": "2017-09-25T05:28:17Z"
 		},
@@ -352,6 +376,12 @@
 			"path": "golang.org/x/sys/unix",
 			"revision": "8eb05f94d449fdf134ec24630ce69ada5b469c1c",
 			"revisionTime": "2017-11-04T16:30:55Z"
+		},
+		{
+			"checksumSHA1": "LiyXfqOzaeQ8vgYZH3t2hUEdVTw=",
+			"path": "google.golang.org/appengine/cloudsql",
+			"revision": "ca59ef35f409df61fa4a5f8290ff289b37eccfb8",
+			"revisionTime": "2016-11-15T22:01:06Z"
 		},
 		{
 			"checksumSHA1": "WrnWl9sC9qr8Ny0wkfKfnuwIxDM=",
