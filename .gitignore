@@ -15,3 +15,5 @@
 
 external/*
 fonts/*
+bleve/index/*
+vendor/*/*

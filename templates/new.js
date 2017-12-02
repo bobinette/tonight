@@ -11,7 +11,7 @@ function watchNewTaskInput(identifer) {
     if (event.keyCode === 13) {
       event.preventDefault();
 
-      $.post('/ui/tasks', JSON.stringify({ content: $('#new_task_input').val() }))
+      $.post(`/ui/tasks?q=${searchQ || ''}`, JSON.stringify({ content: $('#new_task_input').val() }))
         .done(function(data) {
           $('#new_task_input').val('');
           $('#tasks_list ul').sortable('disable');
@@ -52,7 +52,9 @@ function watchAddTaskInput() {
     if (event.keyCode == 13) {
       event.preventDefault();
 
-      $.post('/ui/tasks', JSON.stringify({ content: $('#add_task_input_textarea').val() }), function(data) {
+      $.post(`/ui/tasks?q=${searchQ || ''}`, JSON.stringify({ content: $('#add_task_input_textarea').val() }), function(
+        data,
+      ) {
         $('#tasks_list ul').sortable('disable');
         $('#tasks_list').html(data);
         makeSortable();

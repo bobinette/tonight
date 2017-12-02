@@ -2,7 +2,6 @@ package tonight
 
 import (
 	"context"
-	"html/template"
 	"time"
 )
 
@@ -11,9 +10,8 @@ type Task struct {
 	Title       string
 	Description string
 
-	DescriptionMD template.HTML
-
 	Priority int
+	Rank     uint
 	Tags     []string
 
 	Duration string
@@ -30,7 +28,17 @@ type Task struct {
 	CreatedAt time.Time
 }
 
+type LogType string
+
+const (
+	LogTypeCompletion LogType = "COMPLETION"
+	LogTypePause              = "PAUSE"
+	LogTypeStart              = "START"
+	LogTypeLog                = "LOG"
+)
+
 type Log struct {
+	Type        LogType
 	Completion  int
 	Description string
 
@@ -54,7 +62,7 @@ type Planning struct {
 }
 
 type TaskRepository interface {
-	List(ctx context.Context, done bool) ([]Task, error)
+	List(ctx context.Context, ids []uint) ([]Task, error)
 	Create(ctx context.Context, t *Task) error
 	Update(ctx context.Context, t *Task) error
 
@@ -63,7 +71,13 @@ type TaskRepository interface {
 
 	Delete(ctx context.Context, taskID uint) error
 
-	StartPlanning(ctx context.Context, duration string, taskIDs []uint) (Planning, error)
-	DismissPlanning(ctx context.Context) error
-	CurrentPlanning(ctx context.Context) (Planning, error)
+	StartPlanning(ctx context.Context, userID uint, duration string, taskIDs []uint) (Planning, error)
+	DismissPlanning(ctx context.Context, userID uint) error
+	CurrentPlanning(ctx context.Context, userID uint) (Planning, error)
+}
+
+type TaskIndex interface {
+	Search(ctx context.Context, q string, done bool, allowedIDs []uint) ([]uint, error)
+	Index(ctx context.Context, task Task) error
+	Delete(ctx context.Context, taskID uint) error
 }

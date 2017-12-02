@@ -1,0 +1,38 @@
+{{/*  Expects a list of tonight.Log */}}
+<div class="timeline TaskLog">
+  <div class="timeline-line"></div>
+
+  <!--
+  <div class="timeline timeline-info text-muted w-100">
+    <em><small>Newest to oldest</small></em>
+  </div>
+  -->
+
+  {{- range . }}
+  <div class="timeline-content flex">
+    {{- if eq .Type "COMPLETION" }}
+      {{- if not (eq .Completion 100) }}
+        <div class="timeline-node">
+          <small>{{ .Completion }}%</small>
+        </div>
+      {{ else }}
+        <div class="timeline-node timeline-node-done">
+          <i class="fa fa-check"></i>
+        </div>
+      {{- end }}
+    {{- else if eq .Type "START" }}
+      <div class="timeline-node">
+        <i class="fa fa-play"></i>
+      </div>
+    {{- else if eq .Type "PAUSE" }}
+      <div class="timeline-node">
+        <i class="fa fa-pause"></i>
+      </div>
+    {{- end }}
+    <div class="flex flex-1">
+      <div class="flex-1">{{ formatMarkDown .Description }}</div>
+      <div><em><small class="text-muted">{{ formatDateTime .CreatedAt }}</small></em></div>
+    </div>
+  </div>
+  {{- end }}
+</div>

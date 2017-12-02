@@ -6,7 +6,7 @@ function watchClickOnTasks(identifier) {
   $(identifier).on('click', '.TaskPending', function(event) {
     event.preventDefault();
 
-    if ($(event.target).closest('.TaskDelete, .TaskDone, .TaskEdit', '#edit_input').length !== 0) {
+    if ($(event.target).closest('.TaskDelete, .TaskDone, .TaskEdit, #edit_input, .TaskProgress').length !== 0) {
       return;
     }
 
@@ -37,7 +37,7 @@ function watchClickOnTasks(identifier) {
 // Watch all clicks outside a task row to hide a potential done input
 function watchClickOutsideTask() {
   $(window).on('click', function(event) {
-    if ($(event.target).closest('.TaskPending').length === 0) {
+    if ($(event.target).closest('.Task').length === 0) {
       $('#done_input').remove();
 
       // Check if it is somewhere else
@@ -48,6 +48,8 @@ function watchClickOutsideTask() {
           $(elt).show();
         });
       }
+
+      $('.TaskLog').hide();
     }
   });
 }
@@ -59,7 +61,7 @@ function watchDoneButtons(identifier) {
     event.stopPropagation();
 
     $.post(
-      `/ui/tasks/${$(this).data('taskid')}/done`,
+      `/ui/tasks/${$(this).data('taskid')}/done?q=${searchQ || ''}`,
       JSON.stringify({ description: $('#done_input').val() }),
       function(data) {
         $('#tasks_list ul').sortable('disable');
@@ -78,7 +80,7 @@ function watchDoneWithDescription(identifier) {
     if (event.keyCode === 13) {
       event.preventDefault();
       $.post(
-        `/ui/tasks/${$(this).data('taskid')}/done`,
+        `/ui/tasks/${$(this).data('taskid')}/done?q=${searchQ || ''}`,
         JSON.stringify({ description: $('#done_input').val() }),
         function(data) {
           $('#tasks_list ul').sortable('disable');
@@ -134,25 +136,41 @@ function watchEditFinished() {
     if (event.keyCode === 13) {
       event.preventDefault();
 
-      $.post(`/ui/tasks/${$(this).data('taskid')}`, JSON.stringify({ content: $('#edit_input').val() }), function(
-        data,
-      ) {
-        $('#tasks_list ul').sortable('disable');
-        $('#tasks_list').html(data);
+      $.post(
+        `/ui/tasks/${$(this).data('taskid')}?q=${searchQ || ''}`,
+        JSON.stringify({ content: $('#edit_input').val() }),
+        function(data) {
+          $('#tasks_list ul').sortable('disable');
+          $('#tasks_list').html(data);
 
-        $('#edit_input').remove();
-        $('#edit_input_help').remove();
+          $('#edit_input').remove();
+          $('#edit_input_help').remove();
 
-        makeSortable();
-        updateDoneTasks();
-        refreshPlanning();
-      }).fail(handleError);
+          makeSortable();
+          updateDoneTasks();
+          refreshPlanning();
+        },
+      ).fail(handleError);
     } else if (event.keyCode === 27) {
       $('#edit_input').remove();
       $('#edit_input_help').remove();
       $('.TaskContent').each(function(i, elt) {
         $(elt).show();
       });
+    }
+  });
+}
+
+function watchProgressBarClick() {
+  $(document).on('click', '.TaskLogProgressBar', function(event) {
+    event.preventDefault();
+
+    const task = $(this).closest('.Task');
+    const log = task.find('.TaskLog');
+    if (log.is(':visible')) {
+      log.hide();
+    } else {
+      log.show();
     }
   });
 }
@@ -164,6 +182,7 @@ $(document).ready(function() {
   watchDoneWithDescription(document);
   watchClickOutsideTask();
   watchEditFinished();
+  watchProgressBarClick();
 
   $(function() {
     $('[data-toggle="tooltip"]').tooltip();

@@ -18,7 +18,17 @@ var (
 	titleDescriptionRegex = regexp.MustCompile(`([^:]*)(?::(.*))?`)
 
 	// Log
-	percentageCompletionRegex = regexp.MustCompile(`(?:([0-9]*)?% )?(.*)`)
+	logKeywordRegex    = regexp.MustCompile(`^(pause|stop|start|resume|done)`)
+	logCompletionRegex = regexp.MustCompile(`^(\d+)%`)
+	logFractionRegex   = regexp.MustCompile(`^(\d+)/([1-9]\d*)`)
+
+	logKeywordMapping = map[string]LogType{
+		"pause":  LogTypePause,
+		"stop":   LogTypePause,
+		"start":  LogTypeStart,
+		"resume": LogTypeStart,
+		"done":   LogTypeCompletion,
+	}
 )
 
 func parse(content string) Task {
@@ -134,19 +144,33 @@ func formatRaw(t Task) string {
 }
 
 func parseLog(desc string) Log {
-	matches := percentageCompletionRegex.FindStringSubmatch(desc)
-
 	log := Log{
-		Completion:  100,
-		Description: matches[2],
+		Type:       LogTypeCompletion,
+		Completion: 0,
 	}
 
-	if len(matches[1]) > 0 {
-		log.Completion, _ = strconv.Atoi(matches[1])
-		if log.Completion > 100 {
+	if keywordMatch := logKeywordRegex.FindStringSubmatch(desc); len(keywordMatch) > 0 {
+		log.Type = logKeywordMapping[keywordMatch[1]]
+		desc = logKeywordRegex.ReplaceAllString(desc, "")
+
+		if keywordMatch[1] == "done" {
 			log.Completion = 100
 		}
+	} else if completionMatch := logCompletionRegex.FindStringSubmatch(desc); len(completionMatch) > 0 {
+		log.Completion, _ = strconv.Atoi(completionMatch[1])
+		desc = logCompletionRegex.ReplaceAllString(desc, "")
+	} else if fractionMatch := logFractionRegex.FindStringSubmatch(desc); len(fractionMatch) > 0 {
+		num, _ := strconv.Atoi(fractionMatch[1])
+		den, _ := strconv.Atoi(fractionMatch[2])
+		log.Completion = (num * 100) / den
+		desc = logFractionRegex.ReplaceAllString(desc, "")
 	}
+
+	if log.Completion > 100 {
+		log.Completion = 100
+	}
+
+	log.Description = strings.TrimSpace(desc)
 
 	return log
 }

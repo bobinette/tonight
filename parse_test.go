@@ -1,6 +1,7 @@
 package tonight
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -121,17 +122,49 @@ func TestParseLog(t *testing.T) {
 	}{
 		"without completion: 100%% by default": {
 			content:  "this is the description",
-			expected: Log{Description: "this is the description", Completion: 100},
+			expected: Log{Type: LogTypeLog, Description: "this is the description", Completion: 0},
 		},
 		"with completion": {
 			content:  "25% this is the description",
-			expected: Log{Description: "this is the description", Completion: 25},
+			expected: Log{Type: LogTypeCompletion, Description: "this is the description", Completion: 25},
+		},
+		"0%% should work": {
+			content:  "0% this is the description",
+			expected: Log{Type: LogTypeCompletion, Description: "this is the description", Completion: 0},
+		},
+		"fractions": {
+			content:  "2/8 has a completion of 25%%",
+			expected: Log{Type: LogTypeCompletion, Description: "has a completion of 25%%", Completion: 25},
+		},
+		"fractions again": {
+			content:  "2/7 is truncated to 28%%",
+			expected: Log{Type: LogTypeCompletion, Description: "is truncated to 28%%", Completion: 28},
+		},
+		"done": {
+			content:  "done c'est fini",
+			expected: Log{Type: LogTypeCompletion, Description: "c'est fini", Completion: 100},
 		},
 	}
 
 	for name, test := range tests {
 		log := parseLog(test.content)
 		assert.Equal(t, test.expected.Completion, log.Completion, name)
-		assert.True(t, test.expected.Description == log.Description, name)
+		assert.True(t, test.expected.Description == log.Description, "%s - %s != %s", name, test.expected.Description, log.Description)
+	}
+}
+
+func TestParseLog_keywords(t *testing.T) {
+	tests := map[string]LogType{
+		"pause":  LogTypePause,
+		"stop":   LogTypePause,
+		"start":  LogTypeStart,
+		"resume": LogTypeStart,
+	}
+
+	for keyword, logType := range tests {
+		log := parseLog(fmt.Sprintf("%s description", keyword))
+		assert.Equal(t, 0, log.Completion, keyword)
+		assert.Equal(t, "description", log.Description, keyword)
+		assert.Equal(t, logType, log.Type, keyword)
 	}
 }

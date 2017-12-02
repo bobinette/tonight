@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Tonight</title>
+    <link rel="icon" type="image/png" href="/assets/logo.png" />
+
+    <link rel="stylesheet" href="/assets/style.css">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/assets/bootstrap.min.css">
+
+    <!-- Font awesome -->
+    <!-- <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous"> -->
+
+    <!-- With a slow conneciton, use the following instead -->
+    <link href="/external/font-awesome.css" rel="stylesheet">
+    <script src="/external/jquery.min.js"></script>
+
+    <script src="/external/tether.min.js"></script>
+    <script src="/external/bootstrap.min.js"></script>
+    <script src="/external/autosize.min.js"></script>
+  </head>
+  <body>
+    <!-- Nav bar -->
+    <nav class="navbar navbar-top navbar-inverse bg-primary">
+      <h1 class="NavBar"><img src="/assets/logo-i.png" height="36" width="36">Tonight</h1>
+    </nav>
+
+    <div class="container Page">
+      <div class="col-md-8 offset-md-2">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="input" class="form-control" id="username_input" aria-describedby="username_help" placeholder="Username...">
+          <small id="username_help" class="form-text text-muted">We'll never share your email with anyone else.</small>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      $(document).ready(function() {
+        $('#username_input').on('keyup', function(event) {
+          if (event.keyCode === 13) {
+            event.preventDefault();
+            $.post(
+              '/login', JSON.stringify({ username: $('#username_input').val() })
+            ).done(function() {
+              window.location = '/ui/home';
+            });
+          }
+        })
+      })
+    </script>
+  </body>
+</html>

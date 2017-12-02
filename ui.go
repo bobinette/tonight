@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/dustin/go-humanize"
 	"github.com/labstack/echo"
 )
@@ -29,16 +30,18 @@ type templateRenderer struct {
 func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 	tmpls := map[string][]string{
 		"home": {
-			"home.tmpl", "tasks.tmpl", "plan.tmpl",
+			"home.tmpl", "tasks.tmpl", "plan.tmpl", "timeline.tmpl",
 			// JS files
 			"tasksList.js", "sort.js", "delete.js", "new.js",
-			"doneTasksList.js", "plan.js", "utils.js",
+			"doneTasksList.js", "plan.js", "utils.js", "home.js",
 		},
-		"tasks": {"tasks.tmpl"},
-		"plan":  {"plan.tmpl"},
+		"tasks": {"tasks.tmpl", "timeline.tmpl"},
+		"plan":  {"plan.tmpl", "timeline.tmpl"},
+		"login": {"login.tmpl"},
 	}
 
 	funcMap := map[string]interface{}{
+		"formatDuration":     formatDuration,
 		"formatDateRelative": humanize.Time,
 		"formatPriority": func(p int) string {
 			return strings.Repeat("!", p)
@@ -49,7 +52,8 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 		"formatDateTime": func(dt time.Time) string {
 			return dt.Format("2006-01-02 15:03:04")
 		},
-		"raw": formatRaw,
+		"raw":            formatRaw,
+		"formatMarkDown": formatDescription,
 		"formatDependencies": func(dependencies []Dependency) string {
 			total := len(dependencies)
 			done := 0
@@ -60,6 +64,14 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 			}
 
 			return fmt.Sprintf("%d/%d", done, total)
+		},
+		"reverseLog": func(a []Log) []Log {
+			reversed := make([]Log, len(a))
+			l := len(reversed) - 1
+			for i, e := range a {
+				reversed[l-i] = e
+			}
+			return reversed
 		},
 	}
 
@@ -95,30 +107,57 @@ func (t *templateRenderer) Render(w io.Writer, name string, data interface{}, c 
 }
 
 type UIService struct {
-	repo TaskRepository
+	repo  TaskRepository
+	index TaskIndex
+
+	userRepository UserRepository
 }
 
-func NewUIService(repo TaskRepository) *UIService {
+func NewUIService(repo TaskRepository, index TaskIndex, userRepo UserRepository) *UIService {
 	return &UIService{
-		repo: repo,
+		repo:  repo,
+		index: index,
+
+		userRepository: userRepo,
 	}
+}
+
+func (us *UIService) loadUser(c echo.Context) (User, error) {
+	token := c.Get("access_token").(*jwt.Token)
+	claims := token.Claims.(*tonightClaims)
+
+	ctx := c.Request().Context()
+
+	user, err := us.userRepository.Get(ctx, claims.ID)
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
 }
 
 func (us *UIService) Home(c echo.Context) error {
 	ctx := c.Request().Context()
-	tasks, err := us.repo.List(ctx, false)
+
+	user, err := us.loadUser(c)
 	if err != nil {
 		return err
 	}
 
-	planning, err := us.repo.CurrentPlanning(ctx)
+	q := c.QueryParam("q")
+	ids, err := us.index.Search(ctx, q, false, user.TaskIDs)
 	if err != nil {
 		return err
 	}
 
-	for i, task := range tasks {
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
-		tasks[i] = task
+	tasks, err := us.repo.List(ctx, ids)
+	if err != nil {
+		return err
+	}
+
+	planning, err := us.repo.CurrentPlanning(ctx, user.ID)
+	if err != nil {
+		return err
 	}
 
 	var totalDuration time.Duration = 0
@@ -133,7 +172,6 @@ func (us *UIService) Home(c echo.Context) error {
 			totalDuration += 1 * time.Hour
 		}
 
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
 		planning.Tasks[i] = task
 	}
 
@@ -158,16 +196,59 @@ func (us *UIService) Home(c echo.Context) error {
 		Tasks    []Task
 		Sortable bool
 		Planning planningForTemplate
+		User     User
 	}{
 		Tasks:    tasks,
 		Sortable: true,
 		Planning: pft,
+		User:     user,
 	}
 	return c.Render(http.StatusOK, "home", data)
 }
 
+func (us *UIService) Search(c echo.Context) error {
+	q := c.QueryParam("q")
+
+	ctx := c.Request().Context()
+
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	ids, err := us.index.Search(ctx, q, false, user.TaskIDs)
+	if err != nil {
+		return err
+	}
+
+	tasks, err := us.repo.List(c.Request().Context(), ids)
+	if err != nil {
+		return err
+	}
+
+	for i, task := range tasks {
+		tasks[i] = task
+	}
+
+	data := struct {
+		Tasks    []Task
+		Sortable bool
+	}{
+		Tasks:    tasks,
+		Sortable: q == "",
+	}
+	return c.Render(http.StatusOK, "tasks", data)
+}
+
 func (us *UIService) CreateTask(c echo.Context) error {
 	defer c.Request().Body.Close()
+
+	ctx := c.Request().Context()
+
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
 
 	var t struct {
 		Content string `json:"content"`
@@ -178,11 +259,19 @@ func (us *UIService) CreateTask(c echo.Context) error {
 
 	task := parse(t.Content)
 
-	if err := us.repo.Create(c.Request().Context(), &task); err != nil {
+	if err := us.repo.Create(ctx, &task); err != nil {
 		return err
 	}
 
-	return us.pendingTasks(c)
+	if err := us.index.Index(ctx, task); err != nil {
+		return err
+	}
+
+	if err := us.userRepository.AddTaskToUser(ctx, user.ID, task.ID); err != nil {
+		return err
+	}
+
+	return us.Search(c)
 }
 
 func (us *UIService) Update(c echo.Context) error {
@@ -203,12 +292,21 @@ func (us *UIService) Update(c echo.Context) error {
 
 	task := parse(t.Content)
 	task.ID = uint(taskID)
-
-	if err := us.repo.Update(c.Request().Context(), &task); err != nil {
+	ctx := c.Request().Context()
+	if err := us.repo.Update(ctx, &task); err != nil {
 		return err
 	}
 
-	return us.pendingTasks(c)
+	tasks, err := us.repo.List(ctx, []uint{uint(taskID)})
+	if err != nil {
+		return err
+	}
+
+	if err := us.index.Index(ctx, tasks[0]); err != nil {
+		return err
+	}
+
+	return us.Search(c)
 }
 
 func (us *UIService) MarkDone(c echo.Context) error {
@@ -227,43 +325,59 @@ func (us *UIService) MarkDone(c echo.Context) error {
 		return err
 	}
 
+	ctx := c.Request().Context()
+
 	log := parseLog(body.Description)
-	if err := us.repo.MarkDone(c.Request().Context(), uint(taskID), log); err != nil {
-		return err
-	}
 
-	return us.pendingTasks(c)
-}
-
-func (us *UIService) pendingTasks(c echo.Context) error {
-	tasks, err := us.repo.List(c.Request().Context(), false)
+	tasks, err := us.repo.List(ctx, []uint{uint(taskID)})
 	if err != nil {
 		return err
 	}
 
-	for i, task := range tasks {
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
-		tasks[i] = task
+	task := tasks[0]
+	maxCompletion := 0
+	if len(task.Log) > 0 {
+		for _, l := range task.Log {
+			if l.Completion > maxCompletion {
+				maxCompletion = l.Completion
+			}
+		}
 	}
 
-	data := struct {
-		Tasks    []Task
-		Sortable bool
-	}{
-		Tasks:    tasks,
-		Sortable: true,
+	if log.Completion < maxCompletion {
+		log.Completion = maxCompletion
 	}
-	return c.Render(http.StatusOK, "tasks", data)
+
+	if err := us.repo.MarkDone(ctx, uint(taskID), log); err != nil {
+		return err
+	}
+
+	if err := us.index.Index(ctx, task); err != nil {
+		return err
+	}
+
+	return us.Search(c)
 }
 
 func (us *UIService) DoneTasks(c echo.Context) error {
-	tasks, err := us.repo.List(c.Request().Context(), true)
+	ctx := c.Request().Context()
+
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	ids, err := us.index.Search(ctx, "", true, user.TaskIDs)
+	if err != nil {
+		return err
+	}
+
+	tasks, err := us.repo.List(c.Request().Context(), ids)
 	if err != nil {
 		return err
 	}
 
 	for i, task := range tasks {
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
 		tasks[i] = task
 	}
 
@@ -290,7 +404,11 @@ func (us *UIService) Delete(c echo.Context) error {
 		return err
 	}
 
-	return us.pendingTasks(c)
+	if err := us.index.Delete(c.Request().Context(), uint(taskID)); err != nil {
+		return err
+	}
+
+	return us.Search(c)
 }
 
 func (us *UIService) UpdateRanks(c echo.Context) error {
@@ -303,11 +421,25 @@ func (us *UIService) UpdateRanks(c echo.Context) error {
 		return err
 	}
 
-	if err := us.repo.UpdateRanks(c.Request().Context(), body.Ranks); err != nil {
+	ctx := c.Request().Context()
+
+	if err := us.repo.UpdateRanks(ctx, body.Ranks); err != nil {
 		return err
 	}
 
-	return us.pendingTasks(c)
+	for id := range body.Ranks {
+		// This could be improved by batching
+		tasks, err := us.repo.List(ctx, []uint{id})
+		if err != nil {
+			return err
+		}
+
+		if err := us.index.Index(ctx, tasks[0]); err != nil {
+			return err
+		}
+	}
+
+	return us.Search(c)
 }
 
 func (us *UIService) Plan(c echo.Context) error {
@@ -326,7 +458,19 @@ func (us *UIService) Plan(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	tasks, err := us.repo.List(ctx, false)
+
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	q := c.QueryParam("q")
+	ids, err := us.index.Search(ctx, q, false, user.TaskIDs)
+	if err != nil {
+		return err
+	}
+
+	tasks, err := us.repo.List(c.Request().Context(), ids)
 	if err != nil {
 		return err
 	}
@@ -338,13 +482,12 @@ func (us *UIService) Plan(c echo.Context) error {
 		taskIDs[i] = task.ID
 	}
 
-	planning, err := us.repo.StartPlanning(ctx, body.Duration, taskIDs)
+	planning, err := us.repo.StartPlanning(ctx, user.ID, body.Duration, taskIDs)
 	if err != nil {
 		return err
 	}
 
 	for i, task := range planning.Tasks {
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
 		planning.Tasks[i] = task
 	}
 
@@ -359,7 +502,14 @@ func (us *UIService) Plan(c echo.Context) error {
 }
 
 func (us *UIService) CurrentPlanning(c echo.Context) error {
-	planning, err := us.repo.CurrentPlanning(c.Request().Context())
+	ctx := c.Request().Context()
+
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	planning, err := us.repo.CurrentPlanning(ctx, user.ID)
 	if err != nil {
 		return err
 	}
@@ -375,7 +525,6 @@ func (us *UIService) CurrentPlanning(c echo.Context) error {
 			totalDuration += 1 * time.Hour
 		}
 
-		task.DescriptionMD = template.HTML(formatDescription(task.Description))
 		planning.Tasks[i] = task
 	}
 
@@ -398,7 +547,14 @@ func (us *UIService) CurrentPlanning(c echo.Context) error {
 }
 
 func (us *UIService) DismissPlanning(c echo.Context) error {
-	if err := us.repo.DismissPlanning(c.Request().Context()); err != nil {
+	ctx := c.Request().Context()
+
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	if err := us.repo.DismissPlanning(ctx, user.ID); err != nil {
 		return err
 	}
 
