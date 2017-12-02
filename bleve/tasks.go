@@ -79,7 +79,7 @@ func (s *Index) Delete(ctx context.Context, id uint) error {
 	return s.index.Delete(fmt.Sprintf("%d", id))
 }
 
-func (s *Index) Search(ctx context.Context, q string, done bool) ([]uint, error) {
+func (s *Index) Search(ctx context.Context, q string, done bool, allowedIDs []uint) ([]uint, error) {
 	total := 100 // Default...
 	if sr, err := s.index.Search(bleve.NewSearchRequest(query.NewMatchAllQuery())); err != nil {
 		return nil, err
@@ -95,6 +95,7 @@ func (s *Index) Search(ctx context.Context, q string, done bool) ([]uint, error)
 			searchTags(q),
 		),
 		searchDone(done),
+		searchIDs(allowedIDs),
 	)
 
 	searchRequest := bleve.NewSearchRequest(query)
@@ -192,4 +193,12 @@ func searchDone(done bool) query.Query {
 	query := bleve.NewBoolFieldQuery(done)
 	query.FieldVal = "done"
 	return query
+}
+
+func searchIDs(ids []uint) query.Query {
+	docIDs := make([]string, len(ids))
+	for i, id := range ids {
+		docIDs[i] = fmt.Sprintf("%d", id)
+	}
+	return query.NewDocIDQuery(docIDs)
 }

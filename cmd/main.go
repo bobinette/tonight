@@ -1,12 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 
 	"github.com/bobinette/tonight"
 	"github.com/bobinette/tonight/bleve"
@@ -56,12 +58,14 @@ func main() {
 		mysqlConfig.Port,
 		mysqlConfig.Database,
 	)
-	fmt.Println(mysqlAddr)
-	taskRepo, err := mysql.NewTaskRepository(mysqlAddr)
+	db, err := sql.Open("mysql", mysqlAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer taskRepo.Close()
+	defer db.Close()
+
+	taskRepo := mysql.NewTaskRepository(db)
+	userRepo := mysql.NewUserRepository(db)
 
 	index := &bleve.Index{}
 	if err := index.Open("./bleve/index"); err != nil {
@@ -69,7 +73,13 @@ func main() {
 	}
 	defer index.Close()
 
-	uiService := tonight.NewUIService(taskRepo, index)
+	jwtKey := []byte("tonight_secret")
+
+	loginService := tonight.LoginService{
+		Key:        jwtKey,
+		Repository: userRepo,
+	}
+	uiService := tonight.NewUIService(taskRepo, index, userRepo)
 
 	// Create server + register routes
 	srv := echo.New()
@@ -82,23 +92,35 @@ func main() {
 		log.Fatal(err)
 	}
 
+	srv.HTTPErrorHandler = tonight.HTTPErrorHandler
+	srv.Use(middleware.Logger())
+
 	// UI routes
 	// -- Home
-	srv.GET("/", func(c echo.Context) error { return c.Redirect(http.StatusPermanentRedirect, "/home") })
-	srv.GET("/home", uiService.Home)
+	srv.GET("/", func(c echo.Context) error { return c.Redirect(http.StatusPermanentRedirect, "/ui/home") })
+	srv.GET("/home", func(c echo.Context) error { return c.Redirect(http.StatusPermanentRedirect, "/ui/home") })
+
+	srv.GET("/login", loginService.LoginPage)
+	srv.POST("/login", loginService.Login)
+	srv.POST("/logout", loginService.Logout)
+
+	uiGroup := srv.Group("/ui")
+	uiGroup.Use(tonight.JWTMiddleware(jwtKey))
+
+	uiGroup.GET("/home", uiService.Home)
 
 	// -- Calls serving html to partially update the page
-	srv.GET("/ui/tasks", uiService.Search)
-	srv.POST("/ui/tasks", uiService.CreateTask)
-	srv.POST("/ui/tasks/:id", uiService.Update)
-	srv.POST("/ui/tasks/:id/done", uiService.MarkDone)
-	srv.DELETE("/ui/tasks/:id", uiService.Delete)
-	srv.GET("/ui/done", uiService.DoneTasks)
-	srv.POST("/ui/ranks", uiService.UpdateRanks)
+	uiGroup.GET("/tasks", uiService.Search)
+	uiGroup.POST("/tasks", uiService.CreateTask)
+	uiGroup.POST("/tasks/:id", uiService.Update)
+	uiGroup.POST("/tasks/:id/done", uiService.MarkDone)
+	uiGroup.DELETE("/tasks/:id", uiService.Delete)
+	uiGroup.GET("/done", uiService.DoneTasks)
+	uiGroup.POST("/ranks", uiService.UpdateRanks)
 
-	srv.POST("/ui/plan", uiService.Plan)
-	srv.GET("/ui/plan", uiService.CurrentPlanning)
-	srv.DELETE("/ui/plan", uiService.DismissPlanning)
+	uiGroup.POST("/plan", uiService.Plan)
+	uiGroup.GET("/plan", uiService.CurrentPlanning)
+	uiGroup.DELETE("/plan", uiService.DismissPlanning)
 
 	// Ping
 	srv.GET("/api/ping", tonight.Ping)

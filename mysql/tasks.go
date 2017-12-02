@@ -18,17 +18,8 @@ type TaskRepository struct {
 	db *sql.DB
 }
 
-func NewTaskRepository(addr string) (*TaskRepository, error) {
-	db, err := sql.Open("mysql", addr)
-	if err != nil {
-		return nil, err
-	}
-
-	return &TaskRepository{db: db}, nil
-}
-
-func (r *TaskRepository) Close() error {
-	return r.db.Close()
+func NewTaskRepository(db *sql.DB) *TaskRepository {
+	return &TaskRepository{db: db}
 }
 
 func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
@@ -179,7 +170,7 @@ func (r *TaskRepository) MarkDone(ctx context.Context, taskID uint, log tonight.
 	now := time.Now()
 	_, err := r.db.ExecContext(
 		ctx,
-		`INSERT INTO task_log (task_id, type, completion, description, created_at)
+		`INSERT INTO task_logs (task_id, type, completion, description, created_at)
 			VALUES (?, ?, ?, ?, ?)`,
 		taskID, string(log.Type), log.Completion, log.Description, now,
 	)
@@ -220,11 +211,11 @@ func (r *TaskRepository) UpdateRanks(ctx context.Context, ranks map[uint]uint) e
 	return nil
 }
 
-func (r *TaskRepository) StartPlanning(ctx context.Context, duration string, taskIDs []uint) (tonight.Planning, error) {
+func (r *TaskRepository) StartPlanning(ctx context.Context, userID uint, duration string, taskIDs []uint) (tonight.Planning, error) {
 	now := time.Now()
 	res, err := r.db.ExecContext(ctx, `
-		INSERT INTO planning (duration, startedAt, dismissed) VALUES (?, ?, ?)
-		`, duration, now, false)
+		INSERT INTO planning (user_id, duration, startedAt, dismissed) VALUES (?, ?, ?, ?)
+		`, userID, duration, now, false)
 	if err != nil {
 		return tonight.Planning{}, err
 	}
@@ -264,10 +255,13 @@ func (r *TaskRepository) StartPlanning(ctx context.Context, duration string, tas
 	return planning, nil
 }
 
-func (r *TaskRepository) CurrentPlanning(ctx context.Context) (tonight.Planning, error) {
+func (r *TaskRepository) CurrentPlanning(ctx context.Context, userID uint) (tonight.Planning, error) {
 	row := r.db.QueryRowContext(
 		ctx,
-		"SELECT id, duration, startedAt, dismissed FROM planning ORDER BY startedAt DESC LIMIT 1",
+		`SELECT id, duration, startedAt, dismissed FROM planning
+		WHERE user_id = ?
+		ORDER BY startedAt DESC LIMIT 1
+		`, userID,
 	)
 
 	var id uint
@@ -321,10 +315,11 @@ func (r *TaskRepository) CurrentPlanning(ctx context.Context) (tonight.Planning,
 	return planning, nil
 }
 
-func (r *TaskRepository) DismissPlanning(ctx context.Context) error {
+func (r *TaskRepository) DismissPlanning(ctx context.Context, userID uint) error {
 	row := r.db.QueryRowContext(
 		ctx,
-		"SELECT id FROM planning ORDER BY startedAt DESC LIMIT 1",
+		"SELECT id FROM planning WHERE user_id = ? ORDER BY startedAt DESC LIMIT 1",
+		userID,
 	)
 
 	var id uint
@@ -456,7 +451,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 	// Fetch logs
 	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(`
 		SELECT task_id, type, completion, description, created_at
-		FROM task_log
+		FROM task_logs
 		WHERE task_id IN (%s)
 		ORDER BY task_id, created_at DESC
 	`, marks,

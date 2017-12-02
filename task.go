@@ -71,13 +71,13 @@ type TaskRepository interface {
 
 	Delete(ctx context.Context, taskID uint) error
 
-	StartPlanning(ctx context.Context, duration string, taskIDs []uint) (Planning, error)
-	DismissPlanning(ctx context.Context) error
-	CurrentPlanning(ctx context.Context) (Planning, error)
+	StartPlanning(ctx context.Context, userID uint, duration string, taskIDs []uint) (Planning, error)
+	DismissPlanning(ctx context.Context, userID uint) error
+	CurrentPlanning(ctx context.Context, userID uint) (Planning, error)
 }
 
 type TaskIndex interface {
-	Search(ctx context.Context, q string, done bool) ([]uint, error)
+	Search(ctx context.Context, q string, done bool, allowedIDs []uint) ([]uint, error)
 	Index(ctx context.Context, task Task) error
 	Delete(ctx context.Context, taskID uint) error
 }

@@ -30,8 +30,16 @@
   </head>
   <body>
     <!-- Nav bar -->
-    <nav class="navbar navbar-top navbar-inverse bg-primary">
-      <h1 class="NavBar"><img src="/assets/logo-i.png" height="36" width="36">Tonight</h1>
+    <nav class="navbar navbar-row navbar-top navbar-inverse bg-primary justify-content-between">
+      <div class="container">
+        <div class="row flex-align-center">
+          <h1 class="col-md-8 offset-md-2"><img src="/assets/logo-i.png" height="36" width="36">Tonight</h1>
+          <span class="col-md-2">
+            <span>{{ .User.Name }}</span>
+            <button id="logout_button" class="btn btn-link"><i class="fa fa-sign-out"></i></button>
+          </span>
+        </div>
+      </div>
     </nav>
 
     <div class="container Page">
@@ -103,5 +111,15 @@
     <script type="text/javascript">{{template "new.js" .}}</script>
     <script type="text/javascript">{{template "tasksList.js" .}}</script>
     <script type="text/javascript">{{template "utils.js" .}}</script>
+
+    <script>
+      $(document).ready(
+        $('#logout_button').on('click', function() {
+          $.post('/logout').done(function() {
+            window.location = "/login"
+          })
+        })
+      );
+    </script>
   </body>
 </html>

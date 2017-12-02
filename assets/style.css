@@ -1,10 +1,15 @@
-h1.NavBar {
-    text-align: center;
+.navbar {
+    margin-bottom: 1rem;
     color: white;
 }
 
-.navbar {
-    margin-bottom: 1rem;
+.navbar .btn.btn-link {
+    color: white;
+    padding: 0.2rem 0.5rem;
+}
+
+.navbar h1 {
+    text-align: center;
 }
 
 li p {
@@ -38,6 +43,10 @@ li p {
 
 .flex.flex-space-between {
     justify-content: space-between;
+}
+
+.flex-align-center {
+    align-items: center;
 }
 
 #edit_input {

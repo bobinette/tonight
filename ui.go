@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/dustin/go-humanize"
 	"github.com/labstack/echo"
 )
@@ -36,6 +37,7 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 		},
 		"tasks": {"tasks.tmpl", "timeline.tmpl"},
 		"plan":  {"plan.tmpl", "timeline.tmpl"},
+		"login": {"login.tmpl"},
 	}
 
 	funcMap := map[string]interface{}{
@@ -107,20 +109,43 @@ func (t *templateRenderer) Render(w io.Writer, name string, data interface{}, c 
 type UIService struct {
 	repo  TaskRepository
 	index TaskIndex
+
+	userRepository UserRepository
 }
 
-func NewUIService(repo TaskRepository, index TaskIndex) *UIService {
+func NewUIService(repo TaskRepository, index TaskIndex, userRepo UserRepository) *UIService {
 	return &UIService{
 		repo:  repo,
 		index: index,
+
+		userRepository: userRepo,
 	}
+}
+
+func (us *UIService) loadUser(c echo.Context) (User, error) {
+	token := c.Get("access_token").(*jwt.Token)
+	claims := token.Claims.(*tonightClaims)
+
+	ctx := c.Request().Context()
+
+	user, err := us.userRepository.Get(ctx, claims.ID)
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
 }
 
 func (us *UIService) Home(c echo.Context) error {
 	ctx := c.Request().Context()
 
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
 	q := c.QueryParam("q")
-	ids, err := us.index.Search(ctx, q, false)
+	ids, err := us.index.Search(ctx, q, false, user.TaskIDs)
 	if err != nil {
 		return err
 	}
@@ -130,7 +155,7 @@ func (us *UIService) Home(c echo.Context) error {
 		return err
 	}
 
-	planning, err := us.repo.CurrentPlanning(ctx)
+	planning, err := us.repo.CurrentPlanning(ctx, user.ID)
 	if err != nil {
 		return err
 	}
@@ -171,21 +196,59 @@ func (us *UIService) Home(c echo.Context) error {
 		Tasks    []Task
 		Sortable bool
 		Planning planningForTemplate
+		User     User
 	}{
 		Tasks:    tasks,
 		Sortable: true,
 		Planning: pft,
+		User:     user,
 	}
 	return c.Render(http.StatusOK, "home", data)
 }
 
 func (us *UIService) Search(c echo.Context) error {
 	q := c.QueryParam("q")
-	return us.pendingTasks(q, c)
+
+	ctx := c.Request().Context()
+
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	ids, err := us.index.Search(ctx, q, false, user.TaskIDs)
+	if err != nil {
+		return err
+	}
+
+	tasks, err := us.repo.List(c.Request().Context(), ids)
+	if err != nil {
+		return err
+	}
+
+	for i, task := range tasks {
+		tasks[i] = task
+	}
+
+	data := struct {
+		Tasks    []Task
+		Sortable bool
+	}{
+		Tasks:    tasks,
+		Sortable: q == "",
+	}
+	return c.Render(http.StatusOK, "tasks", data)
 }
 
 func (us *UIService) CreateTask(c echo.Context) error {
 	defer c.Request().Body.Close()
+
+	ctx := c.Request().Context()
+
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
 
 	var t struct {
 		Content string `json:"content"`
@@ -196,11 +259,15 @@ func (us *UIService) CreateTask(c echo.Context) error {
 
 	task := parse(t.Content)
 
-	if err := us.repo.Create(c.Request().Context(), &task); err != nil {
+	if err := us.repo.Create(ctx, &task); err != nil {
 		return err
 	}
 
-	if err := us.index.Index(c.Request().Context(), task); err != nil {
+	if err := us.index.Index(ctx, task); err != nil {
+		return err
+	}
+
+	if err := us.userRepository.AddTaskToUser(ctx, user.ID, task.ID); err != nil {
 		return err
 	}
 
@@ -292,37 +359,15 @@ func (us *UIService) MarkDone(c echo.Context) error {
 	return us.Search(c)
 }
 
-func (us *UIService) pendingTasks(q string, c echo.Context) error {
-	ctx := c.Request().Context()
-
-	ids, err := us.index.Search(ctx, q, false)
-	if err != nil {
-		return err
-	}
-
-	tasks, err := us.repo.List(c.Request().Context(), ids)
-	if err != nil {
-		return err
-	}
-
-	for i, task := range tasks {
-		tasks[i] = task
-	}
-
-	data := struct {
-		Tasks    []Task
-		Sortable bool
-	}{
-		Tasks:    tasks,
-		Sortable: q == "",
-	}
-	return c.Render(http.StatusOK, "tasks", data)
-}
-
 func (us *UIService) DoneTasks(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	ids, err := us.index.Search(ctx, "", true)
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	ids, err := us.index.Search(ctx, "", true, user.TaskIDs)
 	if err != nil {
 		return err
 	}
@@ -414,8 +459,13 @@ func (us *UIService) Plan(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
 	q := c.QueryParam("q")
-	ids, err := us.index.Search(ctx, q, false)
+	ids, err := us.index.Search(ctx, q, false, user.TaskIDs)
 	if err != nil {
 		return err
 	}
@@ -432,7 +482,7 @@ func (us *UIService) Plan(c echo.Context) error {
 		taskIDs[i] = task.ID
 	}
 
-	planning, err := us.repo.StartPlanning(ctx, body.Duration, taskIDs)
+	planning, err := us.repo.StartPlanning(ctx, user.ID, body.Duration, taskIDs)
 	if err != nil {
 		return err
 	}
@@ -452,7 +502,14 @@ func (us *UIService) Plan(c echo.Context) error {
 }
 
 func (us *UIService) CurrentPlanning(c echo.Context) error {
-	planning, err := us.repo.CurrentPlanning(c.Request().Context())
+	ctx := c.Request().Context()
+
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	planning, err := us.repo.CurrentPlanning(ctx, user.ID)
 	if err != nil {
 		return err
 	}
@@ -490,7 +547,14 @@ func (us *UIService) CurrentPlanning(c echo.Context) error {
 }
 
 func (us *UIService) DismissPlanning(c echo.Context) error {
-	if err := us.repo.DismissPlanning(c.Request().Context()); err != nil {
+	ctx := c.Request().Context()
+
+	user, err := us.loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	if err := us.repo.DismissPlanning(ctx, user.ID); err != nil {
 		return err
 	}
 
