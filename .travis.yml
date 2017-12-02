@@ -1,0 +1,48 @@
+sudo: required
+language: go
+go:
+  - 1.9.1
+
+services:
+  - docker
+  - mysql
+
+install:
+  # Install mysql 5.7 via docker
+  - docker pull mysql:5.7
+  - |
+    docker run \
+      -d -p 127.0.0.1:3307:3306 \
+      --name mysqld \
+      -e MYSQL_DATABASE=tonight \
+      -e MYSQL_USER=tonight \
+      -e MYSQL_PASSWORD=tonight \
+      -e MYSQL_ROOT_PASSWORD=root \
+      mysql:5.7 \
+      --innodb_log_file_size=256MB \
+      --innodb_buffer_pool_size=512MB \
+      --max_allowed_packet=16MB
+  - cp .travis/docker.cnf ~/.my.cnf
+  - mysql --print-defaults
+
+  # Update dependencies
+  - go get -u -v github.com/kardianos/govendor/...
+  - govendor sync -v
+
+  # Make sure mysql is up before continuing
+  - .travis/wait_mysql.sh
+
+  # Run migrations
+  - git clone https://github.com/mbucc/shmig.git ./mysql/shmig
+  - ./mysql/shmig/shmig -t mysql -H 127.0.0.1 -P 3307 -l tonight -p tonight -d tonight -m ./mysql/migrations up
+
+# Default is `make`
+script:
+  - go test ./... -v
+
+# Build only the master branch. The PRs will still be built
+branches:
+  only:
+    - master
+    # Regex for tags, needed for releases
+    - /^\d+\.\d+(\.\d+)?(-\S*)?$/
