@@ -77,7 +77,7 @@ function watchDoneButtons(identifier) {
 // Mark a task as done when validating the done description
 function watchDoneWithDescription(identifier) {
   $(identifier).on('keyup', '#done_input', function(event) {
-    if (event.keyCode === 13) {
+    if (!event.shiftKey && event.keyCode === 13) {
       event.preventDefault();
       $.post(
         `/ui/tasks/${$(this).data('taskid')}/done?q=${searchQ || ''}`,
