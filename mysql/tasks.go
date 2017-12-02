@@ -482,7 +482,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 
 	// Fetch dependencies
 	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT task_id, dependency_task_id
+		SELECT task_id, dependency_task_id, tasks.done
 		FROM task_dependencies
 		JOIN tasks ON tasks.id = dependency_task_id
 		WHERE task_id IN (%s) AND tasks.deleted = ?
@@ -493,15 +493,19 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 	}
 	defer rows.Close()
 
-	dependencies := make(map[uint][]uint)
+	dependencies := make(map[uint][]tonight.Dependency)
 	for rows.Next() {
 		var taskID uint
 		var dependencyID uint
-		if err := rows.Scan(&taskID, &dependencyID); err != nil {
+		var done bool
+		if err := rows.Scan(&taskID, &dependencyID, &done); err != nil {
 			return nil, err
 		}
 
-		dependencies[taskID] = append(dependencies[taskID], dependencyID)
+		dependencies[taskID] = append(dependencies[taskID], tonight.Dependency{
+			ID:   dependencyID,
+			Done: done,
+		})
 	}
 
 	if err := rows.Close(); err != nil {
@@ -526,18 +530,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 			}
 		}
 
-		tasks[i] = task
-		taskMap[id] = task
-	}
-
-	// Wait for all the tasks to be effectively marked done
-	for i, task := range tasks {
-		for _, dependencyID := range dependencies[task.ID] {
-			task.Dependencies = append(task.Dependencies, tonight.Dependency{
-				ID:   dependencyID,
-				Done: taskMap[dependencyID].Done,
-			})
-		}
+		task.Dependencies = dependencies[task.ID]
 
 		tasks[i] = task
 	}

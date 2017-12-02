@@ -352,7 +352,13 @@ func (us *UIService) MarkDone(c echo.Context) error {
 		return err
 	}
 
-	if err := us.index.Index(ctx, task); err != nil {
+	// relaod the task
+	tasks, err = us.repo.List(c.Request().Context(), []uint{task.ID})
+	if err != nil {
+		return err
+	}
+
+	if err := us.index.Index(ctx, tasks[0]); err != nil {
 		return err
 	}
 
