@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-
 	"github.com/bobinette/tonight"
 )
 
@@ -27,7 +25,7 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 		return errors.New("cannot update a task")
 	}
 
-	row := r.db.QueryRowContext(ctx, "SELECT max(rank) FROM tasks WHERE deleted = ? AND done = ?", false, false)
+	row := r.db.QueryRowContext(ctx, "SELECT max(rank) FROM tasks")
 	var rank uint
 	if err := row.Scan(&rank); err != nil {
 		return err
@@ -38,7 +36,7 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 	res, err := r.db.ExecContext(ctx, `
 		INSERT INTO tasks (title, description, priority, duration, deadline, rank, done, created_at, updated_at)
 		     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, rank, t.Done, now, now)
+	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, rank, false, now, now)
 	if err != nil {
 		return err
 	}
@@ -166,7 +164,7 @@ func (r *TaskRepository) Update(ctx context.Context, t *tonight.Task) error {
 	return nil
 }
 
-func (r *TaskRepository) MarkDone(ctx context.Context, taskID uint, log tonight.Log) error {
+func (r *TaskRepository) Log(ctx context.Context, taskID uint, log tonight.Log) error {
 	now := time.Now()
 	_, err := r.db.ExecContext(
 		ctx,
@@ -211,129 +209,6 @@ func (r *TaskRepository) UpdateRanks(ctx context.Context, ranks map[uint]uint) e
 	return nil
 }
 
-func (r *TaskRepository) StartPlanning(ctx context.Context, userID uint, duration string, taskIDs []uint) (tonight.Planning, error) {
-	now := time.Now()
-	res, err := r.db.ExecContext(ctx, `
-		INSERT INTO planning (user_id, duration, startedAt, dismissed) VALUES (?, ?, ?, ?)
-		`, userID, duration, now, false)
-	if err != nil {
-		return tonight.Planning{}, err
-	}
-
-	planningID, err := res.LastInsertId()
-	if err != nil {
-		return tonight.Planning{}, err
-	}
-
-	for rank, taskID := range taskIDs {
-		_, err := r.db.ExecContext(
-			ctx,
-			"INSERT INTO planning_has_task (planning_id, rank, task_id) VALUE (?, ?, ?)",
-			planningID, rank, taskID,
-		)
-		if err != nil {
-			return tonight.Planning{}, err
-		}
-	}
-
-	tasks, err := r.List(ctx, taskIDs)
-	if err != nil {
-		return tonight.Planning{}, err
-	}
-
-	planning := tonight.Planning{
-		ID: uint(planningID),
-
-		Duration: duration,
-
-		StartedAt: now,
-		Dismissed: false,
-
-		Tasks: tasks,
-	}
-
-	return planning, nil
-}
-
-func (r *TaskRepository) CurrentPlanning(ctx context.Context, userID uint) (tonight.Planning, error) {
-	row := r.db.QueryRowContext(
-		ctx,
-		`SELECT id, duration, startedAt, dismissed FROM planning
-		WHERE user_id = ?
-		ORDER BY startedAt DESC LIMIT 1
-		`, userID,
-	)
-
-	var id uint
-	var duration string
-	var startedAt time.Time
-	var dismissed bool
-	if err := row.Scan(&id, &duration, &startedAt, &dismissed); err != nil {
-		if err == sql.ErrNoRows {
-			return tonight.Planning{}, nil
-		}
-		return tonight.Planning{}, err
-	}
-
-	if dismissed {
-		return tonight.Planning{}, nil
-	}
-
-	planning := tonight.Planning{
-		ID:        id,
-		Duration:  duration,
-		StartedAt: startedAt,
-		Dismissed: dismissed,
-	}
-
-	rows, err := r.db.QueryContext(ctx, "SELECT task_id FROM planning_has_task WHERE planning_id = ?", id)
-	if err != nil {
-		return tonight.Planning{}, err
-	}
-	defer rows.Close()
-
-	taskIDs := make([]uint, 0)
-	for rows.Next() {
-		var id uint
-		if err := rows.Scan(&id); err != nil {
-			return tonight.Planning{}, err
-		}
-
-		taskIDs = append(taskIDs, id)
-	}
-
-	if err := rows.Close(); err != nil {
-		return tonight.Planning{}, err
-	}
-
-	tasks, err := r.List(ctx, taskIDs)
-	if err != nil {
-		return tonight.Planning{}, err
-	}
-
-	planning.Tasks = tasks
-	return planning, nil
-}
-
-func (r *TaskRepository) DismissPlanning(ctx context.Context, userID uint) error {
-	row := r.db.QueryRowContext(
-		ctx,
-		"SELECT id FROM planning WHERE user_id = ? ORDER BY startedAt DESC LIMIT 1",
-		userID,
-	)
-
-	var id uint
-	if err := row.Scan(&id); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return err
-	}
-
-	_, err := r.db.ExecContext(ctx, "UPDATE planning SET dismissed = ? WHERE id = ?", true, id)
-	return err
-}
-
 func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -344,7 +219,7 @@ func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, 
 		params[i] = id
 	}
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, priority, rank, duration, deadline, done, done_at, created_at
+		SELECT id, title, description, priority, rank, duration, deadline, created_at
 		  FROM tasks
 		 WHERE id IN (%s)
 `, join("?", ",", len(ids))), params...)
@@ -382,10 +257,8 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		var rank uint
 		var duration string
 		var deadline *time.Time
-		var done bool
-		var doneAt *time.Time
 		var createdAt time.Time
-		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &done, &doneAt, &createdAt); err != nil {
+		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &createdAt); err != nil {
 			return nil, err
 		}
 
@@ -399,9 +272,6 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 
 			Duration: duration,
 			Deadline: deadline,
-
-			Done:   done,
-			DoneAt: doneAt,
 
 			CreatedAt: createdAt,
 		}
@@ -518,18 +388,6 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		task.Tags = tags[task.ID]
 		task.Log = logs[task.ID]
 
-		for _, log := range task.Log {
-			if log.Completion > task.Completion {
-				task.Completion = log.Completion
-			}
-
-			if task.Completion == 100 {
-				task.Done = true
-				task.DoneAt = &log.CreatedAt
-				break
-			}
-		}
-
 		task.Dependencies = dependencies[task.ID]
 
 		tasks[i] = task
@@ -542,7 +400,7 @@ func (r *TaskRepository) All(ctx context.Context) ([]tonight.Task, error) {
 	rows, err := r.db.QueryContext(
 		ctx,
 		`
-		SELECT id, title, description, priority, rank, duration, deadline, done, done_at, created_at
+		SELECT id, title, description, priority, rank, duration, deadline, created_at
 		  FROM tasks
 		  WHERE deleted = ?
 		`,

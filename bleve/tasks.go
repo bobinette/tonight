@@ -64,12 +64,12 @@ func (s *Index) Index(ctx context.Context, task tonight.Task) error {
 		"title":       task.Title,
 		"description": task.Description,
 		"tags":        task.Tags,
-		"done":        task.Done,
+		"done":        task.Done(),
 		"rank":        task.Rank,
 	}
 
-	if task.DoneAt != nil {
-		data["done_at"] = *task.DoneAt
+	if doneAt := task.DoneAt(); doneAt != nil {
+		data["done_at"] = *doneAt
 	}
 
 	return s.index.Index(fmt.Sprintf("%d", task.ID), data)

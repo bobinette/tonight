@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/labstack/echo"
@@ -66,6 +65,7 @@ func main() {
 
 	taskRepo := mysql.NewTaskRepository(db)
 	userRepo := mysql.NewUserRepository(db)
+	planningRepo := mysql.NewPlanningRepository(db, taskRepo)
 
 	index := &bleve.Index{}
 	if err := index.Open("./bleve/index"); err != nil {
@@ -74,12 +74,6 @@ func main() {
 	defer index.Close()
 
 	jwtKey := []byte("tonight_secret")
-
-	loginService := tonight.LoginService{
-		Key:        jwtKey,
-		Repository: userRepo,
-	}
-	uiService := tonight.NewUIService(taskRepo, index, userRepo)
 
 	// Create server + register routes
 	srv := echo.New()
@@ -95,32 +89,11 @@ func main() {
 	srv.HTTPErrorHandler = tonight.HTTPErrorHandler
 	srv.Use(middleware.Logger())
 
-	// UI routes
-	// -- Home
-	srv.GET("/", func(c echo.Context) error { return c.Redirect(http.StatusPermanentRedirect, "/ui/home") })
-	srv.GET("/home", func(c echo.Context) error { return c.Redirect(http.StatusPermanentRedirect, "/ui/home") })
+	// Login handler
+	tonight.RegisterLoginHandler(srv, jwtKey, userRepo)
 
-	srv.GET("/login", loginService.LoginPage)
-	srv.POST("/login", loginService.Login)
-	srv.POST("/logout", loginService.Logout)
-
-	uiGroup := srv.Group("/ui")
-	uiGroup.Use(tonight.JWTMiddleware(jwtKey))
-
-	uiGroup.GET("/home", uiService.Home)
-
-	// -- Calls serving html to partially update the page
-	uiGroup.GET("/tasks", uiService.Search)
-	uiGroup.POST("/tasks", uiService.CreateTask)
-	uiGroup.POST("/tasks/:id", uiService.Update)
-	uiGroup.POST("/tasks/:id/done", uiService.MarkDone)
-	uiGroup.DELETE("/tasks/:id", uiService.Delete)
-	uiGroup.GET("/done", uiService.DoneTasks)
-	uiGroup.POST("/ranks", uiService.UpdateRanks)
-
-	uiGroup.POST("/plan", uiService.Plan)
-	uiGroup.GET("/plan", uiService.CurrentPlanning)
-	uiGroup.DELETE("/plan", uiService.DismissPlanning)
+	// UI handler
+	tonight.RegisterUIHandler(srv, jwtKey, taskRepo, index, planningRepo, userRepo)
 
 	// Ping
 	srv.GET("/api/ping", tonight.Ping)
