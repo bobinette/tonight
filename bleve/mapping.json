@@ -79,9 +79,11 @@
         "dynamic": false,
         "fields": [
           {
-            "type": "boolean",
+            "type": "text",
+            "analyzer": "keyword",
             "store": true,
             "index": true,
+            "include_term_vectors": true,
             "include_in_all": true
           }
         ],

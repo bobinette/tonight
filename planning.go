@@ -17,7 +17,7 @@ type Planning struct {
 
 func (p Planning) Done() bool {
 	for _, task := range p.Tasks {
-		if !task.Done() {
+		if task.Done() == DoneStatusNotDone {
 			return false
 		}
 	}
@@ -66,7 +66,7 @@ func (ps *planningService) current(ctx context.Context, user User) (Planning, er
 }
 
 func (ps *planningService) plan(ctx context.Context, user User, d time.Duration) (Planning, error) {
-	ids, err := ps.taskIndex.Search(ctx, "", false, user.TaskIDs)
+	ids, err := ps.taskIndex.Search(ctx, "", DoneStatusNotDone, user.TaskIDs)
 	if err != nil {
 		return Planning{}, err
 	}

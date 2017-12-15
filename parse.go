@@ -18,17 +18,27 @@ var (
 	titleDescriptionRegex = regexp.MustCompile(`([^:]*)(?::(.*))?`)
 
 	// Log
-	logKeywordRegex    = regexp.MustCompile(`^(pause|stop|start|resume|done)`)
 	logCompletionRegex = regexp.MustCompile(`^(\d+)%`)
 	logFractionRegex   = regexp.MustCompile(`^(\d+)/([1-9]\d*)`)
 
 	logKeywordMapping = map[string]LogType{
-		"pause":  LogTypePause,
-		"stop":   LogTypePause,
-		"start":  LogTypeStart,
-		"resume": LogTypeStart,
-		"done":   LogTypeCompletion,
+		"pause":    LogTypePause,
+		"stop":     LogTypePause,
+		"start":    LogTypeStart,
+		"resume":   LogTypeStart,
+		"done":     LogTypeCompletion,
+		"won't do": LogTypeWontDo,
 	}
+	logKeywordRegex = func(m map[string]LogType) *regexp.Regexp {
+		keyWords := make([]string, len(m))
+		i := 0
+		for k := range m {
+			keyWords[i] = k
+			i++
+		}
+
+		return regexp.MustCompile(fmt.Sprintf(`^(%s)`, strings.Join(keyWords, "|")))
+	}(logKeywordMapping)
 )
 
 func parse(content string) Task {

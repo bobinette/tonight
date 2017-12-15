@@ -34,9 +34,9 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 
 	now := time.Now()
 	res, err := r.db.ExecContext(ctx, `
-		INSERT INTO tasks (title, description, priority, duration, deadline, rank, done, created_at, updated_at)
-		     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, rank, false, now, now)
+		INSERT INTO tasks (title, description, priority, duration, deadline, rank, created_at, updated_at)
+		     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, rank, now, now)
 	if err != nil {
 		return err
 	}
@@ -174,17 +174,6 @@ func (r *TaskRepository) Log(ctx context.Context, taskID uint, log tonight.Log) 
 	)
 	if err != nil {
 		return err
-	}
-
-	if log.Completion == 100 {
-		_, err := r.db.ExecContext(
-			ctx,
-			"UPDATE tasks SET done = ?, done_at = ?, updated_at = ? WHERE id = ?",
-			true, now, now, taskID,
-		)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -352,7 +341,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 
 	// Fetch dependencies
 	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT task_id, dependency_task_id, tasks.done, tasks.title
+		SELECT task_id, dependency_task_id, tasks.title
 		FROM task_dependencies
 		JOIN tasks ON tasks.id = dependency_task_id
 		WHERE task_id IN (%s) AND tasks.deleted = ?
@@ -364,23 +353,28 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 	defer rows.Close()
 
 	dependencies := make(map[uint][]tonight.Dependency)
+	dependencyIDs := make([]uint, 0)
 	for rows.Next() {
 		var taskID uint
 		var dependencyID uint
-		var done bool
 		var title string
-		if err := rows.Scan(&taskID, &dependencyID, &done, &title); err != nil {
+		if err := rows.Scan(&taskID, &dependencyID, &title); err != nil {
 			return nil, err
 		}
 
 		dependencies[taskID] = append(dependencies[taskID], tonight.Dependency{
 			ID:    dependencyID,
-			Done:  done,
 			Title: title,
 		})
+		dependencyIDs = append(dependencyIDs, dependencyID)
 	}
 
 	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	dependencyLogs, err := r.loadLogs(ctx, dependencyIDs...)
+	if err != nil {
 		return nil, err
 	}
 
@@ -390,12 +384,72 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		task.Tags = tags[task.ID]
 		task.Log = logs[task.ID]
 
-		task.Dependencies = dependencies[task.ID]
+		task.Dependencies = make([]tonight.Dependency, len(dependencies[task.ID]))
+		for i, dep := range dependencies[task.ID] {
+			dep.Done = false
+
+			for _, log := range dependencyLogs[dep.ID] {
+				if log.Completion == 100 {
+					dep.Done = true
+				}
+
+				if log.Type == tonight.LogTypeWontDo {
+					break
+				}
+			}
+
+			task.Dependencies[i] = dep
+		}
 
 		tasks[i] = task
 	}
 
 	return tasks, nil
+}
+
+func (r *TaskRepository) loadLogs(ctx context.Context, taskIDs ...uint) (map[uint][]tonight.Log, error) {
+	if len(taskIDs) == 0 {
+		return nil, nil
+	}
+
+	marks := join("?", ",", len(taskIDs))
+	params := make([]interface{}, len(taskIDs))
+	for i, id := range taskIDs {
+		params[i] = id
+	}
+
+	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT task_id, type, completion, description, created_at
+		FROM task_logs
+		WHERE task_id IN (%s)
+		ORDER BY task_id, created_at DESC
+	`, marks,
+	), params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	logs := make(map[uint][]tonight.Log)
+	for rows.Next() {
+		var taskID uint
+		var logType tonight.LogType
+		var completion int
+		var description string
+		var createdAt time.Time
+		if err := rows.Scan(&taskID, &logType, &completion, &description, &createdAt); err != nil {
+			return nil, err
+		}
+
+		logs[taskID] = append(logs[taskID], tonight.Log{
+			Type:        logType,
+			Completion:  completion,
+			Description: description,
+			CreatedAt:   createdAt,
+		})
+	}
+
+	return logs, nil
 }
 
 func (r *TaskRepository) All(ctx context.Context) ([]tonight.Task, error) {

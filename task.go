@@ -2,7 +2,12 @@ package tonight
 
 import (
 	"context"
+	"errors"
 	"time"
+)
+
+var (
+	ErrTaskNotFound = errors.New("task not found")
 )
 
 type LogType string
@@ -12,6 +17,15 @@ const (
 	LogTypePause              = "PAUSE"
 	LogTypeStart              = "START"
 	LogTypeLog                = "LOG"
+	LogTypeWontDo             = "WONT_DO"
+)
+
+type DoneStatus int
+
+const (
+	DoneStatusNotDone DoneStatus = iota
+	DoneStatusDone
+	DoneStatusWontDo
 )
 
 type Task struct {
@@ -43,13 +57,18 @@ func (t Task) Completion() int {
 	return c
 }
 
-func (t Task) Done() bool {
+func (t Task) Done() DoneStatus {
 	for _, log := range t.Log {
 		if log.Completion == 100 {
-			return true
+			return DoneStatusDone
+		}
+
+		if log.Type == LogTypeWontDo {
+			return DoneStatusWontDo
 		}
 	}
-	return false
+
+	return DoneStatusNotDone
 }
 
 func (t Task) DoneAt() *time.Time {
@@ -88,7 +107,7 @@ type TaskRepository interface {
 }
 
 type TaskIndex interface {
-	Search(ctx context.Context, q string, done bool, allowedIDs []uint) ([]uint, error)
+	Search(ctx context.Context, q string, doneStatus DoneStatus, allowedIDs []uint) ([]uint, error)
 	Index(ctx context.Context, task Task) error
 	Delete(ctx context.Context, taskID uint) error
 }
@@ -100,8 +119,8 @@ type taskService struct {
 	userRepo UserRepository
 }
 
-func (ts *taskService) list(ctx context.Context, user User, q string, done bool) ([]Task, error) {
-	ids, err := ts.index.Search(ctx, q, done, user.TaskIDs)
+func (ts *taskService) list(ctx context.Context, user User, q string, doneStatus DoneStatus) ([]Task, error) {
+	ids, err := ts.index.Search(ctx, q, doneStatus, user.TaskIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +156,10 @@ func (ts *taskService) update(ctx context.Context, taskID uint, input string) (T
 	task.ID = taskID
 
 	if err := ts.repo.Update(ctx, &task); err != nil {
+		return Task{}, err
+	}
+
+	if err := ts.index.Index(ctx, task); err != nil {
 		return Task{}, err
 	}
 
@@ -180,6 +203,8 @@ func (ts *taskService) log(ctx context.Context, taskID uint, input string) (Task
 	tasks, err := ts.repo.List(ctx, []uint{taskID})
 	if err != nil {
 		return Task{}, err
+	} else if len(tasks) == 0 {
+		return Task{}, ErrTaskNotFound
 	}
 
 	// Ensure completion does not go down
@@ -194,7 +219,13 @@ func (ts *taskService) log(ctx context.Context, taskID uint, input string) (Task
 		return Task{}, err
 	}
 
-	task.Log = append(task.Log, log)
+	tasks, err = ts.repo.List(ctx, []uint{taskID})
+	if err != nil {
+		return Task{}, err
+	}
+
+	// Ensure completion does not go down
+	task = tasks[0]
 	if err := ts.index.Index(ctx, task); err != nil {
 		return Task{}, err
 	}
