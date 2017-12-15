@@ -88,6 +88,7 @@ func main() {
 
 	srv.HTTPErrorHandler = tonight.HTTPErrorHandler
 	srv.Use(middleware.Logger())
+	srv.Use(middleware.Recover())
 
 	// Login handler
 	tonight.RegisterLoginHandler(srv, jwtKey, userRepo)

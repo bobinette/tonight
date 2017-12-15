@@ -1,7 +1,7 @@
 <ul class="list-group Tasks">
   {{ $out := . }}
   {{- range .Tasks}}
-  <li class="list-group-item flex-column align-items-start Task {{ if not .Done }}TaskPending{{ end }}" data-taskid="{{ .ID }}">
+  <li class="list-group-item flex-column align-items-start Task {{ if not .Done }}TaskPending{{ end }}" data-taskid="{{ .ID }}" data-taskrank="{{ .Rank }}">
     <div id="task_content_{{ .ID }}" class="w-100 TaskContent">
       <div class="w-100 TaskHeader">
         <h6 class="TaskTitle" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="id: {{ .ID }}" data-placement="left" >
@@ -12,9 +12,7 @@
           <button class="btn btn-link fa fa-pencil TaskEdit" data-taskid="{{ .ID }}"></button>
           <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
           <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>
-          {{- if $out.Sortable }}
-            <i class="fa fa-bars TaskDrag"></i>
-          {{- end }}
+          <i class="fa fa-bars TaskDrag"></i>
         {{ else }}
           <small class="text-muted Date" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="{{ formatDateTime .DoneAt }}">Done {{ formatDateRelative .DoneAt }}</small>
         {{- end }}

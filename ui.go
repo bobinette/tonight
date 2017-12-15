@@ -35,6 +35,7 @@ func RegisterUIHandler(
 			taskRepo:  repo,
 			taskIndex: index,
 		},
+		userRepository: userRepo,
 	}
 
 	e.GET("/", func(c echo.Context) error { return c.Redirect(http.StatusPermanentRedirect, "/ui/home") })
@@ -144,6 +145,10 @@ func (us *uiHandler) create(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	if _, err := us.taskService.create(ctx, user, body.Content); err != nil {
+		return err
+	}
+
+	if _, err := reloadUser(c, us.userRepository); err != nil {
 		return err
 	}
 

@@ -12,6 +12,10 @@ type taskDuration struct {
 }
 
 func plan(tasks []Task, d time.Duration) ([]Task, time.Duration) {
+	if len(tasks) == 0 {
+		return nil, 0
+	}
+
 	durations := make([]taskDuration, 0, len(tasks))
 	taskMapping := make(map[uint]Task)
 	for _, task := range tasks {
@@ -41,9 +45,15 @@ func plan(tasks []Task, d time.Duration) ([]Task, time.Duration) {
 	}
 
 	sort.Stable(taskSorter(durations))
+
 	var cumDur time.Duration = 0
+	quickestTask := durations[0] // will be used if the planning is empty
 	planned := make([]Task, 0)
 	for _, task := range durations {
+		if task.Duration < quickestTask.Duration {
+			quickestTask = task
+		}
+
 		if cumDur+task.Duration > d {
 			continue
 		}
@@ -52,7 +62,12 @@ func plan(tasks []Task, d time.Duration) ([]Task, time.Duration) {
 		cumDur += task.Duration
 	}
 
-	return planned, cumDur
+	if len(planned) > 0 {
+		return planned, cumDur
+	}
+
+	// No task could fit, we select the quickest one
+	return []Task{taskMapping[quickestTask.ID]}, quickestTask.Duration
 }
 
 type taskSorter []taskDuration

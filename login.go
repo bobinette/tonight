@@ -59,7 +59,7 @@ func (h *loginHandler) login(c echo.Context) error {
 	c.SetCookie(&http.Cookie{
 		Name:    "access_token",
 		Value:   accessToken,
-		Expires: time.Now().Add(24 * time.Hour),
+		Expires: time.Now().Add(60 * 24 * time.Hour),
 	})
 
 	return c.NoContent(http.StatusNoContent)

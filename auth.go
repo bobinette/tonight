@@ -62,6 +62,21 @@ func loadUser(c echo.Context) (User, error) {
 	return user, nil
 }
 
+func reloadUser(c echo.Context, userRepository UserRepository) (User, error) {
+	user, ok := c.Get("user").(User)
+	if !ok {
+		return User{}, ErrMissingUser
+	}
+
+	user, err := userRepository.Get(c.Request().Context(), user.ID)
+	if err != nil {
+		return User{}, err
+	}
+
+	c.Set("user", user)
+	return user, nil
+}
+
 func checkPermission(c echo.Context, taskID uint) error {
 	user, err := loadUser(c)
 	if err != nil {
