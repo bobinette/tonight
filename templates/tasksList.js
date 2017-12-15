@@ -104,6 +104,12 @@ function watchDoneWithDescription(identifier) {
           $('#tasks_list ul').sortable('disable');
           $('#tasks_list').html(data);
 
+          if ($('#tasks_list').find('li').length > 0) {
+            $('#new_task_input').addClass('HasTasks');
+          } else {
+            $('#new_task_input').removeClass('HasTasks');
+          }
+
           makeSortable();
           updateDoneTasks();
           refreshPlanning();
@@ -160,6 +166,12 @@ function watchEditFinished() {
         function(data) {
           $('#tasks_list ul').sortable('disable');
           $('#tasks_list').html(data);
+
+          if ($('#tasks_list').find('li').length > 0) {
+            $('#new_task_input').addClass('HasTasks');
+          } else {
+            $('#new_task_input').removeClass('HasTasks');
+          }
 
           $('#edit_input').remove();
           $('#edit_input_help').remove();

@@ -36,6 +36,12 @@ function makeSortable() {
         $('#tasks_list ul').sortable('disable');
         $('#tasks_list').html(data);
 
+        if ($('#tasks_list').find('li').length > 0) {
+          $('#new_task_input').addClass('HasTasks');
+        } else {
+          $('#new_task_input').removeClass('HasTasks');
+        }
+
         $(function() {
           $('[data-toggle="tooltip"]').tooltip();
         });

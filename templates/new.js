@@ -7,7 +7,7 @@ $.fn.invisible = function() {
 };
 
 function watchNewTaskInput(identifer) {
-  $(identifer).on('keyup', function(event) {
+  $(document).on('keyup', '#new_task_input', function(event) {
     if (event.keyCode === 13) {
       event.preventDefault();
 
@@ -16,6 +16,12 @@ function watchNewTaskInput(identifer) {
           $('#new_task_input').val('');
           $('#tasks_list ul').sortable('disable');
           $('#tasks_list').html(data);
+
+          if ($('#tasks_list').find('li').length > 0) {
+            $('#new_task_input').addClass('HasTasks');
+          } else {
+            $('#new_task_input').removeClass('HasTasks');
+          }
 
           makeSortable();
 
@@ -57,6 +63,13 @@ function watchAddTaskInput() {
       ) {
         $('#tasks_list ul').sortable('disable');
         $('#tasks_list').html(data);
+
+        if ($('#tasks_list').find('li').length > 0) {
+          $('#new_task_input').addClass('HasTasks');
+        } else {
+          $('#new_task_input').removeClass('HasTasks');
+        }
+
         makeSortable();
 
         $('#add_task_input_textarea').val('');
@@ -99,7 +112,7 @@ $(document).ready(function() {
   autosize($('#add_task_input_textarea'));
   autosize($('#new_task_input'));
 
-  watchNewTaskInput('#new_task_input');
+  watchNewTaskInput();
 
   watchAddTaskButton();
   watchClickOutsideAddTaskButton();

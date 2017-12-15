@@ -143,10 +143,6 @@ ul.Tasks {
     /*font-size: 0.8rem;*/
 }
 
-#new_task_input {
-    border-top: none;
-}
-
 .Task .progress {
     margin-top: 0.3rem;
     margin-right: 0.3rem;
@@ -157,17 +153,14 @@ ul.Tasks {
     height: 0.3rem;
 }
 
-/*
-#new_task_input.list-group-item.NewTaskInputTop {
-    border-top-left-radius: 0.25rem;
-    border-top-right-radius: 0.25rem;
+#new_task_input.list-group-item.HasTasks {
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
 }
-*/
 
 #new_task_input.list-group-item {
-    border-radius: 0;
-    border-bottom-left-radius: 0.25rem;
-    border-bottom-right-radius: 0.25rem;
+    border-radius: 0.25rem;
 }
 
 #new_task_input:focus {

@@ -11,6 +11,12 @@ function watchSearchInput() {
         $('#tasks_list').html(data);
         makeSortable();
 
+        if ($('#tasks_list').find('li').length > 0) {
+          $('#new_task_input').addClass('HasTasks');
+        } else {
+          $('#new_task_input').removeClass('HasTasks');
+        }
+
         $(function() {
           $('[data-toggle="tooltip"]').tooltip();
         });
