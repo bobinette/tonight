@@ -94,9 +94,15 @@ ul.Tasks {
 
 .Task .btn.fa {
     padding: 0;
+    color: #999;
 }
 
 .Task .btn.fa:hover {
+    text-decoration: none;
+    color: #292b2c;
+}
+
+.Task .btn.fa:focus {
     text-decoration: none;
 }
 
@@ -205,6 +211,12 @@ ul.Tasks {
 
 .TaskLog {
     display: none;
+}
+
+.TaskDependenciesList {
+    display: none;
+    list-style: none;
+    padding-left: 1rem;
 }
 
 /*

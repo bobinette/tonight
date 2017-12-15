@@ -2,6 +2,7 @@
   {{ $out := . }}
   {{- range .Tasks}}
   <li class="list-group-item flex-column align-items-start Task {{ if not .Done }}TaskPending{{ end }}" data-taskid="{{ .ID }}" data-taskrank="{{ .Rank }}">
+    <a id="task_{{ .ID }}" ></a>
     <div id="task_content_{{ .ID }}" class="w-100 TaskContent">
       <div class="w-100 TaskHeader">
         <h6 class="TaskTitle" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="id: {{ .ID }}" data-placement="left" >
@@ -42,7 +43,8 @@
           {{- if .Dependencies }}
             <div>
               {{ formatDependencies .Dependencies }}
-              <i class="fa fa-check-square-o"></i>
+              <button class="btn btn-link fa fa-check-square-o TaskDependenciesButton">
+              </button>
             </div>
           {{- end }}
         </div>
@@ -57,6 +59,20 @@
           </div>
           {{ template "timeline.tmpl" .Log }}
         </div>
+      {{- end }}
+      {{- if .Dependencies }}
+        <ul class="TaskDependenciesList">
+        {{- range .Dependencies }}
+          <li>
+            {{- if .Done }}
+              <i class="fa fa-check-square-o"></i>
+            {{- else}}
+              <i class="fa fa-square-o"></i>
+            {{- end}}
+            <a href="#task_{{ .ID }}">{{ .Title }}</a>
+         </li>
+        {{- end }}
+        </ul>
       {{- end }}
       <div class="w-100 TaskDoneInputPlaceholder"></div>
     </div>

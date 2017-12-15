@@ -71,8 +71,9 @@ type Log struct {
 }
 
 type Dependency struct {
-	ID   uint
-	Done bool
+	ID    uint
+	Done  bool
+	Title string
 }
 
 type TaskRepository interface {

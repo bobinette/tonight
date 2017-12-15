@@ -4,15 +4,19 @@
 // how the task was done
 function watchClickOnTasks(identifier) {
   $(identifier).on('click', '.TaskPending', function(event) {
-    event.preventDefault();
-
-    if ($(event.target).closest('.TaskDelete, .TaskDone, .TaskEdit, #edit_input, .TaskProgress').length !== 0) {
+    if (
+      $(event.target).closest(
+        'a, .TaskDelete, .TaskDone, .TaskEdit, #edit_input, .TaskProgress, .TaskDependenciesButton',
+      ).length !== 0
+    ) {
       return;
     }
 
     if ($(this).find('#done_input').length) {
       return;
     }
+
+    event.preventDefault();
 
     // Check if it is somewhere else
     if ($('#done_input').length) {
@@ -50,6 +54,7 @@ function watchClickOutsideTask() {
       }
 
       $('.TaskLog').hide();
+      $('.TaskDependenciesList').hide();
     }
   });
 }
@@ -175,6 +180,20 @@ function watchProgressBarClick() {
   });
 }
 
+function watchClickOnDependenciesButton() {
+  $(document).on('click', '.TaskDependenciesButton', function(event) {
+    event.preventDefault();
+
+    const task = $(this).closest('.Task');
+    const dependencies = task.find('.TaskDependenciesList');
+    if (dependencies.is(':visible')) {
+      dependencies.hide();
+    } else {
+      dependencies.show();
+    }
+  });
+}
+
 $(document).ready(function() {
   watchEdit();
   watchDoneButtons(document);
@@ -183,6 +202,7 @@ $(document).ready(function() {
   watchClickOutsideTask();
   watchEditFinished();
   watchProgressBarClick();
+  watchClickOnDependenciesButton();
 
   $(function() {
     $('[data-toggle="tooltip"]').tooltip();

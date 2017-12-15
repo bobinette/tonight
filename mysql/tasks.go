@@ -352,7 +352,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 
 	// Fetch dependencies
 	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT task_id, dependency_task_id, tasks.done
+		SELECT task_id, dependency_task_id, tasks.done, tasks.title
 		FROM task_dependencies
 		JOIN tasks ON tasks.id = dependency_task_id
 		WHERE task_id IN (%s) AND tasks.deleted = ?
@@ -368,13 +368,15 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		var taskID uint
 		var dependencyID uint
 		var done bool
-		if err := rows.Scan(&taskID, &dependencyID, &done); err != nil {
+		var title string
+		if err := rows.Scan(&taskID, &dependencyID, &done, &title); err != nil {
 			return nil, err
 		}
 
 		dependencies[taskID] = append(dependencies[taskID], tonight.Dependency{
-			ID:   dependencyID,
-			Done: done,
+			ID:    dependencyID,
+			Done:  done,
+			Title: title,
 		})
 	}
 
