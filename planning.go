@@ -66,7 +66,11 @@ func (ps *planningService) current(ctx context.Context, user User) (Planning, er
 }
 
 func (ps *planningService) plan(ctx context.Context, user User, d time.Duration) (Planning, error) {
-	ids, err := ps.taskIndex.Search(ctx, "", DoneStatusNotDone, user.TaskIDs)
+	ids, err := ps.taskIndex.Search(ctx, TaskSearchParameters{
+		Q:        "",
+		Statuses: []DoneStatus{DoneStatusNotDone},
+		IDs:      user.TaskIDs,
+	})
 	if err != nil {
 		return Planning{}, err
 	}

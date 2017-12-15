@@ -9,13 +9,15 @@
           {{ .Title }}
           <span class="TaskPriority">{{ formatPriority .Priority }}</span>
         </h6>
-        {{- if not .Done }}
+        {{- if eq .Done 0 }}
           <button class="btn btn-link fa fa-pencil TaskEdit" data-taskid="{{ .ID }}"></button>
           <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
           <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>
           <i class="fa fa-bars TaskDrag"></i>
-        {{ else }}
+        {{- else if eq .Done 1 }}
           <small class="text-muted Date" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="{{ formatDateTime .DoneAt }}">Done {{ formatDateRelative .DoneAt }}</small>
+        {{- else if eq .Done 2 }}
+          <span class="badge badge-pill badge-warning">won't do</span>
         {{- end }}
       </div>
       <div class="w-100 TaskDescription">{{ formatMarkDown .Description }}</div>

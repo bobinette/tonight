@@ -331,3 +331,7 @@ ul.Tasks {
 .timeline .timeline-node.timeline-node-done {
     background: #5cb85c;
 }
+
+.timeline .timeline-node.timeline-node-wont-do {
+    background: #f0ad4e;
+}

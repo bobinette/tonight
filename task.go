@@ -73,7 +73,7 @@ func (t Task) Done() DoneStatus {
 
 func (t Task) DoneAt() *time.Time {
 	for _, log := range t.Log {
-		if log.Completion == 100 {
+		if log.Completion == 100 || log.Type == LogTypeWontDo {
 			doneAt := log.CreatedAt
 			return &doneAt
 		}
@@ -106,8 +106,14 @@ type TaskRepository interface {
 	Delete(ctx context.Context, taskID uint) error
 }
 
+type TaskSearchParameters struct {
+	IDs      []uint
+	Q        string
+	Statuses []DoneStatus
+}
+
 type TaskIndex interface {
-	Search(ctx context.Context, q string, doneStatus DoneStatus, allowedIDs []uint) ([]uint, error)
+	Search(ctx context.Context, p TaskSearchParameters) ([]uint, error)
 	Index(ctx context.Context, task Task) error
 	Delete(ctx context.Context, taskID uint) error
 }
@@ -119,8 +125,12 @@ type taskService struct {
 	userRepo UserRepository
 }
 
-func (ts *taskService) list(ctx context.Context, user User, q string, doneStatus DoneStatus) ([]Task, error) {
-	ids, err := ts.index.Search(ctx, q, doneStatus, user.TaskIDs)
+func (ts *taskService) list(ctx context.Context, user User, q string, doneStatuses []DoneStatus) ([]Task, error) {
+	ids, err := ts.index.Search(ctx, TaskSearchParameters{
+		Q:        q,
+		Statuses: doneStatuses,
+		IDs:      user.TaskIDs,
+	})
 	if err != nil {
 		return nil, err
 	}

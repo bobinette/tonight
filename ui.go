@@ -80,7 +80,7 @@ func (h *uiHandler) home(c echo.Context) error {
 		return err
 	}
 
-	tasks, err := h.taskService.list(ctx, user, q, DoneStatusNotDone)
+	tasks, err := h.taskService.list(ctx, user, q, []DoneStatus{DoneStatusNotDone})
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (us *uiHandler) search(c echo.Context) error {
 		return err
 	}
 
-	tasks, err := us.taskService.list(ctx, user, q, DoneStatusNotDone)
+	tasks, err := us.taskService.list(ctx, user, q, []DoneStatus{DoneStatusNotDone})
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func (us *uiHandler) listDone(c echo.Context) error {
 		return err
 	}
 
-	tasks, err := us.taskService.list(ctx, user, "", DoneStatusDone)
+	tasks, err := us.taskService.list(ctx, user, "", []DoneStatus{DoneStatusDone, DoneStatusWontDo})
 	if err != nil {
 		return err
 	}

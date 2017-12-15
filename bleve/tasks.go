@@ -79,7 +79,7 @@ func (s *Index) Delete(ctx context.Context, id uint) error {
 	return s.index.Delete(fmt.Sprintf("%d", id))
 }
 
-func (s *Index) Search(ctx context.Context, q string, doneStatus tonight.DoneStatus, allowedIDs []uint) ([]uint, error) {
+func (s *Index) Search(ctx context.Context, p tonight.TaskSearchParameters) ([]uint, error) {
 	total := 100 // Default...
 	if sr, err := s.index.Search(bleve.NewSearchRequest(query.NewMatchAllQuery())); err != nil {
 		return nil, err
@@ -90,18 +90,18 @@ func (s *Index) Search(ctx context.Context, q string, doneStatus tonight.DoneSta
 	query := andQ(
 		query.NewMatchAllQuery(),
 		orQ(
-			match(q, "title"),
-			match(q, "description"),
-			searchTags(q),
+			match(p.Q, "title"),
+			match(p.Q, "description"),
+			searchTags(p.Q),
 		),
-		searchDoneStatus(doneStatus),
-		searchIDs(allowedIDs),
+		searchDoneStatuses(p.Statuses),
+		searchIDs(p.IDs),
 	)
 
 	searchRequest := bleve.NewSearchRequest(query)
 	searchRequest.Size = total
 	searchRequest.SortBy([]string{"rank"})
-	if doneStatus == tonight.DoneStatusDone {
+	if len(p.Statuses) != 1 {
 		searchRequest.SortBy([]string{"-done_at"})
 	}
 
@@ -189,10 +189,18 @@ func searchTags(s string) query.Query {
 	return orQ(qs...)
 }
 
-func searchDoneStatus(doneStatus tonight.DoneStatus) query.Query {
-	query := bleve.NewTermQuery(strconv.Itoa(int(doneStatus)))
-	query.FieldVal = "done"
-	return query
+func searchDoneStatuses(statuses []tonight.DoneStatus) query.Query {
+	if len(statuses) == 0 {
+		return nil
+	}
+
+	qs := make([]query.Query, len(statuses))
+	for i, s := range statuses {
+		query := bleve.NewTermQuery(strconv.Itoa(int(s)))
+		query.FieldVal = "done"
+		qs[i] = query
+	}
+	return orQ(qs...)
 }
 
 func searchIDs(ids []uint) query.Query {
