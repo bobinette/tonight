@@ -26,9 +26,13 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 	}
 
 	row := r.db.QueryRowContext(ctx, "SELECT max(rank) FROM tasks")
-	var rank uint
-	if err := row.Scan(&rank); err != nil {
+	var rankp *uint
+	if err := row.Scan(&rankp); err != nil {
 		return err
+	}
+	rank := uint(0)
+	if rankp != nil {
+		rank = *rankp
 	}
 	rank++
 
@@ -89,6 +93,7 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 
 	t.ID = taskID
 	t.Rank = rank
+	t.CreatedAt = now.Round(time.Second)
 	return nil
 }
 
@@ -217,6 +222,7 @@ func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, 
 		SELECT id, title, description, priority, rank, duration, deadline, created_at
 		  FROM tasks
 		 WHERE id IN (%s)
+		   AND deleted = 0
 `, join("?", ",", len(ids))), params...)
 	if err != nil {
 		return nil, err

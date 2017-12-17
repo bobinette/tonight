@@ -27,13 +27,7 @@ func (p Planning) Done() bool {
 func (p Planning) TotalDuration() time.Duration {
 	var totalDuration time.Duration = 0
 	for _, task := range p.Tasks {
-		if dur, err := time.ParseDuration(task.Duration); err == nil {
-			totalDuration += dur
-		} else {
-			// By default use 1h for tasks without duration
-			// (Yes, it is totally arbitrary)
-			totalDuration += 1 * time.Hour
-		}
+		totalDuration += task.LeftDuration()
 	}
 
 	return totalDuration

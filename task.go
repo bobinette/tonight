@@ -47,6 +47,15 @@ type Task struct {
 	CreatedAt time.Time
 }
 
+func (t Task) LeftDuration() time.Duration {
+	d, err := time.ParseDuration(t.Duration)
+	if err != nil {
+		d = time.Hour
+	}
+
+	return time.Duration(100-t.Completion()) * d / time.Duration(100)
+}
+
 func (t Task) Completion() int {
 	c := 0
 	for _, log := range t.Log {

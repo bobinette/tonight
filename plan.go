@@ -1,6 +1,7 @@
 package tonight
 
 import (
+	"fmt"
 	"sort"
 	"time"
 )
@@ -30,15 +31,10 @@ func plan(tasks []Task, d time.Duration) ([]Task, time.Duration) {
 			continue
 		}
 
-		td, err := time.ParseDuration(task.Duration)
-		if err != nil {
-			td = 1 * time.Hour
-		}
-
 		durations = append(durations, taskDuration{
 			ID:       task.ID,
 			Priority: task.Priority,
-			Duration: td,
+			Duration: task.LeftDuration(),
 		})
 
 		taskMapping[task.ID] = task

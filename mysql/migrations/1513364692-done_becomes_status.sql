@@ -5,7 +5,9 @@
 BEGIN;
 
 ALTER TABLE `tasks`
-    DROP COLUMN `done`;
+    DROP COLUMN `done`,
+    DROP COLUMN `done_at`,
+    DROP COLUMN `done_description`;
 
 COMMIT;
 
@@ -14,6 +16,8 @@ COMMIT;
 BEGIN;
 
 ALTER TABLE `tasks`
-    ADD COLUMN `done` BOOLEAN NOT NULL AFTER `rank`;
+    ADD COLUMN `done` BOOLEAN NOT NULL AFTER `rank`,
+    ADD COLUMN `done_description` TEXT DEFAULT NULL AFTER `done`,
+    ADD COLUMN `done_at` DATETIME(6) DEFAULT NULL AFTER `done_description`;
 
 COMMIT;
