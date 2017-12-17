@@ -161,6 +161,12 @@ func (r *TaskRepository) Update(ctx context.Context, t *tonight.Task) error {
 		}
 	}
 
+	tasks, err := r.List(ctx, []uint{t.ID})
+	if err != nil {
+		return err
+	}
+	*t = tasks[0]
+
 	return nil
 }
 
