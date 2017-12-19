@@ -13,7 +13,7 @@ var (
 	priorityRegex         = regexp.MustCompile(`^(!*)`)
 	dependenciesRegex     = regexp.MustCompile(`needs:((?:\d+,?)+)`)
 	tagsRegex             = regexp.MustCompile(`\B\#(\w+\b)`)
-	durationRegex         = regexp.MustCompile(`\B~([0-9hms]+)`)
+	durationRegex         = regexp.MustCompile(`\B~([0-9a-zA-Z]+)`) // a-zA-Z to have a meaningful error message
 	deadlineRegex         = regexp.MustCompile(`\B>(\d{4}-\d{1,2}-\d{1,2})`)
 	titleDescriptionRegex = regexp.MustCompile(`([^:]*)(?::(.*))?`)
 
@@ -41,7 +41,7 @@ var (
 	}(logKeywordMapping)
 )
 
-func parse(content string) Task {
+func parse(content string) (Task, error) {
 	task := Task{}
 
 	parseFunctions := []func(s string) string{
@@ -128,7 +128,14 @@ func parse(content string) Task {
 	task.Title = strings.Trim(task.Title, " ")
 	task.Description = strings.Trim(task.Description, " ")
 
-	return task
+	if task.Duration != "" {
+		_, err := time.ParseDuration(task.Duration)
+		if err != nil {
+			return Task{}, err
+		}
+	}
+
+	return task, nil
 }
 
 func formatRaw(t Task) string {

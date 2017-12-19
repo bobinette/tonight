@@ -153,7 +153,10 @@ func (ts *taskService) list(ctx context.Context, user User, q string, doneStatus
 }
 
 func (ts *taskService) create(ctx context.Context, user User, input string) (Task, error) {
-	task := parse(input)
+	task, err := parse(input)
+	if err != nil {
+		return Task{}, err
+	}
 
 	if err := ts.repo.Create(ctx, &task); err != nil {
 		return Task{}, err
@@ -171,7 +174,10 @@ func (ts *taskService) create(ctx context.Context, user User, input string) (Tas
 }
 
 func (ts *taskService) update(ctx context.Context, taskID uint, input string) (Task, error) {
-	task := parse(input)
+	task, err := parse(input)
+	if err != nil {
+		return Task{}, err
+	}
 	task.ID = taskID
 
 	if err := ts.repo.Update(ctx, &task); err != nil {
