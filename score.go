@@ -7,6 +7,13 @@ import (
 
 // score gives a score to task to be used when ranking for planning.
 func score(task Task) float64 {
+	// Minimum score for tasks with undone dependencies
+	for _, dep := range task.Dependencies {
+		if !dep.Done {
+			return 0
+		}
+	}
+
 	// Start by using the priority of the task
 	s := float64(task.Priority)
 
