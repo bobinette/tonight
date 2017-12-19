@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo"
@@ -294,7 +295,14 @@ func (us *uiHandler) plan(c echo.Context) error {
 		return err
 	}
 
-	d, err := time.ParseDuration(body.Duration)
+	dur := body.Duration
+	strict := false
+	if strings.HasPrefix(dur, "!") {
+		dur = dur[1:]
+		strict = true
+	}
+
+	d, err := time.ParseDuration(dur)
 	if err != nil {
 		return err
 	}
@@ -306,7 +314,7 @@ func (us *uiHandler) plan(c echo.Context) error {
 		return err
 	}
 
-	planning, err := us.planningService.plan(ctx, user, d)
+	planning, err := us.planningService.plan(ctx, user, d, strict)
 	if err != nil {
 		return err
 	}

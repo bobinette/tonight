@@ -59,7 +59,7 @@ func (ps *planningService) current(ctx context.Context, user User) (Planning, er
 	return planning, nil
 }
 
-func (ps *planningService) plan(ctx context.Context, user User, d time.Duration) (Planning, error) {
+func (ps *planningService) plan(ctx context.Context, user User, d time.Duration, strict bool) (Planning, error) {
 	ids, err := ps.taskIndex.Search(ctx, TaskSearchParameters{
 		Q:        "",
 		Statuses: []DoneStatus{DoneStatusNotDone},
@@ -74,7 +74,7 @@ func (ps *planningService) plan(ctx context.Context, user User, d time.Duration)
 		return Planning{}, err
 	}
 
-	planned, _ := plan(tasks, d)
+	planned := plan(tasks, d, strict)
 
 	taskIDs := make([]uint, len(planned))
 	for i, task := range planned {
