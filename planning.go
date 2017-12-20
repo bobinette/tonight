@@ -8,7 +8,9 @@ import (
 type Planning struct {
 	ID uint
 
-	Duration  time.Duration
+	Duration time.Duration
+	Strict   bool
+
 	Dismissed bool
 	StartedAt time.Time
 
@@ -35,7 +37,8 @@ func (p Planning) TotalDuration() time.Duration {
 
 type PlanningRepository interface {
 	Get(ctx context.Context, userID uint) (Planning, error)
-	Create(ctx context.Context, userID uint, duration string, taskIDs []uint) (Planning, error)
+	Create(ctx context.Context, userID uint, planning *Planning) error
+	Update(ctx context.Context, userID uint, planning *Planning) error
 	Dismiss(ctx context.Context, userID uint) error
 }
 
@@ -76,17 +79,57 @@ func (ps *planningService) plan(ctx context.Context, user User, d time.Duration,
 
 	planned := plan(tasks, d, strict)
 
-	taskIDs := make([]uint, len(planned))
-	for i, task := range planned {
-		taskIDs[i] = task.ID
+	planning := Planning{
+		Duration: d,
+		Strict:   strict,
+
+		Tasks:     planned,
+		StartedAt: time.Now(),
 	}
 
-	planning, err := ps.repo.Create(ctx, user.ID, formatDuration(d), taskIDs)
-	if err != nil {
+	if err := ps.repo.Create(ctx, user.ID, &planning); err != nil {
 		return Planning{}, err
 	}
 
 	return planning, err
+}
+
+func (ps *planningService) doLater(ctx context.Context, user User, taskID uint) (Planning, error) {
+	planning, err := ps.current(ctx, user)
+	if err != nil {
+		return Planning{}, err
+	}
+
+	ids, err := ps.taskIndex.Search(ctx, TaskSearchParameters{
+		Q:        "",
+		Statuses: []DoneStatus{DoneStatusNotDone},
+		IDs:      user.TaskIDs,
+	})
+	if err != nil {
+		return Planning{}, err
+	}
+
+	tasks, err := ps.taskRepo.List(ctx, ids)
+	if err != nil {
+		return Planning{}, err
+	}
+
+	planned := make([]Task, 0)
+	for _, task := range planning.Tasks {
+		if task.ID != taskID {
+			planned = append(planned, task)
+		}
+	}
+
+	tasks = planNext(tasks, planning, taskID)
+	planned = append(planned, tasks...)
+	planning.Tasks = planned
+
+	if err := ps.repo.Update(ctx, user.ID, &planning); err != nil {
+		return Planning{}, err
+	}
+
+	return planning, nil
 }
 
 func (ps *planningService) dismiss(ctx context.Context, user User) error {

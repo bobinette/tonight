@@ -58,6 +58,7 @@ func RegisterUIHandler(
 	uiGroup.POST("/ranks", h.updateRanks)
 
 	uiGroup.POST("/plan", h.plan)
+	uiGroup.POST("/plan/later", h.doLater)
 	uiGroup.GET("/plan", h.currentPlanning)
 	uiGroup.DELETE("/plan", h.dismissPlanning)
 }
@@ -315,6 +316,31 @@ func (us *uiHandler) plan(c echo.Context) error {
 	}
 
 	planning, err := us.planningService.plan(ctx, user, d, strict)
+	if err != nil {
+		return err
+	}
+
+	return c.Render(http.StatusOK, "plan", planning)
+}
+
+func (us *uiHandler) doLater(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	var body struct {
+		TaskID uint `json:"taskId"`
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&body); err != nil {
+		return err
+	}
+
+	ctx := c.Request().Context()
+
+	user, err := loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	planning, err := us.planningService.doLater(ctx, user, body.TaskID)
 	if err != nil {
 		return err
 	}

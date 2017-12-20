@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/bobinette/tonight"
@@ -21,50 +22,61 @@ func NewPlanningRepository(db *sql.DB, taskRepo tonight.TaskRepository) *Plannin
 	}
 }
 
-func (pr *PlanningRepository) Create(ctx context.Context, userID uint, duration string, taskIDs []uint) (tonight.Planning, error) {
-	now := time.Now()
+func (pr *PlanningRepository) Create(ctx context.Context, userID uint, planning *tonight.Planning) error {
+	if planning.ID != 0 {
+		return errors.New("cannot update")
+	}
+
 	res, err := pr.db.ExecContext(ctx, `
-        INSERT INTO planning (user_id, duration, startedAt, dismissed) VALUES (?, ?, ?, ?)
-        `, userID, duration, now, false)
+        INSERT INTO planning (user_id, duration, strict, startedAt, dismissed) VALUES (?, ?, ?, ?, ?)
+        `, userID, planning.Duration.String(), planning.Strict, planning.StartedAt, false)
 	if err != nil {
-		return tonight.Planning{}, err
+		return err
 	}
 
-	planningID, err := res.LastInsertId()
+	id, err := res.LastInsertId()
 	if err != nil {
-		return tonight.Planning{}, err
+		return err
 	}
 
-	for rank, taskID := range taskIDs {
+	for rank, task := range planning.Tasks {
 		_, err := pr.db.ExecContext(
 			ctx,
 			"INSERT INTO planning_has_task (planning_id, rank, task_id) VALUE (?, ?, ?)",
-			planningID, rank, taskID,
+			id, rank, task.ID,
 		)
 		if err != nil {
-			return tonight.Planning{}, err
+			return err
 		}
 	}
 
-	tasks, err := pr.taskRepo.List(ctx, taskIDs)
+	planning.ID = uint(id)
+	return nil
+}
+
+func (pr *PlanningRepository) Update(ctx context.Context, userID uint, planning *tonight.Planning) error {
+	if planning.ID == 0 {
+		return errors.New("cannot create")
+	}
+
+	// Only update the tasks: start by deleting everything
+	_, err := pr.db.ExecContext(ctx, "DELETE FROM planning_has_task WHERE planning_id = ?", planning.ID)
 	if err != nil {
-		return tonight.Planning{}, err
+		return err
 	}
 
-	dur, _ := time.ParseDuration(duration)
-
-	planning := tonight.Planning{
-		ID: uint(planningID),
-
-		Duration: dur,
-
-		StartedAt: now,
-		Dismissed: false,
-
-		Tasks: tasks,
+	for rank, task := range planning.Tasks {
+		_, err := pr.db.ExecContext(
+			ctx,
+			"INSERT INTO planning_has_task (planning_id, rank, task_id) VALUE (?, ?, ?)",
+			planning.ID, rank, task.ID,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
-	return planning, nil
+	return nil
 }
 
 func (pr *PlanningRepository) Get(ctx context.Context, userID uint) (tonight.Planning, error) {

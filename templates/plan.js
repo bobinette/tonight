@@ -27,6 +27,21 @@ function watchDismissPlan() {
   });
 }
 
+function watchDoLater() {
+  $(document).on('click', '.PlanningDoLater', function(event) {
+    event.preventDefault();
+
+    const taskId = $(this).data('taskid');
+    $.post('/ui/plan/later', JSON.stringify({ taskId }), function(data) {
+      $('#current_planning').html(data);
+
+      $(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+      });
+    }).fail(handleError);
+  });
+}
+
 function refreshPlanning() {
   $.get('/ui/plan', function(data) {
     $('#current_planning').html(data);
@@ -40,4 +55,5 @@ function refreshPlanning() {
 $(document).ready(function() {
   watchStartPlan();
   watchDismissPlan();
+  watchDoLater();
 });

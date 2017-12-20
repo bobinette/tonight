@@ -6,7 +6,7 @@ function watchClickOnTasks(identifier) {
   $(identifier).on('click', '.TaskPending', function(event) {
     if (
       $(event.target).closest(
-        'a, .TaskDelete, .TaskDone, .TaskEdit, #edit_input, .TaskProgress, .TaskDependenciesButton',
+        'a, .TaskDelete, .TaskDone, .TaskEdit, #edit_input, .TaskProgress, .TaskDependenciesButton, .PlanningDoLater',
       ).length !== 0
     ) {
       return;

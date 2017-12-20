@@ -6,6 +6,7 @@ import (
 )
 
 func plan(tasks []Task, d time.Duration, strict bool) []Task {
+	tasks = filterUndoneDependencies(tasks)
 	if len(tasks) == 0 {
 		return nil
 	}
@@ -26,6 +27,74 @@ func plan(tasks []Task, d time.Duration, strict bool) []Task {
 	}
 
 	return planned
+}
+
+func planNext(tasks []Task, planning Planning, afterID uint) []Task {
+	tasks = filterUndoneDependencies(tasks)
+	if len(tasks) == 0 {
+		return nil
+	}
+
+	sort.Stable(byScore(tasks))
+
+	var cumDur time.Duration
+	planned := make([]Task, 0, len(tasks))
+	isAfter := false
+	for i := 0; cumDur < planning.Duration && i < len(tasks); i++ {
+		task := tasks[i]
+		if task.ID == afterID {
+			isAfter = true
+			continue
+		}
+
+		if isPlanned(task, planning) {
+			cumDur += task.LeftDuration()
+			continue
+		}
+
+		if !isAfter {
+			continue
+		}
+
+		if planning.Strict && cumDur+task.LeftDuration() > planning.Duration {
+			// This task does not fit
+			continue
+		}
+
+		planned = append(planned, task)
+		cumDur += task.LeftDuration()
+	}
+
+	return planned
+}
+
+func isPlanned(task Task, planning Planning) bool {
+	for _, t := range planning.Tasks {
+		if t.ID == task.ID {
+			return true
+		}
+	}
+	return false
+}
+
+func filterUndoneDependencies(tasks []Task) []Task {
+	filtered := make([]Task, 0, len(tasks))
+	for _, task := range tasks {
+		hasUndone := false
+
+		for _, dep := range task.Dependencies {
+			if !dep.Done {
+				hasUndone = true
+				break
+			}
+		}
+
+		if !hasUndone {
+			filtered = append(filtered, task)
+		}
+	}
+
+	return filtered
 }
 
 type byScoreSorter struct {
