@@ -5,64 +5,118 @@ import (
 	"time"
 )
 
-type taskDuration struct {
-	ID       uint
-	Priority int
-	Duration time.Duration
+func plan(tasks []Task, d time.Duration, strict bool) []Task {
+	tasks = filterUndoneDependencies(tasks)
+	if len(tasks) == 0 {
+		return nil
+	}
+
+	sort.Stable(byScore(tasks))
+
+	var cumDur time.Duration
+	planned := make([]Task, 0, len(tasks))
+	for i := 0; cumDur < d && i < len(tasks); i++ {
+		task := tasks[i]
+		if strict && cumDur+task.LeftDuration() > d {
+			// This task does not fit
+			continue
+		}
+
+		planned = append(planned, task)
+		cumDur += task.LeftDuration()
+	}
+
+	return planned
 }
 
-func plan(tasks []Task, d time.Duration) ([]Task, time.Duration) {
-	durations := make([]taskDuration, 0, len(tasks))
-	taskMapping := make(map[uint]Task)
+func planNext(tasks []Task, planning Planning, afterID uint) []Task {
+	tasks = filterUndoneDependencies(tasks)
+	if len(tasks) == 0 {
+		return nil
+	}
+
+	sort.Stable(byScore(tasks))
+
+	var cumDur time.Duration
+	planned := make([]Task, 0, len(tasks))
+	isAfter := false
+	for i := 0; cumDur < planning.Duration && i < len(tasks); i++ {
+		task := tasks[i]
+		if task.ID == afterID {
+			isAfter = true
+			continue
+		}
+
+		if isPlanned(task, planning) {
+			cumDur += task.LeftDuration()
+			continue
+		}
+
+		if !isAfter {
+			continue
+		}
+
+		if planning.Strict && cumDur+task.LeftDuration() > planning.Duration {
+			// This task does not fit
+			continue
+		}
+
+		planned = append(planned, task)
+		cumDur += task.LeftDuration()
+	}
+
+	return planned
+}
+
+func isPlanned(task Task, planning Planning) bool {
+	for _, t := range planning.Tasks {
+		if t.ID == task.ID {
+			return true
+		}
+	}
+	return false
+}
+
+func filterUndoneDependencies(tasks []Task) []Task {
+	filtered := make([]Task, 0, len(tasks))
 	for _, task := range tasks {
-		ready := true
+		hasUndone := false
+
 		for _, dep := range task.Dependencies {
 			if !dep.Done {
-				ready = false
+				hasUndone = true
 				break
 			}
 		}
-		if !ready {
-			continue
+
+		if !hasUndone {
+			filtered = append(filtered, task)
 		}
-
-		td, err := time.ParseDuration(task.Duration)
-		if err != nil {
-			td = 1 * time.Hour
-		}
-
-		durations = append(durations, taskDuration{
-			ID:       task.ID,
-			Priority: task.Priority,
-			Duration: td,
-		})
-
-		taskMapping[task.ID] = task
 	}
 
-	sort.Stable(taskSorter(durations))
-	var cumDur time.Duration = 0
-	planned := make([]Task, 0)
-	for _, task := range durations {
-		if cumDur+task.Duration > d {
-			continue
-		}
-
-		planned = append(planned, taskMapping[task.ID])
-		cumDur += task.Duration
-	}
-
-	return planned, cumDur
+	return filtered
 }
 
-type taskSorter []taskDuration
+type byScoreSorter struct {
+	tasks  []Task
+	scores []float64
+}
 
-func (t taskSorter) Len() int      { return len(t) }
-func (t taskSorter) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
-func (t taskSorter) Less(i, j int) bool {
-	if t[i].Priority != t[j].Priority {
-		return t[i].Priority > t[j].Priority
+func byScore(tasks []Task) *byScoreSorter {
+	scores := make([]float64, len(tasks))
+	for i, task := range tasks {
+		scores[i] = score(task)
 	}
 
-	return t[i].Duration > t[j].Duration
+	return &byScoreSorter{
+		tasks:  tasks,
+		scores: scores,
+	}
 }
+
+func (s *byScoreSorter) Len() int { return len(s.tasks) }
+func (s *byScoreSorter) Swap(i, j int) {
+	s.tasks[i], s.tasks[j] = s.tasks[j], s.tasks[i]
+	s.scores[i], s.scores[j] = s.scores[j], s.scores[i]
+}
+func (s *byScoreSorter) Less(i, j int) bool { return s.scores[i] > s.scores[j] }

@@ -94,9 +94,15 @@ ul.Tasks {
 
 .Task .btn.fa {
     padding: 0;
+    color: #999;
 }
 
 .Task .btn.fa:hover {
+    text-decoration: none;
+    color: #292b2c;
+}
+
+.Task .btn.fa:focus {
     text-decoration: none;
 }
 
@@ -137,10 +143,6 @@ ul.Tasks {
     /*font-size: 0.8rem;*/
 }
 
-#new_task_input {
-    border-top: none;
-}
-
 .Task .progress {
     margin-top: 0.3rem;
     margin-right: 0.3rem;
@@ -151,17 +153,14 @@ ul.Tasks {
     height: 0.3rem;
 }
 
-/*
-#new_task_input.list-group-item.NewTaskInputTop {
-    border-top-left-radius: 0.25rem;
-    border-top-right-radius: 0.25rem;
+#new_task_input.list-group-item.HasTasks {
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
 }
-*/
 
 #new_task_input.list-group-item {
-    border-radius: 0;
-    border-bottom-left-radius: 0.25rem;
-    border-bottom-right-radius: 0.25rem;
+    border-radius: 0.25rem;
 }
 
 #new_task_input:focus {
@@ -207,6 +206,12 @@ ul.Tasks {
     display: none;
 }
 
+.TaskDependenciesList {
+    display: none;
+    list-style: none;
+    padding-left: 1rem;
+}
+
 /*
     Done tasks
 */
@@ -246,6 +251,8 @@ ul.Tasks {
 
 #add_task_input {
     display: none;
+
+    background: white;
 
     border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 0.25rem;
@@ -318,4 +325,8 @@ ul.Tasks {
 
 .timeline .timeline-node.timeline-node-done {
     background: #5cb85c;
+}
+
+.timeline .timeline-node.timeline-node-wont-do {
+    background: #f0ad4e;
 }

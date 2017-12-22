@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-
 	"github.com/bobinette/tonight"
 )
 
@@ -27,18 +25,22 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 		return errors.New("cannot update a task")
 	}
 
-	row := r.db.QueryRowContext(ctx, "SELECT max(rank) FROM tasks WHERE deleted = ? AND done = ?", false, false)
-	var rank uint
-	if err := row.Scan(&rank); err != nil {
+	row := r.db.QueryRowContext(ctx, "SELECT max(rank) FROM tasks")
+	var rankp *uint
+	if err := row.Scan(&rankp); err != nil {
 		return err
+	}
+	rank := uint(0)
+	if rankp != nil {
+		rank = *rankp
 	}
 	rank++
 
 	now := time.Now()
 	res, err := r.db.ExecContext(ctx, `
-		INSERT INTO tasks (title, description, priority, duration, deadline, rank, done, created_at, updated_at)
-		     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, rank, t.Done, now, now)
+		INSERT INTO tasks (title, description, priority, duration, deadline, rank, created_at, updated_at)
+		     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, rank, now, now)
 	if err != nil {
 		return err
 	}
@@ -91,6 +93,7 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 
 	t.ID = taskID
 	t.Rank = rank
+	t.CreatedAt = now.Round(time.Second)
 	return nil
 }
 
@@ -163,10 +166,16 @@ func (r *TaskRepository) Update(ctx context.Context, t *tonight.Task) error {
 		}
 	}
 
+	tasks, err := r.List(ctx, []uint{t.ID})
+	if err != nil {
+		return err
+	}
+	*t = tasks[0]
+
 	return nil
 }
 
-func (r *TaskRepository) MarkDone(ctx context.Context, taskID uint, log tonight.Log) error {
+func (r *TaskRepository) Log(ctx context.Context, taskID uint, log tonight.Log) error {
 	now := time.Now()
 	_, err := r.db.ExecContext(
 		ctx,
@@ -176,17 +185,6 @@ func (r *TaskRepository) MarkDone(ctx context.Context, taskID uint, log tonight.
 	)
 	if err != nil {
 		return err
-	}
-
-	if log.Completion == 100 {
-		_, err := r.db.ExecContext(
-			ctx,
-			"UPDATE tasks SET done = ?, done_at = ?, updated_at = ? WHERE id = ?",
-			true, now, now, taskID,
-		)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -211,129 +209,6 @@ func (r *TaskRepository) UpdateRanks(ctx context.Context, ranks map[uint]uint) e
 	return nil
 }
 
-func (r *TaskRepository) StartPlanning(ctx context.Context, userID uint, duration string, taskIDs []uint) (tonight.Planning, error) {
-	now := time.Now()
-	res, err := r.db.ExecContext(ctx, `
-		INSERT INTO planning (user_id, duration, startedAt, dismissed) VALUES (?, ?, ?, ?)
-		`, userID, duration, now, false)
-	if err != nil {
-		return tonight.Planning{}, err
-	}
-
-	planningID, err := res.LastInsertId()
-	if err != nil {
-		return tonight.Planning{}, err
-	}
-
-	for rank, taskID := range taskIDs {
-		_, err := r.db.ExecContext(
-			ctx,
-			"INSERT INTO planning_has_task (planning_id, rank, task_id) VALUE (?, ?, ?)",
-			planningID, rank, taskID,
-		)
-		if err != nil {
-			return tonight.Planning{}, err
-		}
-	}
-
-	tasks, err := r.List(ctx, taskIDs)
-	if err != nil {
-		return tonight.Planning{}, err
-	}
-
-	planning := tonight.Planning{
-		ID: uint(planningID),
-
-		Duration: duration,
-
-		StartedAt: now,
-		Dismissed: false,
-
-		Tasks: tasks,
-	}
-
-	return planning, nil
-}
-
-func (r *TaskRepository) CurrentPlanning(ctx context.Context, userID uint) (tonight.Planning, error) {
-	row := r.db.QueryRowContext(
-		ctx,
-		`SELECT id, duration, startedAt, dismissed FROM planning
-		WHERE user_id = ?
-		ORDER BY startedAt DESC LIMIT 1
-		`, userID,
-	)
-
-	var id uint
-	var duration string
-	var startedAt time.Time
-	var dismissed bool
-	if err := row.Scan(&id, &duration, &startedAt, &dismissed); err != nil {
-		if err == sql.ErrNoRows {
-			return tonight.Planning{}, nil
-		}
-		return tonight.Planning{}, err
-	}
-
-	if dismissed {
-		return tonight.Planning{}, nil
-	}
-
-	planning := tonight.Planning{
-		ID:        id,
-		Duration:  duration,
-		StartedAt: startedAt,
-		Dismissed: dismissed,
-	}
-
-	rows, err := r.db.QueryContext(ctx, "SELECT task_id FROM planning_has_task WHERE planning_id = ?", id)
-	if err != nil {
-		return tonight.Planning{}, err
-	}
-	defer rows.Close()
-
-	taskIDs := make([]uint, 0)
-	for rows.Next() {
-		var id uint
-		if err := rows.Scan(&id); err != nil {
-			return tonight.Planning{}, err
-		}
-
-		taskIDs = append(taskIDs, id)
-	}
-
-	if err := rows.Close(); err != nil {
-		return tonight.Planning{}, err
-	}
-
-	tasks, err := r.List(ctx, taskIDs)
-	if err != nil {
-		return tonight.Planning{}, err
-	}
-
-	planning.Tasks = tasks
-	return planning, nil
-}
-
-func (r *TaskRepository) DismissPlanning(ctx context.Context, userID uint) error {
-	row := r.db.QueryRowContext(
-		ctx,
-		"SELECT id FROM planning WHERE user_id = ? ORDER BY startedAt DESC LIMIT 1",
-		userID,
-	)
-
-	var id uint
-	if err := row.Scan(&id); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return err
-	}
-
-	_, err := r.db.ExecContext(ctx, "UPDATE planning SET dismissed = ? WHERE id = ?", true, id)
-	return err
-}
-
 func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -344,9 +219,10 @@ func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, 
 		params[i] = id
 	}
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, priority, rank, duration, deadline, done, done_at, created_at
+		SELECT id, title, description, priority, rank, duration, deadline, created_at
 		  FROM tasks
 		 WHERE id IN (%s)
+		   AND deleted = 0
 `, join("?", ",", len(ids))), params...)
 	if err != nil {
 		return nil, err
@@ -382,10 +258,8 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		var rank uint
 		var duration string
 		var deadline *time.Time
-		var done bool
-		var doneAt *time.Time
 		var createdAt time.Time
-		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &done, &doneAt, &createdAt); err != nil {
+		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &createdAt); err != nil {
 			return nil, err
 		}
 
@@ -399,9 +273,6 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 
 			Duration: duration,
 			Deadline: deadline,
-
-			Done:   done,
-			DoneAt: doneAt,
 
 			CreatedAt: createdAt,
 		}
@@ -482,7 +353,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 
 	// Fetch dependencies
 	rows, err = r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT task_id, dependency_task_id
+		SELECT task_id, dependency_task_id, tasks.title
 		FROM task_dependencies
 		JOIN tasks ON tasks.id = dependency_task_id
 		WHERE task_id IN (%s) AND tasks.deleted = ?
@@ -493,18 +364,29 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 	}
 	defer rows.Close()
 
-	dependencies := make(map[uint][]uint)
+	dependencies := make(map[uint][]tonight.Dependency)
+	dependencyIDs := make([]uint, 0)
 	for rows.Next() {
 		var taskID uint
 		var dependencyID uint
-		if err := rows.Scan(&taskID, &dependencyID); err != nil {
+		var title string
+		if err := rows.Scan(&taskID, &dependencyID, &title); err != nil {
 			return nil, err
 		}
 
-		dependencies[taskID] = append(dependencies[taskID], dependencyID)
+		dependencies[taskID] = append(dependencies[taskID], tonight.Dependency{
+			ID:    dependencyID,
+			Title: title,
+		})
+		dependencyIDs = append(dependencyIDs, dependencyID)
 	}
 
 	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	dependencyLogs, err := r.loadLogs(ctx, dependencyIDs...)
+	if err != nil {
 		return nil, err
 	}
 
@@ -514,29 +396,21 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		task.Tags = tags[task.ID]
 		task.Log = logs[task.ID]
 
-		for _, log := range task.Log {
-			if log.Completion > task.Completion {
-				task.Completion = log.Completion
+		task.Dependencies = make([]tonight.Dependency, len(dependencies[task.ID]))
+		for i, dep := range dependencies[task.ID] {
+			dep.Done = false
+
+			for _, log := range dependencyLogs[dep.ID] {
+				if log.Completion == 100 {
+					dep.Done = true
+				}
+
+				if log.Type == tonight.LogTypeWontDo {
+					break
+				}
 			}
 
-			if task.Completion == 100 {
-				task.Done = true
-				task.DoneAt = &log.CreatedAt
-				break
-			}
-		}
-
-		tasks[i] = task
-		taskMap[id] = task
-	}
-
-	// Wait for all the tasks to be effectively marked done
-	for i, task := range tasks {
-		for _, dependencyID := range dependencies[task.ID] {
-			task.Dependencies = append(task.Dependencies, tonight.Dependency{
-				ID:   dependencyID,
-				Done: taskMap[dependencyID].Done,
-			})
+			task.Dependencies[i] = dep
 		}
 
 		tasks[i] = task
@@ -545,11 +419,56 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 	return tasks, nil
 }
 
+func (r *TaskRepository) loadLogs(ctx context.Context, taskIDs ...uint) (map[uint][]tonight.Log, error) {
+	if len(taskIDs) == 0 {
+		return nil, nil
+	}
+
+	marks := join("?", ",", len(taskIDs))
+	params := make([]interface{}, len(taskIDs))
+	for i, id := range taskIDs {
+		params[i] = id
+	}
+
+	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT task_id, type, completion, description, created_at
+		FROM task_logs
+		WHERE task_id IN (%s)
+		ORDER BY task_id, created_at DESC
+	`, marks,
+	), params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	logs := make(map[uint][]tonight.Log)
+	for rows.Next() {
+		var taskID uint
+		var logType tonight.LogType
+		var completion int
+		var description string
+		var createdAt time.Time
+		if err := rows.Scan(&taskID, &logType, &completion, &description, &createdAt); err != nil {
+			return nil, err
+		}
+
+		logs[taskID] = append(logs[taskID], tonight.Log{
+			Type:        logType,
+			Completion:  completion,
+			Description: description,
+			CreatedAt:   createdAt,
+		})
+	}
+
+	return logs, nil
+}
+
 func (r *TaskRepository) All(ctx context.Context) ([]tonight.Task, error) {
 	rows, err := r.db.QueryContext(
 		ctx,
 		`
-		SELECT id, title, description, priority, rank, duration, deadline, done, done_at, created_at
+		SELECT id, title, description, priority, rank, duration, deadline, created_at
 		  FROM tasks
 		  WHERE deleted = ?
 		`,

@@ -4,15 +4,19 @@
 // how the task was done
 function watchClickOnTasks(identifier) {
   $(identifier).on('click', '.TaskPending', function(event) {
-    event.preventDefault();
-
-    if ($(event.target).closest('.TaskDelete, .TaskDone, .TaskEdit, #edit_input, .TaskProgress').length !== 0) {
+    if (
+      $(event.target).closest(
+        'a, .TaskDelete, .TaskDone, .TaskEdit, #edit_input, .TaskProgress, .TaskDependenciesButton, .PlanningDoLater',
+      ).length !== 0
+    ) {
       return;
     }
 
     if ($(this).find('#done_input').length) {
       return;
     }
+
+    event.preventDefault();
 
     // Check if it is somewhere else
     if ($('#done_input').length) {
@@ -50,6 +54,7 @@ function watchClickOutsideTask() {
       }
 
       $('.TaskLog').hide();
+      $('.TaskDependenciesList').hide();
     }
   });
 }
@@ -60,24 +65,37 @@ function watchDoneButtons(identifier) {
   $(identifier).on('click', '.TaskDone', function(event) {
     event.stopPropagation();
 
-    $.post(
-      `/ui/tasks/${$(this).data('taskid')}/done?q=${searchQ || ''}`,
-      JSON.stringify({ description: $('#done_input').val() }),
-      function(data) {
-        $('#tasks_list ul').sortable('disable');
-        $('#tasks_list').html(data);
-        makeSortable();
-        updateDoneTasks();
-        refreshPlanning();
-      },
-    ).fail(handleError);
+    const task = $(this).closest('.Task');
+    if (task.find('#done_input').length) {
+      return;
+    }
+
+    event.preventDefault();
+
+    // Check if it is somewhere else
+    if ($('#done_input').length) {
+      $('#done_input').remove();
+    }
+
+    // Add it where it belongs
+    task.find('.TaskDoneInputPlaceholder').html(`
+      <textarea
+        id="done_input"
+        type="text"
+        class="form-control"
+        placeholder="How did you do that? (enter to mark as done)"
+        data-taskid="${task.data('taskid')}"
+      ></textarea>
+    `);
+    $('#done_input').focus();
+    autosize($('#done_input'));
   });
 }
 
 // Mark a task as done when validating the done description
 function watchDoneWithDescription(identifier) {
   $(identifier).on('keyup', '#done_input', function(event) {
-    if (event.keyCode === 13) {
+    if (!event.shiftKey && event.keyCode === 13) {
       event.preventDefault();
       $.post(
         `/ui/tasks/${$(this).data('taskid')}/done?q=${searchQ || ''}`,
@@ -85,6 +103,12 @@ function watchDoneWithDescription(identifier) {
         function(data) {
           $('#tasks_list ul').sortable('disable');
           $('#tasks_list').html(data);
+
+          if ($('#tasks_list').find('li').length > 0) {
+            $('#new_task_input').addClass('HasTasks');
+          } else {
+            $('#new_task_input').removeClass('HasTasks');
+          }
 
           makeSortable();
           updateDoneTasks();
@@ -143,6 +167,12 @@ function watchEditFinished() {
           $('#tasks_list ul').sortable('disable');
           $('#tasks_list').html(data);
 
+          if ($('#tasks_list').find('li').length > 0) {
+            $('#new_task_input').addClass('HasTasks');
+          } else {
+            $('#new_task_input').removeClass('HasTasks');
+          }
+
           $('#edit_input').remove();
           $('#edit_input_help').remove();
 
@@ -175,6 +205,20 @@ function watchProgressBarClick() {
   });
 }
 
+function watchClickOnDependenciesButton() {
+  $(document).on('click', '.TaskDependenciesButton', function(event) {
+    event.preventDefault();
+
+    const task = $(this).closest('.Task');
+    const dependencies = task.find('.TaskDependenciesList');
+    if (dependencies.is(':visible')) {
+      dependencies.hide();
+    } else {
+      dependencies.show();
+    }
+  });
+}
+
 $(document).ready(function() {
   watchEdit();
   watchDoneButtons(document);
@@ -183,6 +227,7 @@ $(document).ready(function() {
   watchClickOutsideTask();
   watchEditFinished();
   watchProgressBarClick();
+  watchClickOnDependenciesButton();
 
   $(function() {
     $('[data-toggle="tooltip"]').tooltip();

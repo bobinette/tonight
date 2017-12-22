@@ -2,12 +2,6 @@
 <div class="timeline TaskLog">
   <div class="timeline-line"></div>
 
-  <!--
-  <div class="timeline timeline-info text-muted w-100">
-    <em><small>Newest to oldest</small></em>
-  </div>
-  -->
-
   {{- range . }}
   <div class="timeline-content flex">
     {{- if eq .Type "COMPLETION" }}
@@ -27,6 +21,10 @@
     {{- else if eq .Type "PAUSE" }}
       <div class="timeline-node">
         <i class="fa fa-pause"></i>
+      </div>
+    {{- else if eq .Type "WONT_DO" }}
+      <div class="timeline-node timeline-node-wont-do ">
+        <i class="fa fa-times"></i>
       </div>
     {{- end }}
     <div class="flex flex-1">

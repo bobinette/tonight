@@ -13,25 +13,35 @@ var (
 	priorityRegex         = regexp.MustCompile(`^(!*)`)
 	dependenciesRegex     = regexp.MustCompile(`needs:((?:\d+,?)+)`)
 	tagsRegex             = regexp.MustCompile(`\B\#(\w+\b)`)
-	durationRegex         = regexp.MustCompile(`\B~([0-9hms]+)`)
+	durationRegex         = regexp.MustCompile(`\B~([0-9a-zA-Z]+)`) // a-zA-Z to have a meaningful error message
 	deadlineRegex         = regexp.MustCompile(`\B>(\d{4}-\d{1,2}-\d{1,2})`)
 	titleDescriptionRegex = regexp.MustCompile(`([^:]*)(?::(.*))?`)
 
 	// Log
-	logKeywordRegex    = regexp.MustCompile(`^(pause|stop|start|resume|done)`)
 	logCompletionRegex = regexp.MustCompile(`^(\d+)%`)
 	logFractionRegex   = regexp.MustCompile(`^(\d+)/([1-9]\d*)`)
 
 	logKeywordMapping = map[string]LogType{
-		"pause":  LogTypePause,
-		"stop":   LogTypePause,
-		"start":  LogTypeStart,
-		"resume": LogTypeStart,
-		"done":   LogTypeCompletion,
+		"pause":    LogTypePause,
+		"stop":     LogTypePause,
+		"start":    LogTypeStart,
+		"resume":   LogTypeStart,
+		"done":     LogTypeCompletion,
+		"won't do": LogTypeWontDo,
 	}
+	logKeywordRegex = func(m map[string]LogType) *regexp.Regexp {
+		keyWords := make([]string, len(m))
+		i := 0
+		for k := range m {
+			keyWords[i] = k
+			i++
+		}
+
+		return regexp.MustCompile(fmt.Sprintf(`^(%s)`, strings.Join(keyWords, "|")))
+	}(logKeywordMapping)
 )
 
-func parse(content string) Task {
+func parse(content string) (Task, error) {
 	task := Task{}
 
 	parseFunctions := []func(s string) string{
@@ -118,7 +128,14 @@ func parse(content string) Task {
 	task.Title = strings.Trim(task.Title, " ")
 	task.Description = strings.Trim(task.Description, " ")
 
-	return task
+	if task.Duration != "" {
+		_, err := time.ParseDuration(task.Duration)
+		if err != nil {
+			return Task{}, err
+		}
+	}
+
+	return task, nil
 }
 
 func formatRaw(t Task) string {

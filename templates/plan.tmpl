@@ -23,11 +23,13 @@
           {{ .Title }}
           <span class="TaskPriority">{{ formatPriority .Priority }}</span>
         </h6>
-        {{- if not .Done }}
+        {{- if eq .Done 0 }}
           <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
-          <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>
-        {{ else }}
+          <button class="btn btn-link fa fa-arrow-right PlanningDoLater" data-taskid="{{ .ID }}"></button>
+        {{ else if eq .Done 1 }}
           <span class="badge badge-pill badge-success">done</span>
+        {{ else if eq .Done 2 }}
+          <span class="badge badge-pill badge-warning">won't do</span>
         {{- end }}
       </div>
       <div class="w-100 TaskDescription">{{ formatMarkDown .Description }}</div>
@@ -80,7 +82,7 @@
       <small class="Date" data-toggle="tooltip" title="{{ formatDateTime .StartedAt }}">Started {{ formatDateRelative .StartedAt }}</small>
     </div>
     <div >
-      <div><small>Asked for: {{ formatDuration .RequiredDuration }}</small></div>
+      <div><small>Asked for: {{ formatDuration .Duration }}</small></div>
       <div><small>Total time: {{ formatDuration .TotalDuration }}</small></div>
     </div>
   </div>

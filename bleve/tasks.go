@@ -10,8 +10,7 @@ import (
 
 	"github.com/blevesearch/bleve"
 	_ "github.com/blevesearch/bleve/analysis/analyzer/keyword"
-	_ "github.com/blevesearch/bleve/analysis/analyzer/standard"
-	_ "github.com/blevesearch/bleve/analysis/lang/en"
+	_ "github.com/blevesearch/bleve/analysis/analyzer/simple"
 	"github.com/blevesearch/bleve/mapping"
 	"github.com/blevesearch/bleve/search/query"
 
@@ -64,12 +63,12 @@ func (s *Index) Index(ctx context.Context, task tonight.Task) error {
 		"title":       task.Title,
 		"description": task.Description,
 		"tags":        task.Tags,
-		"done":        task.Done,
+		"done":        strconv.Itoa(int(task.Done())),
 		"rank":        task.Rank,
 	}
 
-	if task.DoneAt != nil {
-		data["done_at"] = *task.DoneAt
+	if doneAt := task.DoneAt(); doneAt != nil {
+		data["done_at"] = *doneAt
 	}
 
 	return s.index.Index(fmt.Sprintf("%d", task.ID), data)
@@ -79,7 +78,7 @@ func (s *Index) Delete(ctx context.Context, id uint) error {
 	return s.index.Delete(fmt.Sprintf("%d", id))
 }
 
-func (s *Index) Search(ctx context.Context, q string, done bool, allowedIDs []uint) ([]uint, error) {
+func (s *Index) Search(ctx context.Context, p tonight.TaskSearchParameters) ([]uint, error) {
 	total := 100 // Default...
 	if sr, err := s.index.Search(bleve.NewSearchRequest(query.NewMatchAllQuery())); err != nil {
 		return nil, err
@@ -89,19 +88,15 @@ func (s *Index) Search(ctx context.Context, q string, done bool, allowedIDs []ui
 
 	query := andQ(
 		query.NewMatchAllQuery(),
-		orQ(
-			match(q, "title"),
-			match(q, "description"),
-			searchTags(q),
-		),
-		searchDone(done),
-		searchIDs(allowedIDs),
+		s.searchQ(p.Q),
+		searchDoneStatuses(p.Statuses),
+		searchIDs(p.IDs),
 	)
 
 	searchRequest := bleve.NewSearchRequest(query)
 	searchRequest.Size = total
 	searchRequest.SortBy([]string{"rank"})
-	if done {
+	if len(p.Statuses) != 1 {
 		searchRequest.SortBy([]string{"-done_at"})
 	}
 
@@ -158,41 +153,62 @@ func orQ(qs ...query.Query) query.Query {
 	return query.NewDisjunctionQuery(ors)
 }
 
-func match(s, field string) query.Query {
-	if s == "" {
+func (s *Index) searchQ(queryString string) query.Query {
+	words := strings.Fields(queryString)
+	if len(words) == 0 {
 		return nil
 	}
 
-	q := query.NewMatchQuery(s)
-	q.FieldVal = field
-	q.Fuzziness = 1
-	return q
-}
-
-func searchTags(s string) query.Query {
-	if s == "" {
-		return nil
-	}
-
-	fields := strings.Fields(s)
-	qs := make([]query.Query, 0, len(fields))
-	for _, field := range fields {
-		if field == "" {
-			continue
+	ands := make([]query.Query, 0, len(words))
+	for _, word := range words {
+		var q query.Query
+		if strings.HasPrefix(word, "#") && len(word) > 1 {
+			fmt.Println("tag", word)
+			q = s.matches(word[1:], "tags")
+		} else {
+			fmt.Println("others", word)
+			q = orQ(
+				s.matches(word, "title"),
+				s.matches(word, "description"),
+			)
 		}
 
-		q := query.NewMatchQuery(field)
-		q.FieldVal = "tags"
-		qs = append(qs, q)
+		ands = append(ands, q)
 	}
 
-	return orQ(qs...)
+	return andQ(ands...)
 }
 
-func searchDone(done bool) query.Query {
-	query := bleve.NewBoolFieldQuery(done)
-	query.FieldVal = "done"
-	return query
+func (s *Index) matches(queryString, field string) query.Query {
+	analyzer := s.index.Mapping().AnalyzerNamed(s.index.Mapping().AnalyzerNameForPath(field))
+	tokens := analyzer.Analyze([]byte(queryString))
+	if len(tokens) == 0 {
+		return nil
+	}
+
+	conjuncts := make([]query.Query, len(tokens))
+	for i, token := range tokens {
+		conjuncts[i] = &query.PrefixQuery{
+			Prefix:   string(token.Term),
+			FieldVal: field,
+		}
+	}
+
+	return query.NewConjunctionQuery(conjuncts)
+}
+
+func searchDoneStatuses(statuses []tonight.DoneStatus) query.Query {
+	if len(statuses) == 0 {
+		return nil
+	}
+
+	qs := make([]query.Query, len(statuses))
+	for i, s := range statuses {
+		query := bleve.NewTermQuery(strconv.Itoa(int(s)))
+		query.FieldVal = "done"
+		qs[i] = query
+	}
+	return orQ(qs...)
 }
 
 func searchIDs(ids []uint) query.Query {

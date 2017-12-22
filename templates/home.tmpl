@@ -44,12 +44,12 @@
 
     <div class="container Page">
       <!-- Planning -->
-      <div id="current_planning" class="col-md-8 offset-md-2">
+      <div id="current_planning" class="col-md-12">
         {{ block "plan.tmpl" .Planning }}{{ end }}
       </div>
 
       <!-- Tasks still open -->
-      <div class="col-md-8 offset-md-2">
+      <div class="col-md-12">
         <h4>Pending tasks</h4>
         <div class="col-md-10 offset-md-1">
           <input
@@ -66,7 +66,7 @@
           <textarea
             id="new_task_input"
             type="text"
-            class="form-control list-group-item NewTaskInput {{ if not .Tasks }}NewTaskInputTop{{ end }}"
+            class="form-control list-group-item NewTaskInput {{ if .Tasks }}HasTasks{{ end }}"
             placeholder="New task..."
             aria-describedby=""
           ></textarea>
@@ -77,7 +77,7 @@
       <div id="show_done_tasks" class="ShowDoneTasksDiv">
         <button id="show_done_tasks_btn" class="btn btn-link">Show done tasks...</button>
       </div>
-      <div id="done_tasks_list" class="col-md-8 offset-md-2">
+      <div id="done_tasks_list" class="col-md-12">
         <!-- Here will appear the done tasks -->
       </div>
 

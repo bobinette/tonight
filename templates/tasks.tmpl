@@ -1,22 +1,23 @@
 <ul class="list-group Tasks">
   {{ $out := . }}
   {{- range .Tasks}}
-  <li class="list-group-item flex-column align-items-start Task {{ if not .Done }}TaskPending{{ end }}" data-taskid="{{ .ID }}">
+  <li class="list-group-item flex-column align-items-start Task {{ if not .Done }}TaskPending{{ end }}" data-taskid="{{ .ID }}" data-taskrank="{{ .Rank }}">
+    <a id="task_{{ .ID }}" ></a>
     <div id="task_content_{{ .ID }}" class="w-100 TaskContent">
       <div class="w-100 TaskHeader">
         <h6 class="TaskTitle" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="id: {{ .ID }}" data-placement="left" >
           {{ .Title }}
           <span class="TaskPriority">{{ formatPriority .Priority }}</span>
         </h6>
-        {{- if not .Done }}
+        {{- if eq .Done 0 }}
           <button class="btn btn-link fa fa-pencil TaskEdit" data-taskid="{{ .ID }}"></button>
           <button class="btn btn-link fa fa-check TaskDone" data-taskid="{{ .ID }}"></button>
           <button class="btn btn-link fa fa-trash TaskDelete" data-taskid="{{ .ID }}"></button>
-          {{- if $out.Sortable }}
-            <i class="fa fa-bars TaskDrag"></i>
-          {{- end }}
-        {{ else }}
+          <i class="fa fa-bars TaskDrag"></i>
+        {{- else if eq .Done 1 }}
           <small class="text-muted Date" data-toggle="tooltip" data-delay='{"show": 500, "hide": 100 }' title="{{ formatDateTime .DoneAt }}">Done {{ formatDateRelative .DoneAt }}</small>
+        {{- else if eq .Done 2 }}
+          <span class="badge badge-pill badge-warning">won't do</span>
         {{- end }}
       </div>
       <div class="w-100 TaskDescription">{{ formatMarkDown .Description }}</div>
@@ -44,7 +45,8 @@
           {{- if .Dependencies }}
             <div>
               {{ formatDependencies .Dependencies }}
-              <i class="fa fa-check-square-o"></i>
+              <button class="btn btn-link fa fa-check-square-o TaskDependenciesButton">
+              </button>
             </div>
           {{- end }}
         </div>
@@ -59,6 +61,20 @@
           </div>
           {{ template "timeline.tmpl" .Log }}
         </div>
+      {{- end }}
+      {{- if .Dependencies }}
+        <ul class="TaskDependenciesList">
+        {{- range .Dependencies }}
+          <li>
+            {{- if .Done }}
+              <i class="fa fa-check-square-o"></i>
+            {{- else}}
+              <i class="fa fa-square-o"></i>
+            {{- end}}
+            <a href="#task_{{ .ID }}">{{ .Title }}</a>
+         </li>
+        {{- end }}
+        </ul>
       {{- end }}
       <div class="w-100 TaskDoneInputPlaceholder"></div>
     </div>
