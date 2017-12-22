@@ -21,6 +21,12 @@
 			"revisionTime": "2017-09-12T13:10:15Z"
 		},
 		{
+			"checksumSHA1": "ObgKIYnYcb6jr+0NMDkgq7D1i3E=",
+			"path": "github.com/blevesearch/bleve/analysis/analyzer/simple",
+			"revision": "6eea5b78da004393b1d06b8c88d1bed9ca0a94b2",
+			"revisionTime": "2017-09-12T13:10:15Z"
+		},
+		{
 			"checksumSHA1": "IefDmVwLU3UiILeN35DA25gPFnc=",
 			"path": "github.com/blevesearch/bleve/analysis/analyzer/standard",
 			"revision": "6eea5b78da004393b1d06b8c88d1bed9ca0a94b2",
@@ -59,6 +65,18 @@
 		{
 			"checksumSHA1": "8wCAW8E4SO7gGxt0tsr4NZ4APIg=",
 			"path": "github.com/blevesearch/bleve/analysis/token/stop",
+			"revision": "6eea5b78da004393b1d06b8c88d1bed9ca0a94b2",
+			"revisionTime": "2017-09-12T13:10:15Z"
+		},
+		{
+			"checksumSHA1": "Fj59TrG73yzFxMWQ/rL9VBSgxHE=",
+			"path": "github.com/blevesearch/bleve/analysis/tokenizer/character",
+			"revision": "6eea5b78da004393b1d06b8c88d1bed9ca0a94b2",
+			"revisionTime": "2017-09-12T13:10:15Z"
+		},
+		{
+			"checksumSHA1": "62U9SMEGOKzubs9iKgGZJv2AJOs=",
+			"path": "github.com/blevesearch/bleve/analysis/tokenizer/letter",
 			"revision": "6eea5b78da004393b1d06b8c88d1bed9ca0a94b2",
 			"revisionTime": "2017-09-12T13:10:15Z"
 		},
@@ -325,6 +343,12 @@
 		{
 			"checksumSHA1": "JXUVA1jky8ZX8w09p2t5KLs97Nc=",
 			"path": "github.com/stretchr/testify/assert",
+			"revision": "4d4bfba8f1d1027c4fdbe371823030df51419987",
+			"revisionTime": "2017-01-30T11:31:45Z"
+		},
+		{
+			"checksumSHA1": "2PpOCNkWnshDrXeCVH2kp3VHhIM=",
+			"path": "github.com/stretchr/testify/require",
 			"revision": "4d4bfba8f1d1027c4fdbe371823030df51419987",
 			"revisionTime": "2017-01-30T11:31:45Z"
 		},
