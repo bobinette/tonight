@@ -22,7 +22,7 @@
         "fields": [
           {
             "type": "text",
-            "analyzer": "en",
+            "analyzer": "simple",
             "store": true,
             "index": true,
             "include_term_vectors": true,
@@ -37,7 +37,7 @@
         "fields": [
           {
             "type": "text",
-            "analyzer": "en",
+            "analyzer": "simple",
             "store": true,
             "index": true,
             "include_term_vectors": true,
@@ -107,7 +107,7 @@
   },
   "type_field": "_type",
   "default_type": "_default",
-  "default_analyzer": "standard",
+  "default_analyzer": "simple",
   "default_datetime_parser": "dateTimeOptional",
   "default_field": "_all",
   "store_dynamic": false,

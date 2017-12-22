@@ -252,6 +252,8 @@ ul.Tasks {
 #add_task_input {
     display: none;
 
+    background: white;
+
     border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 0.25rem;
 

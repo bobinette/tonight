@@ -6,7 +6,7 @@ function watchSearchInput() {
       event.preventDefault();
 
       searchQ = $('#search_input').val();
-      $.get(`/ui/tasks?q=${searchQ || ''}`, function(data) {
+      $.get(`/ui/tasks?q=${encodeURIComponent(searchQ || '')}`, function(data) {
         $('#tasks_list ul').sortable('disable');
         $('#tasks_list').html(data);
         makeSortable();
