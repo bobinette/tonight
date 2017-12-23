@@ -78,10 +78,18 @@ func parse(content string) (Task, error) {
 		// extract tags
 		func(s string) string {
 			matches := tagsRegex.FindAllStringSubmatch(s, -1)
-			task.Tags = make([]string, len(matches))
-			for i, match := range matches {
-				task.Tags[i] = match[1]
+			tags := make(map[string]struct{})
+			for _, match := range matches {
+				tags[match[1]] = struct{}{}
 			}
+
+			task.Tags = make([]string, len(tags))
+			i := 0
+			for tag := range tags {
+				task.Tags[i] = tag
+				i++
+			}
+
 			return tagsRegex.ReplaceAllString(s, "")
 		},
 		// save duration: starting with '~'
@@ -200,8 +208,6 @@ func parsePlanning(input string) (string, time.Duration, bool, error) {
 	if len(matches) != 4 {
 		return "", 0, false, errors.New("incorrect format")
 	}
-
-	fmt.Println(input, matches)
 
 	q := matches[1]
 	if q != "" {

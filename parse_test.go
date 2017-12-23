@@ -2,6 +2,7 @@ package tonight
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -112,6 +113,9 @@ func TestParse(t *testing.T) {
 	for name, test := range tests {
 		task, err := parse(test.content)
 		assert.NoError(t, err, name)
+
+		sort.Strings(test.expected.Tags)
+		sort.Strings(task.Tags)
 		assert.Equal(t, test.expected, task, name)
 	}
 }
