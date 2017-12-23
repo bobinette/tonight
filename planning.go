@@ -8,6 +8,7 @@ import (
 type Planning struct {
 	ID uint
 
+	Q        string
 	Duration time.Duration
 	Strict   bool
 
@@ -62,9 +63,14 @@ func (ps *planningService) current(ctx context.Context, user User) (Planning, er
 	return planning, nil
 }
 
-func (ps *planningService) plan(ctx context.Context, user User, d time.Duration, strict bool) (Planning, error) {
+func (ps *planningService) plan(ctx context.Context, user User, input string) (Planning, error) {
+	q, d, strict, err := parsePlanning(input)
+	if err != nil {
+		return Planning{}, err
+	}
+
 	ids, err := ps.taskIndex.Search(ctx, TaskSearchParameters{
-		Q:        "",
+		Q:        q,
 		Statuses: []DoneStatus{DoneStatusNotDone},
 		IDs:      user.TaskIDs,
 	})
@@ -80,6 +86,7 @@ func (ps *planningService) plan(ctx context.Context, user User, d time.Duration,
 	planned := plan(tasks, d, strict)
 
 	planning := Planning{
+		Q:        q,
 		Duration: d,
 		Strict:   strict,
 
@@ -101,7 +108,7 @@ func (ps *planningService) doLater(ctx context.Context, user User, taskID uint) 
 	}
 
 	ids, err := ps.taskIndex.Search(ctx, TaskSearchParameters{
-		Q:        "",
+		Q:        planning.Q,
 		Statuses: []DoneStatus{DoneStatusNotDone},
 		IDs:      user.TaskIDs,
 	})

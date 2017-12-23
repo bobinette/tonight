@@ -28,8 +28,8 @@ func (pr *PlanningRepository) Create(ctx context.Context, userID uint, planning 
 	}
 
 	res, err := pr.db.ExecContext(ctx, `
-        INSERT INTO planning (user_id, duration, strict, startedAt, dismissed) VALUES (?, ?, ?, ?, ?)
-        `, userID, planning.Duration.String(), planning.Strict, planning.StartedAt, false)
+        INSERT INTO planning (user_id, duration, strict, search_query, startedAt, dismissed) VALUES (?, ?, ?, ?, ?, ?)
+        `, userID, planning.Duration.String(), planning.Strict, planning.Q, planning.StartedAt, false)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (pr *PlanningRepository) Update(ctx context.Context, userID uint, planning 
 func (pr *PlanningRepository) Get(ctx context.Context, userID uint) (tonight.Planning, error) {
 	row := pr.db.QueryRowContext(
 		ctx,
-		`SELECT id, duration, startedAt, dismissed FROM planning
+		`SELECT id, duration, strict, search_query, startedAt, dismissed FROM planning
         WHERE user_id = ?
         ORDER BY startedAt DESC LIMIT 1
         `, userID,
@@ -90,9 +90,11 @@ func (pr *PlanningRepository) Get(ctx context.Context, userID uint) (tonight.Pla
 
 	var id uint
 	var duration string
+	var strict bool
+	var searchQuery string
 	var startedAt time.Time
 	var dismissed bool
-	if err := row.Scan(&id, &duration, &startedAt, &dismissed); err != nil {
+	if err := row.Scan(&id, &duration, &strict, &searchQuery, &startedAt, &dismissed); err != nil {
 		if err == sql.ErrNoRows {
 			return tonight.Planning{}, nil
 		}
@@ -106,8 +108,12 @@ func (pr *PlanningRepository) Get(ctx context.Context, userID uint) (tonight.Pla
 	dur, _ := time.ParseDuration(duration)
 
 	planning := tonight.Planning{
-		ID:        id,
-		Duration:  dur,
+		ID: id,
+
+		Duration: dur,
+		Strict:   strict,
+		Q:        searchQuery,
+
 		StartedAt: startedAt,
 		Dismissed: dismissed,
 	}

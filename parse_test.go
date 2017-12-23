@@ -110,7 +110,8 @@ func TestParse(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		task := parse(test.content)
+		task, err := parse(test.content)
+		assert.NoError(t, err, name)
 		assert.Equal(t, test.expected, task, name)
 	}
 }
@@ -154,17 +155,50 @@ func TestParseLog(t *testing.T) {
 }
 
 func TestParseLog_keywords(t *testing.T) {
-	tests := map[string]LogType{
-		"pause":  LogTypePause,
-		"stop":   LogTypePause,
-		"start":  LogTypeStart,
-		"resume": LogTypeStart,
-	}
-
-	for keyword, logType := range tests {
+	for keyword, logType := range logKeywordMapping {
 		log := parseLog(fmt.Sprintf("%s description", keyword))
-		assert.Equal(t, 0, log.Completion, keyword)
+		if keyword == "done" {
+			assert.Equal(t, 100, log.Completion, keyword)
+		} else {
+			assert.Equal(t, 0, log.Completion, keyword)
+		}
 		assert.Equal(t, "description", log.Description, keyword)
 		assert.Equal(t, logType, log.Type, keyword)
+	}
+}
+
+func TestParsePlanning(t *testing.T) {
+	tests := map[string]struct {
+		input  string
+		q      string
+		d      time.Duration
+		strict bool
+	}{
+		"only duration": {
+			input:  "2h",
+			q:      "",
+			d:      2 * time.Hour,
+			strict: false,
+		},
+		"strict duration": {
+			input:  "!1h",
+			q:      "",
+			d:      1 * time.Hour,
+			strict: true,
+		},
+		"strict duration and query": {
+			input:  "tests #tonight for !30m",
+			q:      "tests #tonight",
+			d:      30 * time.Minute,
+			strict: true,
+		},
+	}
+
+	for name, test := range tests {
+		q, d, strict, err := parsePlanning(test.input)
+		assert.NoError(t, err, name)
+		assert.Equal(t, test.q, q, name)
+		assert.Equal(t, test.d, d, name)
+		assert.Equal(t, test.strict, strict, name)
 	}
 }

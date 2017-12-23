@@ -1,6 +1,7 @@
 package tonight
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -39,6 +40,8 @@ var (
 
 		return regexp.MustCompile(fmt.Sprintf(`^(%s)`, strings.Join(keyWords, "|")))
 	}(logKeywordMapping)
+
+	planningRegex = regexp.MustCompile(`^(.* for )?(!)?([0-9a-zA-Z]+)$`)
 )
 
 func parse(content string) (Task, error) {
@@ -190,4 +193,25 @@ func parseLog(desc string) Log {
 	log.Description = strings.TrimSpace(desc)
 
 	return log
+}
+
+func parsePlanning(input string) (string, time.Duration, bool, error) {
+	matches := planningRegex.FindStringSubmatch(input)
+	if len(matches) != 4 {
+		return "", 0, false, errors.New("incorrect format")
+	}
+
+	fmt.Println(input, matches)
+
+	q := matches[1]
+	if q != "" {
+		q = q[0 : len(q)-5] // len(" for ")
+	}
+	strict := matches[2] == "!"
+	duration, err := time.ParseDuration(matches[3])
+	if err != nil {
+		return "", 0, false, err
+	}
+
+	return q, duration, strict, nil
 }

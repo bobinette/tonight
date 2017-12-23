@@ -3,8 +3,8 @@ function watchStartPlan() {
     if (event.keyCode === 13) {
       event.preventDefault();
 
-      const duration = $('#plan_duration_input').val();
-      $.post('/ui/plan', JSON.stringify({ duration }), function(data) {
+      const input = $('#plan_duration_input').val();
+      $.post('/ui/plan', JSON.stringify({ input }), function(data) {
         $('#current_planning').html(data);
 
         $(function() {
