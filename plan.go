@@ -6,7 +6,6 @@ import (
 )
 
 func plan(tasks []Task, d time.Duration, strict bool) []Task {
-	tasks = filterUndoneDependencies(tasks)
 	if len(tasks) == 0 {
 		return nil
 	}
@@ -26,11 +25,10 @@ func plan(tasks []Task, d time.Duration, strict bool) []Task {
 		cumDur += task.LeftDuration()
 	}
 
-	return planned
+	return filterUndoneDependencies(planned)
 }
 
 func planNext(tasks []Task, planning Planning, afterID uint) []Task {
-	tasks = filterUndoneDependencies(tasks)
 	if len(tasks) == 0 {
 		return nil
 	}
@@ -65,7 +63,7 @@ func planNext(tasks []Task, planning Planning, afterID uint) []Task {
 		cumDur += task.LeftDuration()
 	}
 
-	return planned
+	return filterUndoneDependencies(planned)
 }
 
 func isPlanned(task Task, planning Planning) bool {
@@ -103,9 +101,10 @@ type byScoreSorter struct {
 }
 
 func byScore(tasks []Task) *byScoreSorter {
+	scoreByTask := scoreMany(tasks)
 	scores := make([]float64, len(tasks))
 	for i, task := range tasks {
-		scores[i] = score(task)
+		scores[i] = scoreByTask[task.ID]
 	}
 
 	return &byScoreSorter{

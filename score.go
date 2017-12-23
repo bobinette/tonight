@@ -1,19 +1,45 @@
 package tonight
 
 import (
+	"fmt"
 	"math"
 	"time"
 )
 
-// score gives a score to task to be used when ranking for planning.
-func score(task Task) float64 {
-	// Minimum score for tasks with undone dependencies
-	for _, dep := range task.Dependencies {
-		if !dep.Done {
-			return 0
+func scoreMany(tasks []Task) map[uint]float64 {
+	// Construct the dependency tree
+	reversedDependencies := make(map[uint][]uint)
+	for _, task := range tasks {
+		for _, dep := range task.Dependencies {
+			deps := reversedDependencies[dep.ID]
+			deps = append(deps, task.ID)
+			reversedDependencies[dep.ID] = deps
 		}
 	}
 
+	// Compute all the scores
+	scores := make(map[uint]float64)
+	for _, task := range tasks {
+		scores[task.ID] = score(task)
+	}
+
+	fmt.Println(scores)
+	fmt.Println(reversedDependencies)
+
+	// Boost the scores of task listed as dependencies
+	for depID, taskIDs := range reversedDependencies {
+		for _, taskID := range taskIDs {
+			scores[depID] += scores[taskID]
+		}
+	}
+
+	fmt.Println(scores)
+
+	return scores
+}
+
+// score gives a score to task to be used when ranking for planning.
+func score(task Task) float64 {
 	// Start by using the priority of the task
 	s := float64(task.Priority)
 
