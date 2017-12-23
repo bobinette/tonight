@@ -162,14 +162,23 @@ func (s *Index) searchQ(queryString string) query.Query {
 	ands := make([]query.Query, 0, len(words))
 	for _, word := range words {
 		var q query.Query
+		must := true
+		if strings.HasPrefix(word, "-") {
+			must = false
+			word = word[1:]
+		}
+
 		if strings.HasPrefix(word, "#") && len(word) > 1 {
-			fmt.Println("tag", word)
-			q = s.matches(word[1:], "tags")
-		} else {
-			fmt.Println("others", word)
+			q = s.matches(word[1:], "tags", must)
+		} else if must {
 			q = orQ(
-				s.matches(word, "title"),
-				s.matches(word, "description"),
+				s.matches(word, "title", must),
+				s.matches(word, "description", must),
+			)
+		} else {
+			q = andQ(
+				s.matches(word, "title", must),
+				s.matches(word, "description", must),
 			)
 		}
 
@@ -179,7 +188,7 @@ func (s *Index) searchQ(queryString string) query.Query {
 	return andQ(ands...)
 }
 
-func (s *Index) matches(queryString, field string) query.Query {
+func (s *Index) matches(queryString, field string, must bool) query.Query {
 	analyzer := s.index.Mapping().AnalyzerNamed(s.index.Mapping().AnalyzerNameForPath(field))
 	tokens := analyzer.Analyze([]byte(queryString))
 	if len(tokens) == 0 {
@@ -194,6 +203,9 @@ func (s *Index) matches(queryString, field string) query.Query {
 		}
 	}
 
+	if !must {
+		return query.NewBooleanQuery(nil, nil, conjuncts)
+	}
 	return query.NewConjunctionQuery(conjuncts)
 }
 
