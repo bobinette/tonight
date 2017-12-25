@@ -82,7 +82,7 @@ func main() {
 		return fmt.Errorf("route %s (method %s) not found", c.Request().URL, c.Request().Method)
 	}
 
-	if err := tonight.RegisterTemplateRenderer(srv, "templates"); err != nil {
+	if err := tonight.RegisterTemplateRenderer(srv, "front"); err != nil {
 		log.Fatal(err)
 	}
 
@@ -107,9 +107,10 @@ func main() {
 	srv.POST("/api/reindex", indexer.IndexAll)
 
 	// Assets
-	srv.Static("/assets", "assets")
-	srv.Static("/external", "external")
-	srv.Static("/fonts", "fonts")
+	srv.Static("/assets", "front/assets")
+	srv.Static("/external", "front/external")
+	srv.Static("/fonts", "front/fonts")
+	srv.Static("/scripts", "front/scripts")
 
 	if err := srv.Start(":9090"); err != nil {
 		log.Fatal(err)

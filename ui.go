@@ -93,12 +93,10 @@ func (h *uiHandler) home(c echo.Context) error {
 
 	data := struct {
 		Tasks    []Task
-		Sortable bool
 		Planning Planning
 		User     User
 	}{
 		Tasks:    tasks,
-		Sortable: true,
 		Planning: planning,
 		User:     user,
 	}
@@ -126,7 +124,7 @@ func (us *uiHandler) search(c echo.Context) error {
 		Tasks:    tasks,
 		Sortable: q == "",
 	}
-	return c.Render(http.StatusOK, "tasks", data)
+	return c.Render(http.StatusOK, "pending-tasks", data)
 }
 
 func (us *uiHandler) create(c echo.Context) error {
@@ -229,13 +227,11 @@ func (us *uiHandler) listDone(c echo.Context) error {
 	}
 
 	data := struct {
-		Tasks    []Task
-		Sortable bool
+		Tasks []Task
 	}{
-		Tasks:    tasks,
-		Sortable: true,
+		Tasks: tasks,
 	}
-	return c.Render(http.StatusOK, "tasks", data)
+	return c.Render(http.StatusOK, "complete-tasks", data)
 }
 
 func (us *uiHandler) delete(c echo.Context) error {
@@ -307,7 +303,7 @@ func (us *uiHandler) plan(c echo.Context) error {
 		return err
 	}
 
-	return c.Render(http.StatusOK, "plan", planning)
+	return c.Render(http.StatusOK, "planning", planning)
 }
 
 func (us *uiHandler) doLater(c echo.Context) error {
@@ -332,7 +328,7 @@ func (us *uiHandler) doLater(c echo.Context) error {
 		return err
 	}
 
-	return c.Render(http.StatusOK, "plan", planning)
+	return c.Render(http.StatusOK, "planning", planning)
 }
 
 func (us *uiHandler) currentPlanning(c echo.Context) error {
@@ -348,7 +344,7 @@ func (us *uiHandler) currentPlanning(c echo.Context) error {
 		return err
 	}
 
-	return c.Render(http.StatusOK, "plan", planning)
+	return c.Render(http.StatusOK, "planning", planning)
 }
 
 func (us *uiHandler) dismissPlanning(c echo.Context) error {
@@ -363,5 +359,5 @@ func (us *uiHandler) dismissPlanning(c echo.Context) error {
 		return err
 	}
 
-	return c.Render(http.StatusOK, "plan", planningForTemplate{})
+	return c.Render(http.StatusOK, "planning", planningForTemplate{})
 }

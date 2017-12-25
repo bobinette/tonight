@@ -45,7 +45,7 @@
     <div class="container Page">
       <!-- Planning -->
       <div id="current_planning" class="col-md-12">
-        {{ block "plan.tmpl" .Planning }}{{ end }}
+        {{ template "planning" .Planning }}
       </div>
 
       <!-- Tasks still open -->
@@ -60,7 +60,7 @@
           >
         </div>
         <div id="tasks_list">
-            {{block "tasks.tmpl" .}}{{ end }}
+            {{ template "pending-tasks" .}}
         </div>
         <div>
           <textarea
@@ -103,14 +103,14 @@
     <!-- <script src="https://raw.githubusercontent.com/jackmoore/autosize/master/dist/autosize.min.js"></script> -->
 
     <!-- Custom scripts -->
-    <script type="text/javascript">{{template "home.js" .}}</script>
-    <script type="text/javascript">{{template "plan.js" .}}</script>
-    <script type="text/javascript">{{template "sort.js" .}}</script>
-    <script type="text/javascript">{{template "doneTasksList.js" .}}</script>
-    <script type="text/javascript">{{template "delete.js" .}}</script>
-    <script type="text/javascript">{{template "new.js" .}}</script>
-    <script type="text/javascript">{{template "tasksList.js" .}}</script>
-    <script type="text/javascript">{{template "utils.js" .}}</script>
+    <script type="text/javascript" src="/scripts/home.js"></script>
+    <script type="text/javascript" src="/scripts/plan.js"></script>
+    <script type="text/javascript" src="/scripts/sort.js"></script>
+    <script type="text/javascript" src="/scripts/doneTasksList.js"></script>
+    <script type="text/javascript" src="/scripts/delete.js"></script>
+    <script type="text/javascript" src="/scripts/new.js"></script>
+    <script type="text/javascript" src="/scripts/tasksList.js"></script>
+    <script type="text/javascript" src="/scripts/utils.js"></script>
 
     <script>
       $(document).ready(
