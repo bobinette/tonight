@@ -29,22 +29,22 @@ const (
 )
 
 type Task struct {
-	ID          uint
-	Title       string
-	Description string
+	ID          uint   `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
 
-	Priority int
-	Rank     uint
-	Tags     []string
+	Priority int      `json:"priority"`
+	Rank     uint     `json:"rank"`
+	Tags     []string `json:"tags"`
 
-	Duration string
-	Deadline *time.Time
+	Duration string     `json:"duration"`
+	Deadline *time.Time `json:"deadline"`
 
-	Log []Log
+	Log []Log `json:"log"`
 
-	Dependencies []Dependency
+	Dependencies []Dependency `json:"dependencies"`
 
-	CreatedAt time.Time
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 func (t Task) LeftDuration() time.Duration {
@@ -91,17 +91,17 @@ func (t Task) DoneAt() *time.Time {
 }
 
 type Log struct {
-	Type        LogType
-	Completion  int
-	Description string
+	Type        LogType `json:"type"`
+	Completion  int     `json:"completion"`
+	Description string  `json:"description"`
 
-	CreatedAt time.Time
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Dependency struct {
-	ID    uint
-	Done  bool
-	Title string
+	ID    uint   `json:"id"`
+	Done  bool   `json:"done"`
+	Title string `json:"title"`
 }
 
 type TaskRepository interface {

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Tonight</title>
+    <link rel="icon" type="image/png" href="/images/logo.png" />
+
+    <link rel="stylesheet" href="/css/style.min.css">
+
+    <!-- Font awesome -->
+  </head>
+  <body>
+    <!-- Nav bar -->
+    <nav class="navbar navbar-row navbar-top navbar-inverse bg-primary justify-content-between">
+      <div class="container">
+        <div class="row flex-align-center">
+          <h1 class="col-md-8 offset-md-2"><img src="/images/logo-i.png" height="36" width="36">Tonight</h1>
+          <span class="col-md-2">
+            <span>{{ .User.Name }}</span>
+            <button id="logout_button" class="btn btn-link"><i class="fa fa-sign-out"></i></button>
+          </span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container Page">
+      <!-- Planning -->
+      <div id="current_planning" class="col-md-12">
+        <!-- PLACEHOLDER for the planning -->
+      </div>
+
+      <!-- Tasks still open -->
+      <div class="col-md-12">
+        <h4>Pending tasks</h4>
+        <div class="col-md-10 offset-md-1">
+          <input
+            id="search_input"
+            type="text"
+            class="form-control"
+            placeholder="Search..."
+          >
+        </div>
+        <div id="tasks_list">
+          <!-- PLACEHOLDER for the list of pending tasks -->
+        </div>
+        <div>
+          <textarea
+            id="new_task_input"
+            type="text"
+            class="form-control list-group-item NewTaskInput {{ if .Tasks }}HasTasks{{ end }}"
+            placeholder="New task..."
+            aria-describedby=""
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Done tasks -->
+      <div id="show_done_tasks" class="ShowDoneTasksDiv">
+        <button id="show_done_tasks_btn" class="btn btn-link">Show done tasks...</button>
+      </div>
+      <div id="done_tasks_list" class="col-md-12">
+        <!-- PLACEHOLDER for the list of done tasks -->
+      </div>
+
+      <!-- Add task button -->
+      <div id="add_task_fixed">
+        <div id="add_task_input">
+          <textarea id="add_task_input_textarea" class="form-control" placeholder="New task..." rows="5"></textarea>
+          <small id="add_task_input_help" class="grey">Press enter to create <i class="fa fa-level-down fa-rotate-90"></i></small>
+        </div>
+        <button id="add_task_button" class="btn btn-success btn-round">
+          <i class="fa fa-plus"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Custom scripts -->
+    <script type="text/javascript" src="/js/bundle.js"></script>
+  </body>
+</html>

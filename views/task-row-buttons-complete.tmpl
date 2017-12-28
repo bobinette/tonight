@@ -1,0 +1,12 @@
+{{- if eq .Done 1 }}
+  <small
+    class="text-muted Date"
+    data-toggle="tooltip"
+    data-delay='{"show": 500, "hide": 100 }'
+    title="{{ formatDateTime .DoneAt }}"
+  >
+    Done {{ formatDateRelative .DoneAt }}
+  </small>
+{{- else if eq .Done 2 }}
+  <span class="badge badge-pill badge-warning">won't do</span>
+{{- end }}

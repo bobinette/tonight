@@ -35,24 +35,27 @@ func templateTreeFromName(name string) templateTree {
 	}
 }
 
-func (t *templateTree) load(dir string, funcMap template.FuncMap, tmpl *template.Template) error {
+func (t *templateTree) load(dir string, funcMap template.FuncMap) (*template.Template, error) {
 	data, err := ioutil.ReadFile(path.Join(dir, t.filename))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if _, err := tmpl.Parse(string(data)); err != nil {
-		return err
+	tmpl, err := template.New(t.name).Funcs(funcMap).Parse(string(data))
+	if err != nil {
+		return nil, err
 	}
 
 	for _, child := range t.children {
-		childTemplate := tmpl.New(child.name).Funcs(funcMap)
-		if err := child.load(dir, funcMap, childTemplate); err != nil {
-			return err
+		childTmpl, err := child.load(dir, funcMap)
+		if err != nil {
+			return nil, err
 		}
+
+		tmpl.AddParseTree(child.name, childTmpl.Tree)
 	}
 
-	return nil
+	return tmpl, nil
 }
 
 func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
@@ -65,7 +68,10 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 					name:     "planning",
 					filename: "planning.tmpl",
 					children: []templateTree{
-						templateTreeFromName("task-row-buttons-planning"),
+						templateTree{
+							name:     "row-actions",
+							filename: "task-row-buttons-planning.tmpl",
+						},
 						templateTreeFromName("timeline"),
 						templateTreeFromName("task-row"),
 						templateTreeFromName("task-list"),
@@ -75,12 +81,14 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 					name:     "pending-tasks",
 					filename: "task-list.tmpl",
 					children: []templateTree{
-						templateTreeFromName("task-row-buttons-pending"),
+						templateTree{
+							name:     "row-actions",
+							filename: "task-row-buttons-pending.tmpl",
+						},
 						templateTreeFromName("timeline"),
 						templateTreeFromName("task-row"),
 					},
 				},
-				templateTreeFromName("timeline.tmpl"),
 			},
 		},
 		"planning": { // @TODO: factorize the trees?
@@ -155,13 +163,15 @@ func RegisterTemplateRenderer(e *echo.Echo, dir string) error {
 	names := make(map[string]string)
 	templates := make(map[string]*template.Template)
 	for name, tree := range trees {
-		tmpl := template.New(name).Funcs(funcMap)
-		if err := tree.load(dir, funcMap, tmpl); err != nil {
+		tmpl, err := tree.load(dir, funcMap)
+		if err != nil {
 			return err
 		}
 
 		names[name] = tree.name
 		templates[name] = tmpl
+
+		fmt.Println(tmpl.DefinedTemplates())
 	}
 
 	e.Renderer = &templateRenderer{

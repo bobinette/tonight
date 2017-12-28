@@ -1,0 +1,57 @@
+@import 'variables.scss';
+
+@import '~bootstrap/scss/variables';
+@import '~bootstrap/scss/bootstrap';
+
+// @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
+// @import url('https://fonts.googleapis.com/css?family=Lato');
+
+body {
+    font-family: 'Source Sans Pro', 'Roboto', Arial, sans-serif;
+    margin-bottom: 2rem;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Lato', Arial, sans-serif;
+}
+
+ul {
+    padding-left: 0;
+}
+
+input[type='text'] {
+    background: transparent;
+    outline: none;
+    border: none;
+    border-bottom: 1px solid $gray-lighter;
+    width: 100%;
+
+    &:hover {
+        border-bottom-color: lighten($brand-primary, 30);
+    }
+
+    &:focus {
+        border-bottom-color: $brand-primary;
+    }
+}
+
+textarea {
+    resize: none;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-50 {
+    flex-basis: 50%;
+}
+
+.flex-align-center {
+    align-items: center;
+}
