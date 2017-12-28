@@ -9,6 +9,9 @@
         <span class="fa fa-search"></span>
         <input type="text" class="form-control" :value="q" @input="updateQ" @keydown.enter="search">
       </div>
+      <div class="col-md-1 col-end">
+        <i class="fa fa-circle-o-notch fa-spin" v-if="loading"></i>
+      </div>
     </li>
 
     <!-- Rows -->
@@ -57,6 +60,9 @@ export default {
     },
     q() {
       return this.$store.getters.q;
+    },
+    loading() {
+      return this.$store.getters.loading;
     },
   },
   methods: {
@@ -118,6 +124,10 @@ export default {
       outline: none;
     }
   }
+
+  &:focus-within {
+    border-color: $input-border-focus;
+  }
 }
 
 textarea {
@@ -138,6 +148,11 @@ textarea {
   .col-md-1,
   .col-md-4 {
     padding: 0;
+  }
+
+  .col-end {
+    margin-left: auto;
+    text-align: right;
   }
 }
 </style>

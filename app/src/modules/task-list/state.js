@@ -43,6 +43,7 @@ export default {
   getters: {
     tasks: ({ tasks }) => tasks,
     q: ({ q }) => q,
+    loading: ({ loading }) => loading,
   },
   mutations: {
     // SEARCH / LIST
@@ -74,9 +75,9 @@ export default {
   actions: {
     [FETCH_TASKS]: context => {
       context.commit({ type: TASK_FETCHING_STARTED });
-      const q = context.state.q;
+      const q = encodeURIComponent(context.state.q);
       return axios
-        .get(`http://127.0.0.1:9090/api/tasks?q=${q || ''}`)
+        .get(`http://127.0.0.1:9090/api/tasks?q=${q}`)
         .then(response => {
           const { tasks } = response.data;
           context.commit({ type: TASKS_RECEIVED, tasks });

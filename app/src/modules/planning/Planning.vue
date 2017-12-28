@@ -27,7 +27,7 @@
 <script>
 import { formatDuration, plural } from '@/utils/formats';
 
-import Row from './row/Row';
+import Row from '@/modules/task-list/row/Row';
 
 import { START_PLANNING, DISMISS_PLANNING } from './state';
 
