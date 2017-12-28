@@ -20,24 +20,9 @@ h6 {
     font-family: 'Lato', Arial, sans-serif;
 }
 
-ul {
-    padding-left: 0;
-}
-
-input[type='text'] {
-    background: transparent;
-    outline: none;
-    border: none;
-    border-bottom: 1px solid $gray-lighter;
-    width: 100%;
-
-    &:hover {
-        border-bottom-color: lighten($brand-primary, 30);
-    }
-
-    &:focus {
-        border-bottom-color: $brand-primary;
-    }
+ul.list-group {
+    padding-left: inherit;
+    padding-right: inherit;
 }
 
 textarea {
@@ -54,4 +39,24 @@ textarea {
 
 .flex-align-center {
     align-items: center;
+}
+
+.flex-space-between {
+    justify-content: space-between;
+}
+
+.list-group-item-header {
+    background: $gray-lighter;
+}
+
+.btn.btn-link {
+    color: $brand-primary;
+    padding: 0;
+    cursor: pointer;
+
+    &:focus {
+        text-decoration: none;
+        outline: none;
+        box-shadow: none;
+    }
 }

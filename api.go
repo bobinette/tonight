@@ -34,10 +34,18 @@ func RegisterAPIHandler(
 	apiGroup.Use(JWTMiddleware(jwtKey))
 	apiGroup.Use(UserMiddleware(jwtKey, userRepo))
 
+	// User
 	apiGroup.GET("/me", h.me)
+
+	// Tasks
 	apiGroup.GET("/tasks", h.searchTasks)
 	apiGroup.POST("/tasks", h.createTask)
 	apiGroup.POST("/tasks/:id/log", h.log)
+
+	// Planning
+	apiGroup.GET("/planning", h.currentPlanning)
+	apiGroup.POST("/planning", h.createPlanning)
+	apiGroup.DELETE("/planning", h.dismissPlanning)
 }
 
 type apiHandler struct {
@@ -129,4 +137,68 @@ func (h *apiHandler) log(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, task)
+}
+
+func (h *apiHandler) currentPlanning(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	user, err := loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	planning, err := h.planningService.current(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	if planning.ID == 0 {
+		return c.JSON(http.StatusOK, nil)
+	}
+
+	return c.JSON(http.StatusOK, planning)
+}
+
+func (h *apiHandler) createPlanning(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	var body struct {
+		Input string `json:"input"`
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&body); err != nil {
+		return err
+	}
+
+	ctx := c.Request().Context()
+
+	user, err := loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	planning, err := h.planningService.plan(ctx, user, body.Input)
+	if err != nil {
+		return err
+	}
+
+	if planning.ID == 0 {
+		return c.JSON(http.StatusOK, nil)
+	}
+
+	return c.JSON(http.StatusOK, planning)
+}
+
+func (h *apiHandler) dismissPlanning(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	user, err := loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	if err := h.planningService.dismiss(ctx, user); err != nil {
+		return err
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

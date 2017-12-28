@@ -116,7 +116,7 @@ func main() {
 	srv.Static("/js", "front/static/js")
 
 	srv.Static("/", "app/dist")
-	srv.Static("/static", "app/static")
+	srv.Static("/static", "app/dist/static")
 
 	if err := srv.Start(":9090"); err != nil {
 		log.Fatal(err)

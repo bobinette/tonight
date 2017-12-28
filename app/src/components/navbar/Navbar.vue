@@ -3,12 +3,11 @@
     <div class="container">
       <div class="row flex-align-center">
         <h1 class="col-md-8 offset-md-2">
-          <img src="/static/logo-i.png" height="36" width="36">
+          <img :src="logo" height="36" width="36">
           Tonight
         </h1>
-        <span class="col-md-2">
+        <span class="col-md-2 Username">
           <span>{{ username }}</span>
-          <button id="logout_button" class="btn btn-link"><i class="fa fa-sign-out"></i></button>
         </span>
       </div>
     </div>
@@ -16,8 +15,15 @@
 </template>
 
 <script>
+import logo from '@/assets/logo-i.png';
+
 export default {
   name: 'navbar',
+  data() {
+    return {
+      logo,
+    };
+  },
   computed: {
     username() {
       return this.$store.getters.username;
@@ -38,6 +44,10 @@ export default {
   h1 {
     // margin: 0;
     text-align: center;
+  }
+
+  .Username {
+    text-align: right;
   }
 }
 </style>

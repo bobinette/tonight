@@ -6,16 +6,16 @@ import (
 )
 
 type Planning struct {
-	ID uint
+	ID uint `json:"id"`
 
-	Q        string
-	Duration time.Duration
-	Strict   bool
+	Q        string        `json:"q"`
+	Duration time.Duration `json:"duration"`
+	Strict   bool          `json:"strict"`
 
-	Dismissed bool
-	StartedAt time.Time
+	Dismissed bool      `json:"dismissed"`
+	StartedAt time.Time `json:"startedAt"`
 
-	Tasks []Task
+	Tasks []Task `json:"tasks"`
 }
 
 func (p Planning) Done() bool {

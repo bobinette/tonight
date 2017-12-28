@@ -4,6 +4,9 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import VueAutosize from 'vue-autosize';
 
+// Add font-awesome icons
+import 'font-awesome/scss/font-awesome.scss';
+
 import App from './App';
 
 import store from './store';

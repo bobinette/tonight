@@ -140,10 +140,13 @@ func parse(content string) (Task, error) {
 	task.Description = strings.Trim(task.Description, " ")
 
 	if task.Duration != "" {
-		_, err := time.ParseDuration(task.Duration)
+		dur, err := time.ParseDuration(task.Duration)
 		if err != nil {
 			return Task{}, err
 		}
+
+		// Reformat it for consistency
+		task.Duration = formatDuration(dur)
 	}
 
 	return task, nil

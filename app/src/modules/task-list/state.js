@@ -2,8 +2,11 @@ import axios from 'axios';
 
 import { COOKIE_LOADED } from '@/modules/user/state';
 
+import { isDone } from '@/utils/tasks';
+
 // Tasks
 // -- List
+export const UPDATE_Q = 'UPDATE_Q';
 export const FETCH_TASKS = 'FETCH_TASKS';
 export const TASK_FETCHING_STARTED = 'TASK_FETCHING_STARTED';
 export const TASKS_RECEIVED = 'TASKS_RECEIVED';
@@ -30,16 +33,22 @@ export const plugins = [
     }),
 ];
 
+// State module
 export default {
   state: {
+    q: '',
     tasks: [],
     loading: false,
   },
   getters: {
     tasks: ({ tasks }) => tasks,
+    q: ({ q }) => q,
   },
   mutations: {
     // SEARCH / LIST
+    [UPDATE_Q]: (state, { q }) => {
+      state.q = q;
+    },
     [TASK_FETCHING_STARTED]: state => {
       state.loading = true;
     },
@@ -54,7 +63,7 @@ export default {
     },
     // UPDATE
     [UPDATE_TASK]: (state, { task }) => {
-      const idx = state.tasks.find(t => task.id === t.id);
+      const idx = state.tasks.findIndex(t => task.id === t.id);
       if (idx === -1) {
         return;
       }
@@ -63,8 +72,9 @@ export default {
     },
   },
   actions: {
-    [FETCH_TASKS]: (context, { q }) => {
+    [FETCH_TASKS]: context => {
       context.commit({ type: TASK_FETCHING_STARTED });
+      const q = context.state.q;
       return axios
         .get(`http://127.0.0.1:9090/api/tasks?q=${q || ''}`)
         .then(response => {
@@ -95,6 +105,13 @@ export default {
         .then(response => {
           const task = response.data;
           context.commit({ type: UPDATE_TASK, task });
+          return task;
+        })
+        .then(task => {
+          if (isDone(task)) {
+            context.dispatch({ type: FETCH_TASKS });
+          }
+          return task;
         })
         .catch(err => {
           console.log(err);

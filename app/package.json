@@ -15,6 +15,8 @@
     },
     "dependencies": {
         "axios": "^0.17.1",
+        "font-awesome": "^4.7.0",
+        "moment": "^2.20.1",
         "vue": "^2.5.2",
         "vue-autosize": "^1.0.2",
         "vue-click-outside": "^1.0.7",

@@ -1,5 +1,16 @@
 <template>
   <ul class="list-group">
+    <!-- Header -->
+    <li class="list-group-item list-group-item-header ListHeader">
+      <div class="col-md-1">
+        <strong>{{ tasksLength }} {{ plural("task", tasksLength)}}</strong>
+      </div>
+      <div class="col-md-4 flex flex-align-center SearchInput">
+        <span class="fa fa-search"></span>
+        <input type="text" class="form-control" :value="q" @input="updateQ" @keydown.enter="search">
+      </div>
+    </li>
+
     <!-- Rows -->
     <Row v-for="task in tasks" :key="task.id" :task="task"></Row>
 
@@ -19,9 +30,16 @@
 </template>
 
 <script >
+import { plural } from '@/utils/formats';
+
 import Row from './row/Row';
 
-import { CREATE_TASK, UPDATE_NEW_TASK_CONTENT } from './state';
+import {
+  UPDATE_Q,
+  FETCH_TASKS,
+  CREATE_TASK,
+  UPDATE_NEW_TASK_CONTENT,
+} from './state';
 
 export default {
   name: 'task-list',
@@ -33,6 +51,12 @@ export default {
   computed: {
     tasks() {
       return this.$store.getters.tasks;
+    },
+    tasksLength() {
+      return this.tasks && this.tasks.length ? this.tasks.length : 0;
+    },
+    q() {
+      return this.$store.getters.q;
     },
   },
   methods: {
@@ -55,6 +79,13 @@ export default {
         })
         .catch(err => console.log(err));
     },
+    plural,
+    updateQ(evt) {
+      this.$store.commit({ type: UPDATE_Q, q: evt.target.value });
+    },
+    search() {
+      this.$store.dispatch({ type: FETCH_TASKS }).catch();
+    },
   },
   components: {
     Row,
@@ -63,6 +94,32 @@ export default {
 </script>
 
 <style lang="scss">
+@import 'style/_variables';
+
+.SearchInput {
+  background: $input-bg;
+
+  border: $input-btn-border-width solid $input-border-color;
+  border-radius: $input-border-radius;
+
+  .fa {
+    padding-left: $input-padding-x/2;
+  }
+
+  input {
+    background: transparent;
+    border: none;
+    padding: $input-padding-y $input-padding-x/2;
+
+    width: 100%;
+
+    &:focus {
+      box-shadow: none;
+      outline: none;
+    }
+  }
+}
+
 textarea {
   width: 100%;
   max-height: 250px;
@@ -70,6 +127,17 @@ textarea {
 
   &:focus {
     outline: none;
+  }
+}
+
+.ListHeader {
+  div:not(:last-child) {
+    margin-right: 1rem;
+  }
+
+  .col-md-1,
+  .col-md-4 {
+    padding: 0;
   }
 }
 </style>
