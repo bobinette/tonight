@@ -1,7 +1,8 @@
-@import 'node_modules/bootstrap/scss/_variables';
-
 // ============================================================================
 // Base colors
 // ============================================================================
 
 $brand-primary: #406b8f;
+
+// Import bootstrap now
+@import 'node_modules/bootstrap/scss/_variables';

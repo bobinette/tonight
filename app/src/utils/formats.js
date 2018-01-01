@@ -30,3 +30,41 @@ export const formatDuration = dur => {
 
   return formatted;
 };
+
+// Raw task
+
+export const formatRaw = task => {
+  let formatted = task.title;
+
+  // Add priority
+  formatted = `${Array(task.priority + 1).join('!')}${formatted}`;
+
+  // Add the description
+  if (task.description !== '') {
+    formatted = `${formatted}: ${task.description}`;
+  }
+
+  // Add tags
+  if (task.tags && task.tags.length > 0) {
+    const tags = task.tags.map(tag => `#${tag}`);
+    formatted = `${formatted} ${tags.join(' ')}`;
+  }
+
+  // Add duration
+  if (task.duration !== '') {
+    formatted = `${formatted} ~${task.duration}`;
+  }
+
+  // Add deadline
+  if (task.deadline) {
+    formatted = `${formatted} >${task.deadline}`;
+  }
+
+  // Add dependencies
+  if (task.dependencies && task.dependencies.length > 0) {
+    const deps = task.dependencies.map(dep => dep.id.toString());
+    formatted = `${formatted} needs:${deps.join(',')}`;
+  }
+
+  return formatted;
+};

@@ -37,12 +37,7 @@ import { plural } from '@/utils/formats';
 
 import Row from './row/Row';
 
-import {
-  UPDATE_Q,
-  FETCH_TASKS,
-  CREATE_TASK,
-  UPDATE_NEW_TASK_CONTENT,
-} from './state';
+import { UPDATE_Q, FETCH_TASKS, CREATE_TASK } from './state';
 
 export default {
   name: 'task-list',
@@ -66,12 +61,6 @@ export default {
     },
   },
   methods: {
-    updateNewTaskContent(evt) {
-      return this.$store.commit({
-        type: UPDATE_NEW_TASK_CONTENT,
-        content: evt.target.value,
-      });
-    },
     createTask(evt) {
       if (evt.shiftKey) {
         return;
@@ -100,7 +89,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import 'style/_variables';
+@import '~bootstrap/scss/_variables';
 
 .SearchInput {
   background: $input-bg;

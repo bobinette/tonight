@@ -40,6 +40,7 @@ func RegisterAPIHandler(
 	// Tasks
 	apiGroup.GET("/tasks", h.searchTasks)
 	apiGroup.POST("/tasks", h.createTask)
+	apiGroup.POST("/tasks/:id", h.update)
 	apiGroup.POST("/tasks/:id/log", h.log)
 
 	// Planning
@@ -101,6 +102,36 @@ func (h *apiHandler) createTask(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	task, err := h.taskService.create(ctx, user, body.Content)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, task)
+}
+
+func (h *apiHandler) update(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	taskIDStr := c.Param("id")
+	taskID64, err := strconv.ParseUint(taskIDStr, 10, 64)
+	if err != nil {
+		return err
+	}
+	taskID := uint(taskID64)
+
+	if err := checkPermission(c, taskID); err != nil {
+		return err
+	}
+
+	var body struct {
+		Content string `json:"content"`
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&body); err != nil {
+		return err
+	}
+
+	ctx := c.Request().Context()
+	task, err := h.taskService.update(ctx, taskID, body.Content)
 	if err != nil {
 		return err
 	}

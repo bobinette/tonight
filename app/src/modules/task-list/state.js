@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import Vue from 'vue';
+
 import { COOKIE_LOADED } from '@/modules/user/state';
 
 import { isDone } from '@/utils/tasks';
@@ -19,6 +21,7 @@ export const TASK_CREATED = 'TASK_CREATED';
 export const LOG_FOR_TASK = 'LOG_FOR_TASK';
 
 // -- Update
+export const TASK_UPDATED = 'TASK_UPDATED';
 export const UPDATE_TASK = 'UPDATE_TASK';
 
 // Plugins
@@ -63,13 +66,16 @@ export default {
       state.newTaskContent = '';
     },
     // UPDATE
-    [UPDATE_TASK]: (state, { task }) => {
+    [TASK_UPDATED]: (state, { task }) => {
       const idx = state.tasks.findIndex(t => task.id === t.id);
       if (idx === -1) {
         return;
       }
 
-      state.tasks[idx] = task;
+      // This does not work:
+      // state.tasks[idx] = task;
+      // I need to use Vue.set:
+      Vue.set(state.tasks, idx, task);
     },
   },
   actions: {
@@ -105,7 +111,7 @@ export default {
         .post(`http://127.0.0.1:9090/api/tasks/${taskId}/log`, { log })
         .then(response => {
           const task = response.data;
-          context.commit({ type: UPDATE_TASK, task });
+          context.commit({ type: TASK_UPDATED, task });
           return task;
         })
         .then(task => {
@@ -113,6 +119,18 @@ export default {
             context.dispatch({ type: FETCH_TASKS });
           }
           return task;
+        })
+        .catch(err => {
+          console.log(err);
+          throw err;
+        }),
+    [UPDATE_TASK]: (context, { taskId, content }) =>
+      axios
+        .post(`http://127.0.0.1:9090/api/tasks/${taskId}`, { content })
+        .then(response => {
+          const updatedTask = response.data;
+          context.commit({ type: TASK_UPDATED, task: updatedTask });
+          return updatedTask;
         })
         .catch(err => {
           console.log(err);

@@ -168,7 +168,15 @@ func formatRaw(t Task) string {
 	}
 
 	if t.Deadline != nil {
-		out = fmt.Sprintf("%s ~%s", out, t.Deadline.Format("2006-01-02"))
+		out = fmt.Sprintf("%s >%s", out, t.Deadline.Format("2006-01-02"))
+	}
+
+	if len(t.Dependencies) > 0 {
+		depIDs := make([]string, len(t.Dependencies))
+		for i, dep := range t.Dependencies {
+			depIDs[i] = fmt.Sprintf("%d", dep.ID)
+		}
+		out = fmt.Sprintf("%s needs:%s", out, strings.Join(depIDs, ","))
 	}
 
 	return out
