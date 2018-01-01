@@ -15,6 +15,9 @@ Vue.config.productionTip = false;
 Vue.use(Vuex);
 Vue.use(VueAutosize);
 
+// Define custom modifiers
+Vue.config.keyCodes.esc = 27;
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

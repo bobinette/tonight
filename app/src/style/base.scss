@@ -6,6 +6,8 @@
 // @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
 // @import url('https://fonts.googleapis.com/css?family=Lato');
 
+// Customize basic tags
+
 body {
     font-family: 'Source Sans Pro', 'Roboto', Arial, sans-serif;
     margin-bottom: 2rem;
@@ -20,14 +22,31 @@ h6 {
     font-family: 'Lato', Arial, sans-serif;
 }
 
-ul.list-group {
-    padding-left: inherit;
-    padding-right: inherit;
+ul {
+    list-style: none;
+    padding-left: 0;
+
+    &.list-group {
+        padding-left: inherit;
+        padding-right: inherit;
+    }
 }
 
 textarea {
     resize: none;
 }
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin-bottom: 0;
+}
+
+// New classes
 
 .flex {
     display: flex;
@@ -48,6 +67,16 @@ textarea {
 .list-group-item-header {
     background: $gray-lighter;
 }
+
+.success {
+    color: $brand-success;
+}
+
+.danger {
+    color: $brand-danger;
+}
+
+// Custom corrections of bootstrap
 
 .btn.btn-link {
     color: $brand-primary;

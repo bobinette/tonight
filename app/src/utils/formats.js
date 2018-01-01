@@ -1,3 +1,7 @@
+import moment from 'moment';
+
+// Plural
+
 export const plural = (word, n) => (n > 1 ? `${word}s` : word);
 
 // Duration
@@ -57,7 +61,7 @@ export const formatRaw = task => {
 
   // Add deadline
   if (task.deadline) {
-    formatted = `${formatted} >${task.deadline}`;
+    formatted = `${formatted} >${moment(task.deadline).format('YYYY-MM-DD')}`;
   }
 
   // Add dependencies
