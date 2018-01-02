@@ -188,6 +188,7 @@ export default {
       return {
         COMPLETION: ['inner-circle'],
         START: ['fa fa-flag-checkered'],
+        PAUSE: ['fa fa-coffee'],
       }[logType];
     },
   },
