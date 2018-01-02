@@ -324,7 +324,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		SELECT task_id, type, completion, description, created_at
 		FROM task_logs
 		WHERE task_id IN (%s)
-		ORDER BY task_id, created_at DESC
+		ORDER BY task_id, created_at
 	`, marks,
 	), params...)
 	if err != nil {

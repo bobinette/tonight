@@ -20,7 +20,6 @@
     <!-- New task input -->
     <li class="list-group-item">
       <textarea
-        ref="createTaskInput"
         v-autosize="newTaskContent"
         v-model="newTaskContent"
         @keydown.enter="createTask"
@@ -89,7 +88,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import '~bootstrap/scss/_variables';
+@import 'style/_variables';
 
 .SearchInput {
   background: $input-bg;

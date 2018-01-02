@@ -4,7 +4,7 @@
       <div class="flex flex-align-center flex-space-between w-100 RowHeader" @click="open">
         <span class="flex flex-align-center w-100">
           <h6>{{ task.title }}</h6>
-          <span class="badge badge-pill badge-danger RowDetail">{{ priority }}</span>
+          <span class="badge badge-pill badge-danger RowPriority">{{ priority }}</span>
         </span>
         <span class="flex flex-align-center Actions">
           <button class="btn btn-link" @click="showLog">
@@ -18,11 +18,14 @@
           </button>
         </span>
       </div>
+      <div>
+        <span class="badge badge-primary Tag" v-for="tag in task.tags">#{{ tag }}</span>
+      </div>
       <div v-if="isOpen">
         <div v-if="task.description" class="Smaller">
           <span v-html="task.description"></span>
         </div>
-        <div v-if="task.dependencies.length" class="Smaller">
+        <div v-if="task.dependencies && task.dependencies.length" class="Smaller">
           <ul>
             <li v-for="dep in task.dependencies">
               <i class="fa" :class="{
@@ -36,9 +39,6 @@
           </ul>
         </div>
         <div class="flex flex-align-center flex-space-between">
-          <div>
-            <span class="badge badge-primary Tag" v-for="tag in task.tags">#{{ tag }}</span>
-          </div>
           <div class="flex flex-align-center">
             <div class="text-muted RowDetail" v-if="task.duration">
               <i class="fa fa-clock-o"></i>
@@ -50,6 +50,15 @@
             </div>
           </div>
         </div>
+        <ul class="progress-tracker progress-tracker--text container row" v-if="task.log && task.log.length">
+          <li v-for="log in task.log" class="progress-step is-complete col-md-2">
+            <span class="progress-marker"><i class="ProgressIcon" :class="markerIcon(log.type)"></i></span>
+            <span class="progress-text">
+              <div class="text-muted"><em>{{ formatDate(log.createdAt) }}</em></div>
+              <div>{{ log.description }}</div>
+            </span>
+          </li>
+        </ul>
       </div>
       <textarea
         v-if="logInputVisible"
@@ -81,6 +90,8 @@
 <script>
 import ClickOutside from 'vue-click-outside';
 import { focus } from 'vue-focus';
+
+// import ProgressTracker from 'vue-bulma-progress-tracker';
 
 import moment from 'moment';
 
@@ -169,11 +180,23 @@ export default {
 
       this.isOpen = !this.isOpen;
     },
+    formatDate(date) {
+      const deadline = moment(date);
+      return deadline.fromNow();
+    },
+    markerIcon(logType) {
+      return {
+        COMPLETION: ['inner-circle'],
+        START: ['fa fa-flag-checkered'],
+      }[logType];
+    },
   },
   // Directives
   directives: {
     ClickOutside,
     focus,
+    // ProgressTracker,
+    // StepItem,
   },
 };
 </script>
@@ -185,7 +208,11 @@ export default {
   cursor: pointer;
 }
 
-.RowDetail {
+.RowPriority {
+  margin-left: 0.5rem;
+}
+
+.RowDetail:not(:first-child) {
   margin-left: 0.5rem;
 }
 
@@ -213,5 +240,29 @@ export default {
       color: $body-color;
     }
   }
+}
+
+.ProgressIcon {
+  margin: auto;
+}
+
+.inner-circle {
+  background: $body-bg;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+}
+
+.progress-tracker {
+  margin-top: 1rem;
+
+  .progress-marker {
+    right: - $marker-size;
+    padding-bottom: 0;
+  }
+}
+
+.progress-step:not(:last-child)::after {
+  right: - $marker-size - $marker-size-half;
 }
 </style>

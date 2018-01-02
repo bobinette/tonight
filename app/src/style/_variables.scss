@@ -1,8 +1,21 @@
 // ============================================================================
-// Base colors
+// Bootstrap
 // ============================================================================
 
 $brand-primary: #406b8f;
 
 // Import bootstrap now
 @import 'node_modules/bootstrap/scss/_variables';
+
+// ============================================================================
+// Progress tracker
+// ============================================================================
+
+$progress-color-dark: $brand-primary;
+$progress-color: $brand-primary;
+$progress-color-light: $brand-primary;
+
+$marker-size: 24px;
+$path-height: 2px;
+
+@import 'node_modules/progress-tracker/app/styles/progress-tracker/_progress-tracker-variables';

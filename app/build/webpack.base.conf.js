@@ -51,6 +51,7 @@ module.exports = {
         test: /\.js$/,
         loader: 'babel-loader',
         include: [resolve('src'), resolve('test')],
+        exclude: [new RegExp(`node_modules\\${path.sep}(?!vue-bulma-.*)`)],
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,

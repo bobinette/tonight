@@ -4,6 +4,9 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import VueAutosize from 'vue-autosize';
 
+// Start by loading my custom CSS
+import '@/style/base.scss';
+
 // Add font-awesome icons
 import 'font-awesome/scss/font-awesome.scss';
 
@@ -12,6 +15,7 @@ import App from './App';
 import store from './store';
 
 Vue.config.productionTip = false;
+
 Vue.use(Vuex);
 Vue.use(VueAutosize);
 

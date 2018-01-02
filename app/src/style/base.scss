@@ -3,6 +3,8 @@
 @import '~bootstrap/scss/variables';
 @import '~bootstrap/scss/bootstrap';
 
+@import 'node_modules/progress-tracker/app/styles/progress-tracker.scss';
+
 // @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
 // @import url('https://fonts.googleapis.com/css?family=Lato');
 
@@ -87,5 +89,22 @@ h6 {
         text-decoration: none;
         outline: none;
         box-shadow: none;
+    }
+}
+
+// Custom corrections of progress-tracker
+
+ul.progress-tracker {
+    margin: 0;
+}
+
+li.progress-step:not(:last-child)::after {
+    z-index: 0;
+}
+
+ul.progress-tracker.progress-tracker--vertical {
+    & .progress-marker {
+        top: 0.4rem;
+        // top: calc(1rem - #{$marker-size - $marker-size-third});
     }
 }
