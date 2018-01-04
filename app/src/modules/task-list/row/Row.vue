@@ -1,5 +1,5 @@
 <template>
-  <li class="list-group-item TaskRow flex-column align-items-start" v-click-outside="hideAll">
+  <li class="list-group-item TaskRow flex-column align-items-start" :class="{ highlight: isWorkedOn }" v-click-outside="hideAll">
     <div v-if="!editMode" class="w-100">
       <div class="flex flex-align-center flex-space-between w-100 RowHeader" @click.stop="open">
         <span class="flex flex-align-center w-100">
@@ -143,6 +143,18 @@ export default {
       return (
         this.task.log && this.task.log.findIndex(l => l.type === 'WONT_DO') >= 0
       );
+    },
+    isWorkedOn() {
+      if (!this.task.log || this.isDone || this.isWontDo) {
+        return false;
+      }
+
+      // slice to prevent reversing the log array
+      const lastWorkflowStep = this.task.log
+        .slice()
+        .reverse()
+        .find(l => l.type === 'START' || l.type === 'PAUSE');
+      return lastWorkflowStep.type === 'START';
     },
     formattedDeadline() {
       const deadline = moment(this.task.deadline);
@@ -322,5 +334,13 @@ export default {
 
 .progress-step:not(:last-child)::after {
   right: - $marker-size - $marker-size-half;
+}
+
+.highlight {
+  background-color: lighten($brand-primary, 57);
+}
+
+textarea {
+  background-color: transparent;
 }
 </style>
