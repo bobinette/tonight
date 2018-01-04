@@ -27,6 +27,7 @@ func TestTaskRepository(t *testing.T, repo tonight.TaskRepository) {
 	assert.NotEqual(t, uint(0), task.ID)
 	assert.Equal(t, uint(1), task.Rank)
 	assert.False(t, task.CreatedAt.IsZero())
+	assert.False(t, task.UpdatedAt.IsZero())
 
 	// Retrieve it
 	tasks, err := repo.List(ctx, []uint{task.ID})
@@ -42,6 +43,7 @@ func TestTaskRepository(t *testing.T, repo tonight.TaskRepository) {
 	err = repo.Update(ctx, &taskCopy)
 	assert.NoError(t, err)
 	assert.Equal(t, task, taskCopy)
+	assert.True(t, taskCopy.UpdatedAt.After(task.UpdatedAt))
 
 	// Add a log
 	log := tonight.Log{

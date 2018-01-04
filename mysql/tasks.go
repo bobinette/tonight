@@ -94,6 +94,7 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 	t.ID = taskID
 	t.Rank = rank
 	t.CreatedAt = now.Round(time.Second)
+	t.UpdatedAt = now.Round(time.Second)
 	return nil
 }
 
@@ -219,7 +220,7 @@ func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, 
 		params[i] = id
 	}
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, priority, rank, duration, deadline, created_at
+		SELECT id, title, description, priority, rank, duration, deadline, created_at, updated_at
 		  FROM tasks
 		 WHERE id IN (%s)
 		   AND deleted = 0
@@ -259,7 +260,8 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		var duration string
 		var deadline *time.Time
 		var createdAt time.Time
-		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &createdAt); err != nil {
+		var updatedAt time.Time
+		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &createdAt, &updatedAt); err != nil {
 			return nil, err
 		}
 
@@ -275,6 +277,7 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 			Deadline: deadline,
 
 			CreatedAt: createdAt,
+			UpdatedAt: updatedAt,
 		}
 		taskMap[task.ID] = task
 		ids = append(ids, task.ID)
@@ -468,7 +471,7 @@ func (r *TaskRepository) All(ctx context.Context) ([]tonight.Task, error) {
 	rows, err := r.db.QueryContext(
 		ctx,
 		`
-		SELECT id, title, description, priority, rank, duration, deadline, created_at
+		SELECT id, title, description, priority, rank, duration, deadline, created_at, updated_at
 		  FROM tasks
 		  WHERE deleted = ?
 		`,

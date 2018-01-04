@@ -61,20 +61,7 @@
         ],
         "default_analyzer": ""
       },
-      "rank": {
-        "enabled": true,
-        "dynamic": false,
-        "fields": [
-          {
-            "type": "number",
-            "store": true,
-            "index": true,
-            "include_in_all": true
-          }
-        ],
-        "default_analyzer": ""
-      },
-      "done": {
+      "status": {
         "enabled": true,
         "dynamic": false,
         "fields": [
@@ -89,9 +76,48 @@
         ],
         "default_analyzer": ""
       },
-      "done_at": {
+      "priority": {
         "enabled": true,
         "dynamic": false,
+        "fields": [
+          {
+            "type": "number",
+            "store": true,
+            "index": true,
+            "include_in_all": true
+          }
+        ],
+        "default_analyzer": ""
+      },
+      "score": {
+        "enabled": true,
+        "dynamic": false,
+        "fields": [
+          {
+            "type": "number",
+            "store": true,
+            "index": true,
+            "include_in_all": true
+          }
+        ],
+        "default_analyzer": ""
+      },
+      "createdAt": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "datetime",
+            "store": true,
+            "index": true,
+            "include_in_all": true
+          }
+        ],
+        "default_analyzer": ""
+      },
+      "updatedAt": {
+        "enabled": true,
+        "dynamic": true,
         "fields": [
           {
             "type": "datetime",

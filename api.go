@@ -71,6 +71,7 @@ func (h *apiHandler) me(c echo.Context) error {
 
 func (h *apiHandler) searchTasks(c echo.Context) error {
 	q := c.QueryParam("q")
+	sortBy := c.QueryParam("sortBy")
 	stringStatuses := func(a []string) []string { // Unique
 		res := make([]string, 0, len(a))
 		set := make(map[string]struct{})
@@ -103,7 +104,7 @@ func (h *apiHandler) searchTasks(c echo.Context) error {
 		}
 	}
 
-	tasks, err := h.taskService.list(ctx, user, q, statuses)
+	tasks, err := h.taskService.list(ctx, user, q, statuses, sortBy)
 	if err != nil {
 		return err
 	}

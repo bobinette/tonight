@@ -63,8 +63,10 @@ func (s *Index) Index(ctx context.Context, task tonight.Task) error {
 		"title":       task.Title,
 		"description": task.Description,
 		"tags":        task.Tags,
-		"done":        strconv.Itoa(int(task.Done())),
-		"rank":        task.Rank,
+		"status":      strconv.Itoa(int(task.Done())),
+		"priority":    task.Priority,
+		"createdAt":   task.CreatedAt,
+		"updatedAt":   task.UpdatedAt,
 	}
 
 	if doneAt := task.DoneAt(); doneAt != nil {
@@ -95,13 +97,12 @@ func (s *Index) Search(ctx context.Context, p tonight.TaskSearchParameters) ([]u
 
 	searchRequest := bleve.NewSearchRequest(query)
 	searchRequest.Size = total
-	searchRequest.SortBy([]string{"rank"})
-	if len(p.Statuses) != 1 {
-		searchRequest.SortBy([]string{"-done_at"})
-	}
 
-	// Activate for debugging
-	// searchRequest.Highlight = bleve.NewHighlight()
+	sortBy := []string{"createdAt"}
+	if p.SortBy != "" {
+		sortBy = []string{p.SortBy}
+	}
+	searchRequest.SortBy(sortBy)
 
 	searchResults, err := s.index.Search(searchRequest)
 	if err != nil {
@@ -115,11 +116,6 @@ func (s *Index) Search(ctx context.Context, p tonight.TaskSearchParameters) ([]u
 			return nil, err
 		}
 		ids[i] = uint(id64)
-
-		// Activate for debugging
-		// fmt.Printf("%s: %f\n", hit.ID, hit.Score)
-		// fmt.Println(hit.Fragments)
-		// fmt.Println(hit.Expl)
 	}
 
 	return ids, nil
@@ -217,7 +213,7 @@ func searchDoneStatuses(statuses []tonight.DoneStatus) query.Query {
 	qs := make([]query.Query, len(statuses))
 	for i, s := range statuses {
 		query := bleve.NewTermQuery(strconv.Itoa(int(s)))
-		query.FieldVal = "done"
+		query.FieldVal = "status"
 		qs[i] = query
 	}
 	return orQ(qs...)

@@ -69,6 +69,7 @@ type Task struct {
 	Dependencies []Dependency `json:"dependencies"`
 
 	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (t Task) LeftDuration() time.Duration {
@@ -143,6 +144,7 @@ type TaskSearchParameters struct {
 	IDs      []uint
 	Q        string
 	Statuses []DoneStatus
+	SortBy   string
 }
 
 type TaskIndex interface {
@@ -158,11 +160,12 @@ type taskService struct {
 	userRepo UserRepository
 }
 
-func (ts *taskService) list(ctx context.Context, user User, q string, doneStatuses []DoneStatus) ([]Task, error) {
+func (ts *taskService) list(ctx context.Context, user User, q string, doneStatuses []DoneStatus, sortBy string) ([]Task, error) {
 	ids, err := ts.index.Search(ctx, TaskSearchParameters{
 		Q:        q,
 		Statuses: doneStatuses,
 		IDs:      user.TaskIDs,
+		SortBy:   sortBy,
 	})
 	if err != nil {
 		return nil, err

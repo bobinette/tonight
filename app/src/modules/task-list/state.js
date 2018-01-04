@@ -9,12 +9,14 @@ import { isDone } from '@/utils/tasks';
 
 // Tasks
 // -- List
-export const UPDATE_Q = 'UPDATE_Q';
 export const FETCH_TASKS = 'FETCH_TASKS';
 export const TASK_FETCHING_STARTED = 'TASK_FETCHING_STARTED';
 export const TASKS_RECEIVED = 'TASKS_RECEIVED';
 
+// -- Filters
+export const UPDATE_Q = 'UPDATE_Q';
 export const UPDATE_STATUS_FILTER = 'UPDATE_STATUS_FILTER';
+export const UPDATE_SORT_OPTION = 'UPDATE_SORT_OPTION';
 
 // -- Create
 export const CREATE_TASK = 'CREATE_TASK';
@@ -40,6 +42,7 @@ export const plugins = [
         TASK_UPDATED,
         TASK_DELETED,
         UPDATE_STATUS_FILTER,
+        UPDATE_SORT_OPTION,
       ];
       if (!types.find(t => t === mutation.type)) {
         return;
@@ -56,6 +59,7 @@ export default {
     statuses: [],
     tasks: [],
     loading: false,
+    sortBy: 'createdAt',
   },
   getters: {},
   mutations: {
@@ -70,6 +74,9 @@ export default {
       } else {
         state.statuses.splice(idx, 1);
       }
+    },
+    [UPDATE_SORT_OPTION]: (state, { sortBy }) => {
+      state.sortBy = sortBy;
     },
     [TASK_FETCHING_STARTED]: state => {
       state.loading = true;
@@ -100,12 +107,12 @@ export default {
   actions: {
     [FETCH_TASKS]: context => {
       context.commit({ type: TASK_FETCHING_STARTED });
-      const { statuses } = context.state;
+      const { statuses, sortBy } = context.state;
       const q = encodeURIComponent(context.state.q);
       return axios
         .get(
           `http://127.0.0.1:9090/api/tasks?${qs.stringify(
-            { q, statuses },
+            { q, statuses, sortBy },
             { skipNulls: true, indices: false }
           )}`
         )

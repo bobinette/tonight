@@ -1,13 +1,13 @@
 package tonight
 
 import (
-	"fmt"
 	"math"
 	"time"
 )
 
 func scoreMany(tasks []Task) map[uint]float64 {
 	// Construct the dependency tree
+	// Well, not exactly...
 	reversedDependencies := make(map[uint][]uint)
 	for _, task := range tasks {
 		for _, dep := range task.Dependencies {
@@ -23,17 +23,12 @@ func scoreMany(tasks []Task) map[uint]float64 {
 		scores[task.ID] = score(task)
 	}
 
-	fmt.Println(scores)
-	fmt.Println(reversedDependencies)
-
 	// Boost the scores of task listed as dependencies
 	for depID, taskIDs := range reversedDependencies {
 		for _, taskID := range taskIDs {
 			scores[depID] += scores[taskID]
 		}
 	}
-
-	fmt.Println(scores)
 
 	return scores
 }

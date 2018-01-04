@@ -7,12 +7,14 @@
           <span class="badge badge-pill badge-danger RowPriority">{{ priority }}</span>
         </span>
         <span class="flex flex-align-center Actions">
-          <button class="btn btn-link" @click.stop="deleteTask">
+          <button class="btn btn-link" @click.stop="deleteTask" v-if="isPending">
             <i class="fa fa-trash"></i>
           </button>
-          <button class="btn btn-link" @click.stop="switchToEditMode">
+          <button class="btn btn-link" @click.stop="switchToEditMode" v-if="isPending">
             <i class="fa fa-pencil"></i>
           </button>
+          <span class="badge badge-pill badge-success" v-if="isDone">Done</span>
+          <span class="badge badge-pill badge-warning" v-if="isWontDo">Won't do</span>
           <button class="btn btn-link" @click.stop="open">
             <i class="fa" :class="{'fa-chevron-down': !isOpen, 'fa-chevron-up': isOpen}"></i>
           </button>
@@ -45,12 +47,10 @@
               {{ task.duration }}
               &#9679;
               created {{ formatDate(task.createdAt) }}
-              <!--
               <span v-if="task.createdAt !== task.updatedAt">
                 &#9679;
                 updated {{ formatDate(task.updatedAt) }}
               </span>
-              -->
             </div>
             <div class="text-muted RowDetail" v-if="task.deadline">
               <i class="fa fa-calendar"></i>
@@ -69,7 +69,7 @@
               <div v-else><em class="text-muted">(No description for this step)</em></div>
             </span>
           </li>
-          <li class="progress-step">
+          <li class="progress-step" v-if="isPending">
             <span class="progress-marker bg-success no-bottom-padding"><i class="fa fa-plus"></i></span>
             <span class="progress-text">
               <textarea
@@ -104,8 +104,6 @@
 import ClickOutside from 'vue-click-outside';
 import { focus } from 'vue-focus';
 
-// import ProgressTracker from 'vue-bulma-progress-tracker';
-
 import moment from 'moment';
 
 import { formatRaw } from '@/utils/formats';
@@ -132,6 +130,19 @@ export default {
   computed: {
     priority() {
       return this.task.priority > 0 ? this.task.priority.toString() : '';
+    },
+    isPending() {
+      return !this.isDone && !this.isWontDo;
+    },
+    isDone() {
+      return (
+        this.task.log && this.task.log.findIndex(l => l.completion === 100) >= 0
+      );
+    },
+    isWontDo() {
+      return (
+        this.task.log && this.task.log.findIndex(l => l.type === 'WONT_DO') >= 0
+      );
     },
     formattedDeadline() {
       const deadline = moment(this.task.deadline);
@@ -263,6 +274,11 @@ export default {
 
 .Actions {
   margin-left: 0.3rem;
+
+  > span,
+  > button {
+    margin: 0 0.1rem;
+  }
 
   .btn.btn-link {
     color: lighten($gray-light, 20);

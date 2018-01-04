@@ -31,6 +31,28 @@
           </li>
         </ul>
       </div>
+      <fieldset
+        class="col-md-1 dropdown"
+        :class="{ show: sortOptionsOpen }"
+        v-click-outside="() => sortOptionsOpen = false"
+      >
+        <button class="btn btn-link dropdown-toggle" @click="sortOptionsOpen = !sortOptionsOpen">
+          Sort by
+        </button>
+        <ul class="dropdown-menu">
+          <li class="dropdown-item form-check" v-for="sortOption in sortOptions">
+            <label class="form-check-label" :for="`radio-sortOption-${sortOption.value}`">
+              <input
+                type="radio"
+                :id="`radio-sortOption-${sortOption.value}`"
+                @change="updateSortOption(sortOption.value)"
+                :checked="sortOption.checked"
+              >
+              {{ sortOption.label }}
+            </label>
+          </li>
+        </ul>
+      </fieldset>
       <div class="col-md-1 col-end">
         <i class="fa fa-circle-o-notch fa-spin" v-if="loading"></i>
       </div>
@@ -63,6 +85,7 @@ import Row from './row/Row';
 import {
   UPDATE_Q,
   UPDATE_STATUS_FILTER,
+  UPDATE_SORT_OPTION,
   FETCH_TASKS,
   CREATE_TASK,
 } from './state';
@@ -73,9 +96,7 @@ export default {
     return {
       newTaskContent: '',
       statusFilterOpen: false,
-      statusPending: false,
-      statusDone: false,
-      statusWontDo: false,
+      sortOptionsOpen: false,
     };
   },
   computed: {
@@ -111,6 +132,36 @@ export default {
         },
       ];
     },
+    sortOptions() {
+      const sortBy = this.$store.state.tasks.sortBy;
+      return [
+        {
+          value: 'createdAt',
+          label: 'Creation date (old to new)',
+          checked: sortBy === 'createdAt',
+        },
+        {
+          value: '-createdAt',
+          label: 'Creation date (new to old)',
+          checked: sortBy === '-createdAt',
+        },
+        {
+          value: 'updatedAt',
+          label: 'Last edition date (old to new)',
+          checked: sortBy === 'updatedAt',
+        },
+        {
+          value: '-updatedAt',
+          label: 'Last edition date (new to old)',
+          checked: sortBy === '-updatedAt',
+        },
+        {
+          value: '-priority',
+          label: 'Priority (desc)',
+          checked: sortBy === '-priority',
+        },
+      ];
+    },
   },
   methods: {
     createTask(evt) {
@@ -135,6 +186,9 @@ export default {
     },
     updateStatusFilter(status) {
       this.$store.commit({ type: UPDATE_STATUS_FILTER, status });
+    },
+    updateSortOption(sortBy) {
+      this.$store.commit({ type: UPDATE_SORT_OPTION, sortBy });
     },
   },
   components: {
@@ -195,6 +249,10 @@ textarea {
   .col-md-1,
   .col-md-4 {
     padding: 0;
+  }
+
+  .btn.btn-link {
+    color: $body-color;
   }
 
   .col-end {
