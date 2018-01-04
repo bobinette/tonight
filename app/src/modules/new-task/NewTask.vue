@@ -7,6 +7,7 @@
         v-model="newTaskContent"
         placeholder="Create a new task..."
         @keydown.enter="createTask"
+        @keydown.esc="isOpen = false"
         rows="5"
       >
       </textarea>

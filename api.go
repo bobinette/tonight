@@ -41,6 +41,7 @@ func RegisterAPIHandler(
 	apiGroup.GET("/tasks", h.searchTasks)
 	apiGroup.POST("/tasks", h.createTask)
 	apiGroup.POST("/tasks/:id", h.update)
+	apiGroup.DELETE("/tasks/:id", h.delete)
 	apiGroup.POST("/tasks/:id/log", h.log)
 
 	// Planning
@@ -70,6 +71,22 @@ func (h *apiHandler) me(c echo.Context) error {
 
 func (h *apiHandler) searchTasks(c echo.Context) error {
 	q := c.QueryParam("q")
+	stringStatuses := func(a []string) []string { // Unique
+		res := make([]string, 0, len(a))
+		set := make(map[string]struct{})
+
+		for _, s := range a {
+			if _, ok := set[s]; ok {
+				continue
+			}
+
+			res = append(res, s)
+			set[s] = struct{}{}
+		}
+
+		return res
+	}(c.QueryParams()["statuses"])
+
 	ctx := c.Request().Context()
 
 	user, err := loadUser(c)
@@ -77,7 +94,16 @@ func (h *apiHandler) searchTasks(c echo.Context) error {
 		return err
 	}
 
-	tasks, err := h.taskService.list(ctx, user, q, []DoneStatus{DoneStatusNotDone})
+	statuses := make([]DoneStatus, len(stringStatuses))
+	if len(stringStatuses) == 0 {
+		statuses = []DoneStatus{DoneStatusPending}
+	} else {
+		for i, s := range stringStatuses {
+			statuses[i] = DoneStatusFromString(s)
+		}
+	}
+
+	tasks, err := h.taskService.list(ctx, user, q, statuses)
 	if err != nil {
 		return err
 	}
@@ -168,6 +194,29 @@ func (h *apiHandler) log(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, task)
+}
+
+func (h *apiHandler) delete(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	taskIDStr := c.Param("id")
+	taskID64, err := strconv.ParseUint(taskIDStr, 10, 64)
+	if err != nil {
+		return err
+	}
+	taskID := uint(taskID64)
+
+	if err := checkPermission(c, taskID); err != nil {
+		return err
+	}
+
+	ctx := c.Request().Context()
+
+	if err := h.taskService.delete(ctx, taskID); err != nil {
+		return err
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
 
 func (h *apiHandler) currentPlanning(c echo.Context) error {

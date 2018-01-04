@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 import { COOKIE_LOADED } from '@/modules/user/state';
-import { TASK_UPDATED } from '@/modules/task-list/state';
+import { TASK_UPDATED, TASK_DELETED } from '@/modules/task-list/state';
 
 // Fetch
 export const FETCH_PLANNING = 'FETCH_PLANNING';
@@ -17,7 +17,7 @@ export const DISMISS_PLANNING = 'DISMISS_PLANNING';
 export const plugins = [
   store =>
     store.subscribe(mutation => {
-      const types = [COOKIE_LOADED, TASK_UPDATED];
+      const types = [COOKIE_LOADED, TASK_UPDATED, TASK_DELETED];
       if (!types.find(t => t === mutation.type)) {
         return;
       }
@@ -32,9 +32,7 @@ export default {
     planning: null,
     loading: false,
   },
-  getters: {
-    planning: ({ planning }) => planning,
-  },
+  getters: {},
   mutations: {
     [PLANNING_RECEIVED]: (state, { planning }) => {
       state.planning = planning;

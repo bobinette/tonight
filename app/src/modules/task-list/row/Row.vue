@@ -1,19 +1,19 @@
 <template>
   <li class="list-group-item TaskRow flex-column align-items-start" v-click-outside="hideAll">
     <div v-if="!editMode" class="w-100">
-      <div class="flex flex-align-center flex-space-between w-100 RowHeader" @click="open">
+      <div class="flex flex-align-center flex-space-between w-100 RowHeader" @click.stop="open">
         <span class="flex flex-align-center w-100">
           <h6>{{ task.title }}</h6>
           <span class="badge badge-pill badge-danger RowPriority">{{ priority }}</span>
         </span>
         <span class="flex flex-align-center Actions">
-          <button class="btn btn-link" @click="showLog">
-            <i class="fa fa-check"></i>
+          <button class="btn btn-link" @click.stop="deleteTask">
+            <i class="fa fa-trash"></i>
           </button>
-          <button class="btn btn-link" @click="switchToEditMode">
+          <button class="btn btn-link" @click.stop="switchToEditMode">
             <i class="fa fa-pencil"></i>
           </button>
-          <button class="btn btn-link" @click="open">
+          <button class="btn btn-link" @click.stop="open">
             <i class="fa" :class="{'fa-chevron-down': !isOpen, 'fa-chevron-up': isOpen}"></i>
           </button>
         </span>
@@ -39,10 +39,18 @@
           </ul>
         </div>
         <div class="flex flex-align-center flex-space-between">
-          <div class="flex flex-align-center">
+          <div class="flex flex-align-center flex-space-between">
             <div class="text-muted RowDetail" v-if="task.duration">
               <i class="fa fa-clock-o"></i>
-              <em>{{ task.duration }}</em>
+              {{ task.duration }}
+              &#9679;
+              created {{ formatDate(task.createdAt) }}
+              <!--
+              <span v-if="task.createdAt !== task.updatedAt">
+                &#9679;
+                updated {{ formatDate(task.updatedAt) }}
+              </span>
+              -->
             </div>
             <div class="text-muted RowDetail" v-if="task.deadline">
               <i class="fa fa-calendar"></i>
@@ -50,27 +58,32 @@
             </div>
           </div>
         </div>
-        <ul class="progress-tracker progress-tracker--text container row" v-if="task.log && task.log.length">
-          <li v-for="log in task.log" class="progress-step is-complete col-md-2">
-            <span class="progress-marker"><i class="ProgressIcon" :class="markerIcon(log.type)"></i></span>
+        <ul class="progress-tracker progress-tracker--text progress-tracker--vertical">
+          <li v-for="log in task.log" class="progress-step is-complete ">
+            <span class="progress-marker" :class="markerClass(log)">
+              <i class="ProgressIcon" :class="markerIcon(log)"></i>
+            </span>
             <span class="progress-text">
-              <div class="text-muted"><em>{{ formatDate(log.createdAt) }}</em></div>
-              <div>{{ log.description }}</div>
+              <small class="text-muted"><em>{{ formatDate(log.createdAt) }}</em></small>
+              <div v-if="log.description">{{ log.description }}</div>
+              <div v-else><em class="text-muted">(No description for this step)</em></div>
+            </span>
+          </li>
+          <li class="progress-step">
+            <span class="progress-marker bg-success no-bottom-padding"><i class="fa fa-plus"></i></span>
+            <span class="progress-text">
+              <textarea
+                v-autosize="log"
+                v-model="log"
+                @keydown.enter="addLog"
+                placeholder="Add a new step..."
+                rows="1"
+              >
+              </textarea>
             </span>
           </li>
         </ul>
       </div>
-      <textarea
-        v-if="logInputVisible"
-        v-autosize="log"
-        v-focus="logInputVisible"
-        v-model="log"
-        @keydown.enter="addLog"
-        @keydown.esc="logInputVisible = false"
-        placeholder="Add a new step..."
-        rows="1"
-      >
-      </textarea>
     </div>
     <div v-else class="w-100">
       <textarea
@@ -97,7 +110,7 @@ import moment from 'moment';
 
 import { formatRaw } from '@/utils/formats';
 
-import { LOG_FOR_TASK, UPDATE_TASK } from '../state';
+import { LOG_FOR_TASK, UPDATE_TASK, DELETE_TASK } from '../state';
 
 export default {
   name: 'task-row',
@@ -126,10 +139,6 @@ export default {
     },
   },
   methods: {
-    showLog(evt) {
-      evt.stopPropagation(); // Do not open the log input
-      this.logInputVisible = true;
-    },
     hideAll() {
       this.logInputVisible = false;
     },
@@ -169,14 +178,12 @@ export default {
     },
     switchToEditMode(evt) {
       evt.preventDefault();
-      evt.stopPropagation(); // Do not open the log input
 
       this.raw = formatRaw(this.task);
       this.editMode = true;
     },
     open(evt) {
       evt.preventDefault();
-      evt.stopPropagation();
 
       this.isOpen = !this.isOpen;
     },
@@ -184,12 +191,35 @@ export default {
       const deadline = moment(date);
       return deadline.fromNow();
     },
-    markerIcon(logType) {
+    markerIcon(log) {
+      if (log.completion === 100) {
+        return ['fa fa-check'];
+      }
+
       return {
         COMPLETION: ['inner-circle'],
         START: ['fa fa-flag-checkered'],
         PAUSE: ['fa fa-coffee'],
-      }[logType];
+        WONT_DO: ['fa fa-times'],
+      }[log.type];
+    },
+    markerClass(log) {
+      if (log.completion === 100) {
+        return ['success-bg'];
+      }
+
+      if (log.type === 'WONT_DO') {
+        return ['warning-bg'];
+      }
+
+      if (log.type === 'COMPLETION') {
+        return ['no-bottom-padding'];
+      }
+
+      return [];
+    },
+    deleteTask() {
+      this.$store.dispatch({ type: DELETE_TASK, taskId: this.task.id }).catch();
     },
   },
   // Directives
@@ -259,7 +289,18 @@ export default {
 
   .progress-marker {
     right: - $marker-size;
-    padding-bottom: 0;
+
+    &.no-bottom-padding {
+      padding-bottom: 0;
+    }
+
+    &.success-bg {
+      background-color: $brand-success;
+    }
+
+    &.warning-bg {
+      background-color: $brand-warning;
+    }
   }
 }
 

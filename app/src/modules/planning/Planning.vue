@@ -39,7 +39,7 @@ export default {
   },
   computed: {
     planning() {
-      return this.$store.getters.planning;
+      return this.$store.state.planning.planning;
     },
     q() {
       return this.planning.q !== '' ? `${this.planning.q} for ` : '';

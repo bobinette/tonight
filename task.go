@@ -23,10 +23,34 @@ const (
 type DoneStatus int
 
 const (
-	DoneStatusNotDone DoneStatus = iota
+	DoneStatusPending DoneStatus = iota
 	DoneStatusDone
 	DoneStatusWontDo
 )
+
+func DoneStatusFromString(s string) DoneStatus {
+	switch s {
+	case "pending":
+		return DoneStatusPending
+	case "done":
+		return DoneStatusDone
+	case "won't do":
+		return DoneStatusWontDo
+	}
+	return DoneStatusPending
+}
+
+func (ds DoneStatus) String() string {
+	switch ds {
+	case DoneStatusPending:
+		return "pending"
+	case DoneStatusDone:
+		return "done"
+	case DoneStatusWontDo:
+		return "won't do"
+	}
+	return ""
+}
 
 type Task struct {
 	ID          uint   `json:"id"`
@@ -77,7 +101,7 @@ func (t Task) Done() DoneStatus {
 		}
 	}
 
-	return DoneStatusNotDone
+	return DoneStatusPending
 }
 
 func (t Task) DoneAt() *time.Time {

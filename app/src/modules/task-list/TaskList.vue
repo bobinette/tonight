@@ -9,6 +9,28 @@
         <span class="fa fa-search"></span>
         <input type="text" class="form-control" :value="q" @input="updateQ" @keydown.enter="search">
       </div>
+      <div
+        class="col-md-1 dropdown"
+        :class="{ show: statusFilterOpen }"
+        v-click-outside="() => statusFilterOpen = false"
+      >
+        <button class="btn btn-link dropdown-toggle" @click="statusFilterOpen = !statusFilterOpen">
+          Status
+        </button>
+        <ul class="dropdown-menu">
+          <li class="dropdown-item form-check" v-for="status in statuses">
+            <label class="form-check-label" :for="`checkbox-status-${status.value}`">
+              <input
+                type="checkbox"
+                :id="`checkbox-status-${status.value}`"
+                @change="updateStatusFilter(status.value)"
+                :checked="status.checked"
+              >
+              {{ status.label }}
+            </label>
+          </li>
+        </ul>
+      </div>
       <div class="col-md-1 col-end">
         <i class="fa fa-circle-o-notch fa-spin" v-if="loading"></i>
       </div>
@@ -32,31 +54,62 @@
 </template>
 
 <script >
+import ClickOutside from 'vue-click-outside';
+
 import { plural } from '@/utils/formats';
 
 import Row from './row/Row';
 
-import { UPDATE_Q, FETCH_TASKS, CREATE_TASK } from './state';
+import {
+  UPDATE_Q,
+  UPDATE_STATUS_FILTER,
+  FETCH_TASKS,
+  CREATE_TASK,
+} from './state';
 
 export default {
   name: 'task-list',
   data() {
     return {
       newTaskContent: '',
+      statusFilterOpen: false,
+      statusPending: false,
+      statusDone: false,
+      statusWontDo: false,
     };
   },
   computed: {
     tasks() {
-      return this.$store.getters.tasks;
+      return this.$store.state.tasks.tasks;
     },
     tasksLength() {
       return this.tasks && this.tasks.length ? this.tasks.length : 0;
     },
     q() {
-      return this.$store.getters.q;
+      return this.$store.state.tasks.q;
     },
     loading() {
-      return this.$store.getters.loading;
+      return this.$store.state.tasks.loading;
+    },
+    statuses() {
+      const checkedStatuses = this.$store.state.tasks.statuses;
+      return [
+        {
+          value: 'pending',
+          label: 'Pending',
+          checked: checkedStatuses.findIndex(s => s === 'pending') !== -1,
+        },
+        {
+          value: 'done',
+          label: 'Done',
+          checked: checkedStatuses.findIndex(s => s === 'done') !== -1,
+        },
+        {
+          value: "won't do",
+          label: "Won't do",
+          checked: checkedStatuses.findIndex(s => s === "won't do") !== -1,
+        },
+      ];
     },
   },
   methods: {
@@ -80,9 +133,15 @@ export default {
     search() {
       this.$store.dispatch({ type: FETCH_TASKS }).catch();
     },
+    updateStatusFilter(status) {
+      this.$store.commit({ type: UPDATE_STATUS_FILTER, status });
+    },
   },
   components: {
     Row,
+  },
+  directives: {
+    ClickOutside,
   },
 };
 </script>
@@ -141,6 +200,14 @@ textarea {
   .col-end {
     margin-left: auto;
     text-align: right;
+  }
+
+  .form-check {
+    margin-bottom: 0;
+  }
+
+  .form-check-label {
+    padding-left: 0;
   }
 }
 </style>

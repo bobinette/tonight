@@ -5,8 +5,8 @@
 
 @import 'node_modules/progress-tracker/app/styles/progress-tracker.scss';
 
-// @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
-// @import url('https://fonts.googleapis.com/css?family=Lato');
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
+@import url('https://fonts.googleapis.com/css?family=Lato');
 
 // Customize basic tags
 
@@ -74,8 +74,16 @@ h6 {
     color: $brand-success;
 }
 
+.success-bg {
+    background: $brand-success;
+}
+
 .danger {
     color: $brand-danger;
+}
+
+.warning-bg {
+    background: $brand-warning;
 }
 
 // Custom corrections of bootstrap
@@ -104,7 +112,14 @@ li.progress-step:not(:last-child)::after {
 
 ul.progress-tracker.progress-tracker--vertical {
     & .progress-marker {
-        top: 0.4rem;
-        // top: calc(1rem - #{$marker-size - $marker-size-third});
+        top: $marker-size-half;
+    }
+
+    .progress-step:not(:last-child)::after {
+        top: $marker-size;
+    }
+
+    .progress-step:not(:last-child) .progress-text {
+        padding-bottom: 1rem;
     }
 }

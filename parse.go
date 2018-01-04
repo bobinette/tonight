@@ -38,7 +38,7 @@ var (
 			i++
 		}
 
-		return regexp.MustCompile(fmt.Sprintf(`^(%s)(?:(?: |:).*|$)`, strings.Join(keyWords, "|")))
+		return regexp.MustCompile(fmt.Sprintf(`^(%s)`, strings.Join(keyWords, "|")))
 	}(logKeywordMapping)
 
 	planningRegex = regexp.MustCompile(`^(.* for )?(!)?([0-9a-zA-Z]+)$`)
