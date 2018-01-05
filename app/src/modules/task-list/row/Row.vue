@@ -25,7 +25,7 @@
       </div>
       <div v-if="isOpen">
         <div v-if="task.description" class="Smaller">
-          <span v-html="task.description"></span>
+          <span v-html="markdown(task.description)"></span>
         </div>
         <div v-if="task.dependencies && task.dependencies.length" class="Smaller">
           <ul>
@@ -65,7 +65,7 @@
             </span>
             <span class="progress-text">
               <small class="text-muted"><em>{{ formatDate(log.createdAt) }}</em></small>
-              <div v-if="log.description">{{ log.description }}</div>
+              <div v-if="log.description" v-html="markdown(log.description)"></div>
               <div v-else><em class="text-muted">(No description for this step)</em></div>
             </span>
           </li>
@@ -105,6 +105,8 @@ import ClickOutside from 'vue-click-outside';
 import { focus } from 'vue-focus';
 
 import moment from 'moment';
+import remark from 'remark';
+import html from 'remark-html';
 
 import { formatRaw } from '@/utils/formats';
 
@@ -243,6 +245,12 @@ export default {
     },
     deleteTask() {
       this.$store.dispatch({ type: DELETE_TASK, taskId: this.task.id }).catch();
+    },
+    markdown(text) {
+      const md = remark()
+        .use(html, { sanitize: true })
+        .processSync(text);
+      return md.contents;
     },
   },
   // Directives

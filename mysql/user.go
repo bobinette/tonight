@@ -86,3 +86,17 @@ func (r *UserRepository) AddTaskToUser(ctx context.Context, userID uint, taskID 
 	`, userID, taskID, time.Now())
 	return err
 }
+
+func (r *UserRepository) UpdateTagColor(ctx context.Context, userID uint, tag string, colour string) error {
+	row := r.db.QueryRowContext(ctx, "SELECT NULL FROM user_customs_tags WHERE user_id = ? AND tag = ?", userID, tag)
+	if err := row.Scan(); err != nil {
+		return err
+	}
+
+	now := time.Now()
+	_, err := r.db.ExecContext(ctx, `
+		INSERT INTO user_customs_tags (user_id, tag, colour, created_at, updated_at)
+		(?, ?, ?, ?, ?)
+	`, userID, tag, colour, now, now)
+	return err
+}

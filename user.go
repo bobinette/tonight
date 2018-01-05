@@ -12,6 +12,8 @@ type User struct {
 	Name string `json:"name"`
 
 	TaskIDs []uint `json:"-"`
+
+	TagColours map[string]string `json:"tagColours"`
 }
 
 type UserRepository interface {
@@ -20,6 +22,7 @@ type UserRepository interface {
 	Insert(ctx context.Context, user *User) error
 
 	AddTaskToUser(ctx context.Context, userID uint, taskID uint) error
+	UpdateTagColor(ctx context.Context, userID uint, tag string, color string) error
 }
 
 type userService struct {
@@ -63,4 +66,13 @@ func (us *userService) token(ctx context.Context, user User) (string, error) {
 	}
 
 	return tokenStr, nil
+}
+
+func (us *userService) customizeColour(ctx context.Context, user User, tag, colour string) (User, error) {
+	err := us.repo.UpdateTagColor(ctx, user.ID, tag, colour)
+	if err != nil {
+		return User{}, err
+	}
+
+	return us.repo.Get(ctx, user.ID)
 }

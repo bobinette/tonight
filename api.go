@@ -27,7 +27,10 @@ func RegisterAPIHandler(
 			taskRepo:  repo,
 			taskIndex: index,
 		},
-		userRepository: userRepo,
+		userService: userService{
+			jwtKey: jwtKey,
+			repo:   userRepo,
+		},
 	}
 
 	apiGroup := e.Group("/api")
@@ -36,6 +39,7 @@ func RegisterAPIHandler(
 
 	// User
 	apiGroup.GET("/me", h.me)
+	apiGroup.POST("/tags/:tag", h.customizeColour)
 
 	// Tasks
 	apiGroup.GET("/tasks", h.searchTasks)
@@ -54,14 +58,34 @@ type apiHandler struct {
 	repo  TaskRepository
 	index TaskIndex
 
-	userRepository UserRepository
-
 	taskService     taskService
 	planningService planningService
+	userService     userService
 }
 
 func (h *apiHandler) me(c echo.Context) error {
 	user, err := loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, user)
+}
+
+func (h *apiHandler) customizeColour(c echo.Context) error {
+	defer c.Request().Body.Close()
+	user, err := loadUser(c)
+
+	tag := c.Param("tag")
+
+	var body struct {
+		Colour string `json:"colour"`
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&body); err != nil {
+		return err
+	}
+
+	user, err = h.userService.customizeColour(c.Request().Context(), user, tag, body.Colour)
 	if err != nil {
 		return err
 	}

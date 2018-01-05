@@ -138,7 +138,7 @@ export default {
         {
           value: 'createdAt',
           label: 'Creation date (old to new)',
-          checked: sortBy === 'createdAt',
+          checked: !sortBy || sortBy === 'createdAt',
         },
         {
           value: '-createdAt',

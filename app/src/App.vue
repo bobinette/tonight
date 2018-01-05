@@ -18,6 +18,7 @@ import Planning from '@/modules/planning/Planning';
 import NewTaskInput from '@/modules/new-task/NewTask';
 
 import { LOAD_COOKIE } from '@/modules/user/state';
+import { LOAD_FILTERS } from '@/modules/task-list/state';
 
 // Components
 import Navbar from '@/components/navbar/Navbar';
@@ -32,6 +33,7 @@ export default {
   },
   mounted() {
     this.$store.dispatch({ type: LOAD_COOKIE });
+    this.$store.dispatch({ type: LOAD_FILTERS, query: window.location.search });
   },
 };
 </script>

@@ -164,6 +164,7 @@ func (s *Index) searchQ(queryString string) query.Query {
 			word = word[1:]
 		}
 
+		fmt.Println(word)
 		if strings.HasPrefix(word, "#") && len(word) > 1 {
 			q = s.matches(word[1:], "tags", must)
 		} else if must {
