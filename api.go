@@ -2,10 +2,16 @@ package tonight
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/labstack/echo"
+)
+
+var (
+	colourRegex = regexp.MustCompile(`^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$`)
 )
 
 func RegisterAPIHandler(
@@ -83,6 +89,10 @@ func (h *apiHandler) customizeColour(c echo.Context) error {
 	}
 	if err := json.NewDecoder(c.Request().Body).Decode(&body); err != nil {
 		return err
+	}
+
+	if !colourRegex.MatchString(body.Colour) {
+		return errors.New("invalid colour")
 	}
 
 	user, err = h.userService.customizeColour(c.Request().Context(), user, tag, body.Colour)

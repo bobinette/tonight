@@ -21,7 +21,15 @@
         </span>
       </div>
       <div>
-        <span class="badge badge-primary Tag" v-for="tag in task.tags">#{{ tag }}</span>
+        <span v-for="tag in task.tags" :key="tag" class="dropdown Tag" :class="{show: openTag === tag}" >
+          <button class="btn btn-link badge badge-primary" :style="tagColourStyle(tag)" @click.stop="openTagColourInput(tag)">#{{ tag }}</button>
+          <div class="dropdown-menu TagColour" v-click-outside="hideTagColourInput" @click.stop="() => {}" >
+            <div class="flex flex-align-center">
+              <div :style="lastValidColour ? {'background-color': lastValidColour} : {}" class="color-preview"></div>
+              <input class="form-control" type="text" v-model="tagColour" @keydown.enter="customizeColour" @keydown.esc="hideTagColourInput" :class="{ danger: !colourIsValid }">
+            </div>
+          </div>
+        </span>
       </div>
       <div v-if="isOpen">
         <div v-if="task.description" class="Smaller">
@@ -108,6 +116,7 @@ import moment from 'moment';
 import remark from 'remark';
 import html from 'remark-html';
 
+import { CUSTOMIZE_COLOUR } from '@/modules/user/state';
 import { formatRaw } from '@/utils/formats';
 
 import { LOG_FOR_TASK, UPDATE_TASK, DELETE_TASK } from '../state';
@@ -127,6 +136,9 @@ export default {
       editMode: false,
       isOpen: false,
       raw: '',
+      openTag: '',
+      tagColour: '',
+      lastValidColour: '',
     };
   },
   computed: {
@@ -161,6 +173,12 @@ export default {
     formattedDeadline() {
       const deadline = moment(this.task.deadline);
       return deadline.format('YYYY-MM-DD');
+    },
+    colourIsValid() {
+      return (
+        !this.tagColour ||
+        this.tagColour.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+      );
     },
   },
   methods: {
@@ -252,6 +270,39 @@ export default {
         .processSync(text);
       return md.contents;
     },
+    openTagColourInput(tag) {
+      this.tagColour = '';
+      this.lastValidColour = '';
+      this.openTag = tag;
+
+      const tagColour = this.$store.state.user.user.tagColours[tag];
+      if (tagColour) {
+        this.tagColour = tagColour;
+      }
+    },
+    hideTagColourInput() {
+      this.openTag = '';
+      this.tagColour = '';
+      this.lastValidColour = '';
+    },
+    customizeColour() {
+      this.$store.dispatch({
+        type: CUSTOMIZE_COLOUR,
+        tag: this.openTag,
+        colour: this.tagColour,
+      });
+    },
+    tagColourStyle(tag) {
+      const tagColour = this.$store.state.user.user.tagColours[tag];
+      return tagColour ? { 'background-color': tagColour } : {};
+    },
+  },
+  watch: {
+    tagColour() {
+      if (this.tagColour.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)) {
+        this.lastValidColour = this.tagColour;
+      }
+    },
   },
   // Directives
   directives: {
@@ -283,13 +334,13 @@ export default {
   margin: 0.5rem 0;
 }
 
-.Tag:not(:last-child) {
-  margin-right: 0.2rem;
-}
-
-.Tag.badge {
+.Tag .badge {
   // font-weight: normal;
   padding: 0.25rem 0.5rem;
+
+  &:not(:last-child) {
+    margin-right: 0.2rem;
+  }
 }
 
 .Actions {
@@ -350,5 +401,33 @@ export default {
 
 textarea {
   background-color: transparent;
+}
+
+.Tag .btn.btn-link.badge.badge-primary {
+  cursor: pointer;
+  color: $body-bg;
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+    color: $body-bg;
+    background-color: $brand-primary;
+  }
+}
+
+.Tag .dropdown-menu {
+  top: calc(100% + 10px);
+}
+
+.TagColour {
+  padding: 0.5rem;
+}
+
+.color-preview {
+  flex: 0 0 24px;
+  height: 24px;
+  border-radius: $input-border-radius/2;
+  background-color: $brand-primary;
+  margin-right: 0.2rem;
 }
 </style>

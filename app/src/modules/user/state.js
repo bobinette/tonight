@@ -9,6 +9,9 @@ export const COOKIE_LOADED = 'COOKIE_LOADED';
 export const LOAD_USER = 'LOAD_USER';
 export const USER_LOADED = 'USER_LOADED';
 
+// Colours
+export const CUSTOMIZE_COLOUR = 'CUSTOMIZE_COLOUR';
+
 export const plugins = [
   store =>
     store.subscribe(mutation => {
@@ -26,6 +29,7 @@ export default {
       loaded: false,
       id: 0,
       name: '',
+      tagColours: {},
     },
     cookie: {
       loaded: false,
@@ -47,11 +51,12 @@ export default {
         token,
       };
     },
-    [USER_LOADED]: (state, { id, name }) => {
+    [USER_LOADED]: (state, { id, name, tagColours }) => {
       state.user = {
         loaded: true,
         id,
         name,
+        tagColours,
       };
     },
   },
@@ -64,8 +69,19 @@ export default {
       axios
         .get('http://127.0.0.1:9090/api/me')
         .then(response => {
-          const { id, name } = response.data;
-          context.commit(USER_LOADED, { id, name });
+          context.commit(USER_LOADED, response.data);
+          return response.data;
+        })
+        .catch(err => {
+          console.log(err);
+          throw err;
+        }),
+    [CUSTOMIZE_COLOUR]: (context, { tag, colour }) =>
+      axios
+        .post(`http://127.0.0.1:9090/api/tags/${tag}`, { colour })
+        .then(response => {
+          context.commit(USER_LOADED, response.data);
+          return response.data;
         })
         .catch(err => {
           console.log(err);

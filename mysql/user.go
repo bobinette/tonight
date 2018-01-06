@@ -56,10 +56,32 @@ func (r *UserRepository) get(ctx context.Context, row *sql.Row) (tonight.User, e
 		return tonight.User{}, err
 	}
 
+	rows, err = r.db.QueryContext(ctx, "SELECT tag, colour FROM user_customs_tags WHERE user_id = ?", id)
+	if err != nil {
+		return tonight.User{}, err
+	}
+	defer rows.Close()
+
+	tagColours := make(map[string]string)
+	for rows.Next() {
+		var tag string
+		var colour string
+		if err := rows.Scan(&tag, &colour); err != nil {
+			return tonight.User{}, err
+		}
+
+		tagColours[tag] = colour
+	}
+
+	if err := rows.Close(); err != nil {
+		return tonight.User{}, err
+	}
+
 	return tonight.User{
-		ID:      id,
-		Name:    username,
-		TaskIDs: taskIDs,
+		ID:         id,
+		Name:       username,
+		TaskIDs:    taskIDs,
+		TagColours: tagColours,
 	}, nil
 }
 
@@ -88,15 +110,22 @@ func (r *UserRepository) AddTaskToUser(ctx context.Context, userID uint, taskID 
 }
 
 func (r *UserRepository) UpdateTagColor(ctx context.Context, userID uint, tag string, colour string) error {
+	now := time.Now()
 	row := r.db.QueryRowContext(ctx, "SELECT NULL FROM user_customs_tags WHERE user_id = ? AND tag = ?", userID, tag)
-	if err := row.Scan(); err != nil {
+	var useless interface{}
+	if err := row.Scan(&useless); err != nil {
+		if err == sql.ErrNoRows {
+			_, err := r.db.ExecContext(ctx, `
+				INSERT INTO user_customs_tags (user_id, tag, colour, created_at, updated_at)
+				VALUES (?, ?, ?, ?, ?)
+			`, userID, tag, colour, now, now)
+			return err
+		}
 		return err
 	}
 
-	now := time.Now()
 	_, err := r.db.ExecContext(ctx, `
-		INSERT INTO user_customs_tags (user_id, tag, colour, created_at, updated_at)
-		(?, ?, ?, ?, ?)
-	`, userID, tag, colour, now, now)
+		UPDATE user_customs_tags SET colour = ?, updated_at = ? WHERE user_id = ? AND tag = ?
+	`, colour, now, userID, tag)
 	return err
 }

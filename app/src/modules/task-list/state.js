@@ -209,6 +209,11 @@ export default {
         },
         qs.parse(search)
       );
+
+      // CHECK ARRAY
+      if (!Array.isArray(filters.statuses)) {
+        filters.statuses = [filters.statuses];
+      }
       context.commit({ type: FILTERS_LOADED, filters });
     },
   },
