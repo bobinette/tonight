@@ -8,6 +8,9 @@
         </span>
         <button class="btn btn-link" @click="dismiss">Dismiss</button>
       </li>
+      <li class="list-group-item progress">
+        <div class="progress-bar progress-bar-small" role="progressbar" :style='{width: `${completion}%`}'></div>
+      </li>
       <Row v-for="task in planning.tasks" :key="task.id" :task="task"></Row>
     </ul>
     <div class="card EmptyPlanning" v-else>
@@ -29,6 +32,8 @@ import { formatDuration, plural } from '@/utils/formats';
 
 import Row from '@/modules/task-list/row/Row';
 
+import { isPending } from '@/utils/tasks';
+
 import { START_PLANNING, DISMISS_PLANNING } from './state';
 
 export default {
@@ -49,6 +54,15 @@ export default {
     },
     duration() {
       return formatDuration(this.planning.duration);
+    },
+    completion() {
+      const c =
+        100 *
+        this.planning.tasks.reduce(
+          (acc, task) => (isPending(task) ? acc : acc + 1),
+          0,
+        );
+      return Math.round(c / this.planning.tasks.length);
     },
   },
   methods: {
@@ -75,6 +89,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import 'style/_variables';
+
 .card {
   padding: 0.75rem 1.25rem;
 }
@@ -100,5 +116,21 @@ ul.list-group {
 
 button.btn.btn-link {
   color: black;
+}
+
+.progress {
+  border-radius: 0;
+
+  &.list-group-item {
+    padding: 0;
+  }
+
+  .progress-bar {
+    border-color: $brand-primary;
+
+    &.progress-bar-small {
+      height: 8px;
+    }
+  }
 }
 </style>

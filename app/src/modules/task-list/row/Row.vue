@@ -117,7 +117,9 @@ import remark from 'remark';
 import html from 'remark-html';
 
 import { CUSTOMIZE_COLOUR } from '@/modules/user/state';
+
 import { formatRaw } from '@/utils/formats';
+import { isPending, isDone, isWontDo, isWorkedOn } from '@/utils/tasks';
 
 import { LOG_FOR_TASK, UPDATE_TASK, DELETE_TASK } from '../state';
 
@@ -146,29 +148,16 @@ export default {
       return this.task.priority > 0 ? this.task.priority.toString() : '';
     },
     isPending() {
-      return !this.isDone && !this.isWontDo;
+      return isPending(this.task);
     },
     isDone() {
-      return (
-        this.task.log && this.task.log.findIndex(l => l.completion === 100) >= 0
-      );
+      return isDone(this.task);
     },
     isWontDo() {
-      return (
-        this.task.log && this.task.log.findIndex(l => l.type === 'WONT_DO') >= 0
-      );
+      return isWontDo(this.task);
     },
     isWorkedOn() {
-      if (!this.task.log || this.isDone || this.isWontDo) {
-        return false;
-      }
-
-      // slice to prevent reversing the log array
-      const lastWorkflowStep = this.task.log
-        .slice()
-        .reverse()
-        .find(l => l.type === 'START' || l.type === 'PAUSE');
-      return lastWorkflowStep.type === 'START';
+      return isWorkedOn(this.task);
     },
     formattedDeadline() {
       const deadline = moment(this.task.deadline);
@@ -396,7 +385,7 @@ export default {
 }
 
 .highlight {
-  background-color: lighten($brand-primary, 57);
+  background-color: lighten($brand-primary, 55);
 }
 
 textarea {
