@@ -188,6 +188,11 @@ func (r *TaskRepository) Log(ctx context.Context, taskID uint, log tonight.Log) 
 		return err
 	}
 
+	_, err = r.db.ExecContext(ctx, `UPDATE tasks SET updated_at = ? WHERE id = ?`, now, taskID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
