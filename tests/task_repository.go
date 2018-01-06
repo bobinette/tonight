@@ -78,4 +78,61 @@ func TestTaskRepository(t *testing.T, repo tonight.TaskRepository) {
 	tasks, err = repo.List(ctx, []uint{task.ID})
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(tasks))
+
+	testDependencies(t, repo)
+}
+
+func testDependencies(t *testing.T, repo tonight.TaskRepository) {
+	ctx := context.Background()
+
+	dependencies := [][]int{
+		{},
+		{},
+		{1},
+		{2},
+		{2},
+		{1, 0},
+	}
+
+	tasks := make([]tonight.Task, 0) // Use append to panic if the dependency build order cannot be respected
+	for _, deps := range dependencies {
+		task := tonight.Task{}
+		for _, dep := range deps {
+			task.Dependencies = append(task.Dependencies, tonight.Dependency{ID: tasks[dep].ID})
+		}
+
+		require.NoError(t, repo.Create(ctx, &task))
+		tasks = append(tasks, task)
+	}
+
+	tests := map[int][]int{
+		0: {0, 5},
+		1: {1, 2, 5, 3, 4},
+		2: {2, 3, 4},
+		3: {3},
+		4: {4},
+		5: {5},
+	}
+
+	for taskID, expectedIDs := range tests {
+		retrievedTasks, err := repo.DependencyTrees(ctx, tasks[taskID].ID)
+		assert.NoError(t, err)
+
+		taskIDs := make([]uint, 0)
+		for _, task := range retrievedTasks {
+			taskIDs = append(taskIDs, task.ID)
+		}
+
+		expected := make([]uint, len(expectedIDs))
+		for i, idx := range expectedIDs {
+			expected[i] = tasks[idx].ID
+		}
+		assert.Equal(t, expected, taskIDs)
+	}
+
+	if t.Failed() {
+		for i, task := range tasks {
+			t.Log(i, task.ID, dependencies[i])
+		}
+	}
 }

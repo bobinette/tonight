@@ -160,6 +160,16 @@ export default {
           label: 'Priority (desc)',
           checked: sortBy === '-priority',
         },
+        {
+          value: '-score',
+          label: 'Score (desc)',
+          checked: sortBy === '-score',
+        },
+        {
+          value: 'score',
+          label: 'Score (asc)',
+          checked: sortBy === 'score',
+        },
       ];
     },
   },

@@ -64,6 +64,8 @@ type Task struct {
 	Duration string     `json:"duration"`
 	Deadline *time.Time `json:"deadline"`
 
+	Score float64 `json:"score"`
+
 	Log []Log `json:"log"`
 
 	Dependencies []Dependency `json:"dependencies"`
@@ -137,6 +139,8 @@ type TaskRepository interface {
 	Log(ctx context.Context, taskID uint, log Log) error
 	UpdateRanks(ctx context.Context, ranks map[uint]uint) error
 
+	DependencyTrees(ctx context.Context, taskID uint) ([]Task, error)
+
 	Delete(ctx context.Context, taskID uint) error
 }
 
@@ -189,12 +193,30 @@ func (ts *taskService) create(ctx context.Context, user User, input string) (Tas
 		return Task{}, err
 	}
 
-	if err := ts.index.Index(ctx, task); err != nil {
+	if err := ts.userRepo.AddTaskToUser(ctx, user.ID, task.ID); err != nil {
 		return Task{}, err
 	}
 
-	if err := ts.userRepo.AddTaskToUser(ctx, user.ID, task.ID); err != nil {
+	tasks, err := ts.repo.DependencyTrees(ctx, task.ID)
+	if err != nil {
 		return Task{}, err
+	}
+
+	scores := scoreMany(tasks, score)
+	for taskID, s := range scores {
+		for i, task := range tasks {
+			if task.ID != taskID {
+				continue
+			}
+
+			tasks[i].Score = s
+		}
+	}
+
+	for _, task := range tasks {
+		if err := ts.index.Index(ctx, task); err != nil {
+			return Task{}, err
+		}
 	}
 
 	return task, nil
@@ -211,8 +233,26 @@ func (ts *taskService) update(ctx context.Context, taskID uint, input string) (T
 		return Task{}, err
 	}
 
-	if err := ts.index.Index(ctx, task); err != nil {
+	tasks, err := ts.repo.DependencyTrees(ctx, taskID)
+	if err != nil {
 		return Task{}, err
+	}
+
+	scores := scoreMany(tasks, score)
+	for taskID, s := range scores {
+		for i, task := range tasks {
+			if task.ID != taskID {
+				continue
+			}
+
+			tasks[i].Score = s
+		}
+	}
+
+	for _, task := range tasks {
+		if err := ts.index.Index(ctx, task); err != nil {
+			return Task{}, err
+		}
 	}
 
 	return task, nil

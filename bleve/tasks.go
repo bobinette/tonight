@@ -65,6 +65,7 @@ func (s *Index) Index(ctx context.Context, task tonight.Task) error {
 		"tags":        task.Tags,
 		"status":      strconv.Itoa(int(task.Done())),
 		"priority":    task.Priority,
+		"score":       task.Score,
 		"createdAt":   task.CreatedAt,
 		"updatedAt":   task.UpdatedAt,
 	}

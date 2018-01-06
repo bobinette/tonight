@@ -101,7 +101,7 @@ type byScoreSorter struct {
 }
 
 func byScore(tasks []Task) *byScoreSorter {
-	scoreByTask := scoreMany(tasks)
+	scoreByTask := scoreMany(tasks, score)
 	scores := make([]float64, len(tasks))
 	for i, task := range tasks {
 		scores[i] = scoreByTask[task.ID]

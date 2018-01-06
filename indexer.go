@@ -22,6 +22,17 @@ func (i *Indexer) IndexAll(c echo.Context) error {
 		return err
 	}
 
+	scores := scoreMany(tasks, score)
+	for taskID, s := range scores {
+		for i, task := range tasks {
+			if task.ID != taskID {
+				continue
+			}
+
+			tasks[i].Score = s
+		}
+	}
+
 	count := 0
 	for _, task := range tasks {
 		if err := i.Index.Index(c.Request().Context(), task); err != nil {

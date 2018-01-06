@@ -22,6 +22,9 @@ func TestTaskRepository(t *testing.T) {
 	)
 	db, err := sql.Open("mysql", mysqlAddr)
 	require.NoError(t, err)
+
+	_, err = db.Exec("DELETE FROM tasks")
+	require.NoError(t, err)
 	defer func() {
 		_, err := db.Exec("DELETE FROM tasks")
 		assert.NoError(t, err)

@@ -31,8 +31,8 @@
           </div>
         </span>
       </div>
-      <div v-if="isOpen">
-        <div v-if="task.description" class="Smaller">
+      <div v-if="isOpen" class="Smaller">
+        <div v-if="task.description">
           <span v-html="markdown(task.description)"></span>
         </div>
         <div v-if="task.dependencies && task.dependencies.length" class="Smaller">
@@ -230,14 +230,15 @@ export default {
 
       return {
         COMPLETION: ['inner-circle'],
+        COMMENT: ['fa fa-comment-o'], // No used yet
         START: ['fa fa-flag-checkered'],
         PAUSE: ['fa fa-coffee'],
         WONT_DO: ['fa fa-times'],
       }[log.type];
     },
     markerClass(log) {
-      if (log.completion === 100) {
-        return ['success-bg'];
+      if (log.type === 'COMPLETION' && log.completion === 100) {
+        return ['success-bg', 'no-bottom-padding'];
       }
 
       if (log.type === 'WONT_DO') {

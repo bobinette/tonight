@@ -364,9 +364,9 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		SELECT task_id, dependency_task_id, tasks.title
 		FROM task_dependencies
 		JOIN tasks ON tasks.id = dependency_task_id
-		WHERE task_id IN (%s) AND tasks.deleted = ?
+		WHERE task_id IN (%s) AND tasks.deleted = 0
 	`, marks,
-	), append(params, false)...)
+	), append(params)...)
 	if err != nil {
 		return nil, err
 	}
@@ -488,4 +488,70 @@ func (r *TaskRepository) All(ctx context.Context) ([]tonight.Task, error) {
 	defer rows.Close()
 
 	return r.loadTasks(ctx, rows)
+}
+
+func (r *TaskRepository) DependencyTrees(ctx context.Context, taskID uint) ([]tonight.Task, error) {
+	buffer := make(map[uint]struct{})
+
+	ids, err := r.dependentTasksIDs(ctx, []uint{taskID}, buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.List(ctx, ids)
+}
+
+func (r *TaskRepository) dependentTasksIDs(ctx context.Context, ids []uint, buffer map[uint]struct{}) ([]uint, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	params := make([]interface{}, 0, len(ids))
+	for _, id := range ids {
+		if _, ok := buffer[id]; !ok {
+			params = append(params, id)
+			buffer[id] = struct{}{}
+		}
+	}
+	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT task_id
+		FROM task_dependencies
+		JOIN tasks ON tasks.id = task_id
+		WHERE dependency_task_id IN (%s) AND tasks.deleted = 0
+	`, join("?", ",", len(ids)),
+	), append(params)...)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	dependencyIDs := make([]uint, 0)
+	dependencyIDsSet := make(map[uint]struct{})
+	for rows.Next() {
+		var taskID uint
+		if err := rows.Scan(&taskID); err != nil {
+			return nil, err
+		}
+
+		dependencyIDs = append(dependencyIDs, taskID)
+		dependencyIDsSet[taskID] = struct{}{}
+	}
+
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	deeperDependencies, err := r.dependentTasksIDs(ctx, dependencyIDs, buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, id := range ids {
+		if _, ok := dependencyIDsSet[id]; !ok {
+			dependencyIDs = append(dependencyIDs, id)
+		}
+	}
+
+	return append(dependencyIDs, deeperDependencies...), nil
 }

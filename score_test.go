@@ -29,3 +29,23 @@ func TestScore(t *testing.T) {
 		assert.True(t, scores[i] > scores[i+1], "%d: %f <= %f\n%+v\n%+v", i, scores[i], scores[i+1], tasks[i], tasks[i+1])
 	}
 }
+
+func TestScoreMany(t *testing.T) {
+	tasks := []Task{
+		{ID: 1},
+		{ID: 11, Dependencies: []Dependency{{ID: 1}}},
+		{ID: 12, Dependencies: []Dependency{{ID: 1}}},
+		{ID: 121, Dependencies: []Dependency{{ID: 12}}},
+		{ID: 122, Dependencies: []Dependency{{ID: 12}}},
+	}
+
+	scores := scoreMany(tasks, func(t Task) float64 { return 1 })
+	expected := map[uint]float64{
+		1:   5,
+		11:  1,
+		12:  3,
+		121: 1,
+		122: 1,
+	}
+	assert.Equal(t, expected, scores)
+}

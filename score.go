@@ -5,29 +5,20 @@ import (
 	"time"
 )
 
-func scoreMany(tasks []Task) map[uint]float64 {
-	// Construct the dependency tree
-	// Well, not exactly...
-	reversedDependencies := make(map[uint][]uint)
-	for _, task := range tasks {
-		for _, dep := range task.Dependencies {
-			deps := reversedDependencies[dep.ID]
-			deps = append(deps, task.ID)
-			reversedDependencies[dep.ID] = deps
-		}
-	}
-
-	// Compute all the scores
+func scoreMany(tasks []Task, scoreFunc func(task Task) float64) map[uint]float64 {
+	// Compute unaries
 	scores := make(map[uint]float64)
 	for _, task := range tasks {
-		scores[task.ID] = score(task)
+		scores[task.ID] = scoreFunc(task)
 	}
 
-	// Boost the scores of task listed as dependencies
-	for depID, taskIDs := range reversedDependencies {
-		for _, taskID := range taskIDs {
-			scores[depID] += scores[taskID]
-		}
+	trees := buildDependencyTrees(tasks)
+	for taskID, tree := range trees {
+		tree.traverseBottomUp(func(t *dependencyTree) {
+			if t.node.ID != taskID { // Don't count multiple times
+				scores[taskID] += scores[t.node.ID]
+			}
+		})
 	}
 
 	return scores
