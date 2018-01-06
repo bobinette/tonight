@@ -1,16 +1,21 @@
+import notificationState from '@/modules/notifications/state';
+
 import planningState, {
   plugins as planningPlugins,
 } from '@/modules/planning/state';
-import userState, { plugins as userPlugins } from '@/modules/user/state';
+
 import taskListState, {
   plugins as taskListPlugins,
 } from '@/modules/task-list/state';
 
+import userState, { plugins as userPlugins } from '@/modules/user/state';
+
 const store = {
   modules: {
+    notifications: notificationState,
     planning: planningState,
-    user: userState,
     tasks: taskListState,
+    user: userState,
   },
 
   // Plugins cannot be defined in modules

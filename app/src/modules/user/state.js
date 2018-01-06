@@ -1,6 +1,8 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
+import { NOTIFICATION_FAILURE } from '@/modules/notifications/state';
+
 // Cookie
 export const LOAD_COOKIE = 'LOAD_COOKIE';
 export const COOKIE_LOADED = 'COOKIE_LOADED';
@@ -84,7 +86,15 @@ export default {
           return response.data;
         })
         .catch(err => {
-          console.log(err);
+          let message = err.message;
+          if (err.response && err.response.data && err.response.data.error) {
+            message = err.response.data.error;
+          }
+
+          context.dispatch({
+            type: NOTIFICATION_FAILURE,
+            text: `Error saving custom tag colour: ${message}`,
+          });
           throw err;
         }),
   },

@@ -92,7 +92,7 @@ func (h *apiHandler) customizeColour(c echo.Context) error {
 	}
 
 	if !colourRegex.MatchString(body.Colour) {
-		return errors.New("invalid colour")
+		return errors.New("invalid colour, expecting an hexadecimal representation such as #A2B5F7")
 	}
 
 	user, err = h.userService.customizeColour(c.Request().Context(), user, tag, body.Colour)

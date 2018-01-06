@@ -275,11 +275,13 @@ export default {
       this.lastValidColour = '';
     },
     customizeColour() {
-      this.$store.dispatch({
-        type: CUSTOMIZE_COLOUR,
-        tag: this.openTag,
-        colour: this.tagColour,
-      });
+      this.$store
+        .dispatch({
+          type: CUSTOMIZE_COLOUR,
+          tag: this.openTag,
+          colour: this.tagColour,
+        })
+        .catch();
     },
     tagColourStyle(tag) {
       const tagColour = this.$store.state.user.user.tagColours[tag];
