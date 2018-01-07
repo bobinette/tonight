@@ -252,7 +252,12 @@ export default {
       return [];
     },
     deleteTask() {
-      this.$store.dispatch({ type: DELETE_TASK, taskId: this.task.id }).catch();
+      const r = confirm(`Do you really want to delete the task:\n${this.task.title}`);
+      if (r) {
+        this.$store
+          .dispatch({ type: DELETE_TASK, taskId: this.task.id })
+          .catch();
+      }
     },
     markdown(text) {
       const md = remark()

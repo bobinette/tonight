@@ -32,7 +32,7 @@ import { formatDuration, plural } from '@/utils/formats';
 
 import Row from '@/modules/task-list/row/Row';
 
-import { isPending } from '@/utils/tasks';
+import { completion, isPending } from '@/utils/tasks';
 
 import { START_PLANNING, DISMISS_PLANNING } from './state';
 
@@ -59,7 +59,7 @@ export default {
       const c =
         100 *
         this.planning.tasks.reduce(
-          (acc, task) => (isPending(task) ? acc : acc + 1),
+          (acc, task) => acc + completion(task) / 100,
           0,
         );
       return Math.round(c / this.planning.tasks.length);

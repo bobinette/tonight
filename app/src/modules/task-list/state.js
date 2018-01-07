@@ -45,6 +45,7 @@ export const plugins = [
         UPDATE_STATUS_FILTER,
         UPDATE_SORT_OPTION,
       ];
+
       if (!types.find(t => t === mutation.type)) {
         return;
       }
