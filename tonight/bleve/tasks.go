@@ -92,7 +92,7 @@ func (s *Index) Search(ctx context.Context, p tonight.TaskSearchParameters) ([]u
 	query := andQ(
 		query.NewMatchAllQuery(),
 		s.searchQ(p.Q),
-		searchDoneStatuses(p.Statuses),
+		searchStatuses(p.Statuses),
 		searchIDs(p.IDs),
 	)
 
@@ -206,7 +206,7 @@ func (s *Index) matches(queryString, field string, must bool) query.Query {
 	return query.NewConjunctionQuery(conjuncts)
 }
 
-func searchDoneStatuses(statuses []tonight.DoneStatus) query.Query {
+func searchStatuses(statuses []tonight.Status) query.Query {
 	if len(statuses) == 0 {
 		return nil
 	}

@@ -129,12 +129,12 @@ func (h *apiHandler) searchTasks(c echo.Context) error {
 		return err
 	}
 
-	statuses := make([]DoneStatus, len(stringStatuses))
+	statuses := make([]Status, len(stringStatuses))
 	if len(stringStatuses) == 0 {
-		statuses = []DoneStatus{DoneStatusPending}
+		statuses = []Status{StatusPending}
 	} else {
 		for i, s := range stringStatuses {
-			statuses[i] = DoneStatusFromString(s)
+			statuses[i] = StatusFromString(s)
 		}
 	}
 

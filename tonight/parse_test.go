@@ -125,10 +125,6 @@ func TestParseLog(t *testing.T) {
 		content  string
 		expected Log
 	}{
-		"without completion: 100%% by default": {
-			content:  "this is the description",
-			expected: Log{Type: LogTypeLog, Description: "this is the description", Completion: 0},
-		},
 		"with completion": {
 			content:  "25% this is the description",
 			expected: Log{Type: LogTypeCompletion, Description: "this is the description", Completion: 25},

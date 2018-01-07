@@ -20,7 +20,7 @@ type Planning struct {
 
 func (p Planning) Done() bool {
 	for _, task := range p.Tasks {
-		if task.Done() == DoneStatusPending {
+		if task.Done() == StatusPending {
 			return false
 		}
 	}
@@ -71,7 +71,7 @@ func (ps *planningService) plan(ctx context.Context, user User, input string) (P
 
 	ids, err := ps.taskIndex.Search(ctx, TaskSearchParameters{
 		Q:        q,
-		Statuses: []DoneStatus{DoneStatusPending},
+		Statuses: []Status{StatusPending},
 		IDs:      user.TaskIDs,
 	})
 	if err != nil {
@@ -109,7 +109,7 @@ func (ps *planningService) doLater(ctx context.Context, user User, taskID uint) 
 
 	ids, err := ps.taskIndex.Search(ctx, TaskSearchParameters{
 		Q:        planning.Q,
-		Statuses: []DoneStatus{DoneStatusPending},
+		Statuses: []Status{StatusPending},
 		IDs:      user.TaskIDs,
 	})
 	if err != nil {

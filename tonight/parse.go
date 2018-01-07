@@ -152,36 +152,6 @@ func parse(content string) (Task, error) {
 	return task, nil
 }
 
-func formatRaw(t Task) string {
-	out := fmt.Sprintf("%s%s", strings.Repeat("!", t.Priority), t.Title)
-
-	if t.Description != "" {
-		out = fmt.Sprintf("%s: %s", out, t.Description)
-	}
-
-	for _, tag := range t.Tags {
-		out = fmt.Sprintf("%s #%s", out, tag)
-	}
-
-	if t.Duration != "" {
-		out = fmt.Sprintf("%s ~%s", out, t.Duration)
-	}
-
-	if t.Deadline != nil {
-		out = fmt.Sprintf("%s >%s", out, t.Deadline.Format("2006-01-02"))
-	}
-
-	if len(t.Dependencies) > 0 {
-		depIDs := make([]string, len(t.Dependencies))
-		for i, dep := range t.Dependencies {
-			depIDs[i] = fmt.Sprintf("%d", dep.ID)
-		}
-		out = fmt.Sprintf("%s needs:%s", out, strings.Join(depIDs, ","))
-	}
-
-	return out
-}
-
 func parseLog(desc string) Log {
 	log := Log{
 		Type:       LogTypeCompletion,

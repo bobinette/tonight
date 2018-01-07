@@ -3,6 +3,7 @@ package tonight
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -16,37 +17,36 @@ const (
 	LogTypeCompletion LogType = "COMPLETION"
 	LogTypePause              = "PAUSE"
 	LogTypeStart              = "START"
-	LogTypeLog                = "LOG"
 	LogTypeWontDo             = "WONT_DO"
 )
 
-type DoneStatus int
+type Status int
 
 const (
-	DoneStatusPending DoneStatus = iota
-	DoneStatusDone
-	DoneStatusWontDo
+	StatusPending Status = iota
+	StatusDone
+	StatusWontDo
 )
 
-func DoneStatusFromString(s string) DoneStatus {
+func StatusFromString(s string) Status {
 	switch s {
 	case "pending":
-		return DoneStatusPending
+		return StatusPending
 	case "done":
-		return DoneStatusDone
+		return StatusDone
 	case "won't do":
-		return DoneStatusWontDo
+		return StatusWontDo
 	}
-	return DoneStatusPending
+	return StatusPending
 }
 
-func (ds DoneStatus) String() string {
+func (ds Status) String() string {
 	switch ds {
-	case DoneStatusPending:
+	case StatusPending:
 		return "pending"
-	case DoneStatusDone:
+	case StatusDone:
 		return "done"
-	case DoneStatusWontDo:
+	case StatusWontDo:
 		return "won't do"
 	}
 	return ""
@@ -93,18 +93,18 @@ func (t Task) Completion() int {
 	return c
 }
 
-func (t Task) Done() DoneStatus {
+func (t Task) Done() Status {
 	for _, log := range t.Log {
 		if log.Completion == 100 {
-			return DoneStatusDone
+			return StatusDone
 		}
 
 		if log.Type == LogTypeWontDo {
-			return DoneStatusWontDo
+			return StatusWontDo
 		}
 	}
 
-	return DoneStatusPending
+	return StatusPending
 }
 
 func (t Task) DoneAt() *time.Time {
@@ -147,7 +147,7 @@ type TaskRepository interface {
 type TaskSearchParameters struct {
 	IDs      []uint
 	Q        string
-	Statuses []DoneStatus
+	Statuses []Status
 	SortBy   string
 }
 
@@ -164,10 +164,10 @@ type taskService struct {
 	userRepo UserRepository
 }
 
-func (ts *taskService) list(ctx context.Context, user User, q string, doneStatuses []DoneStatus, sortBy string) ([]Task, error) {
+func (ts *taskService) list(ctx context.Context, user User, q string, Statuses []Status, sortBy string) ([]Task, error) {
 	ids, err := ts.index.Search(ctx, TaskSearchParameters{
 		Q:        q,
-		Statuses: doneStatuses,
+		Statuses: Statuses,
 		IDs:      user.TaskIDs,
 		SortBy:   sortBy,
 	})
@@ -298,9 +298,13 @@ func (ts *taskService) log(ctx context.Context, taskID uint, input string) (Task
 	} else if len(tasks) == 0 {
 		return Task{}, ErrTaskNotFound
 	}
+	task := tasks[0]
+
+	if !isTransitionAllowed(task, log.Type) {
+		return Task{}, fmt.Errorf("Log type %s not allowed for task %d right now", log.Type, task.ID)
+	}
 
 	// Ensure completion does not go down
-	task := tasks[0]
 	for _, l := range task.Log {
 		if l.Completion > log.Completion {
 			log.Completion = l.Completion
