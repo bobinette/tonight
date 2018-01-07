@@ -40,6 +40,7 @@ export const plugins = [
     store.subscribe(mutation => {
       const types = [
         FILTERS_LOADED,
+        TASK_CREATED,
         TASK_UPDATED,
         TASK_DELETED,
         UPDATE_STATUS_FILTER,
@@ -88,22 +89,9 @@ export default {
       state.tasks = tasks;
     },
     // CREATE
-    [TASK_CREATED]: (state, { task }) => {
-      state.tasks.push(task);
-      state.newTaskContent = '';
-    },
+    [TASK_CREATED]: () => {}, // Nothing to do
     // UPDATE
-    [TASK_UPDATED]: (state, { task }) => {
-      const idx = state.tasks.findIndex(t => task.id === t.id);
-      if (idx === -1) {
-        return;
-      }
-
-      // This does not work:
-      // state.tasks[idx] = task;
-      // I need to use Vue.set:
-      Vue.set(state.tasks, idx, task);
-    },
+    [TASK_UPDATED]: () => {}, // Nothing to do
     [TASK_DELETED]: () => {}, // Nothing to do
     [FILTERS_LOADED]: (state, { filters: { q, statuses, sortBy } }) => {
       state.q = q;

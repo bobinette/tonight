@@ -68,7 +68,7 @@ func main() {
 	planningRepo := mysql.NewPlanningRepository(db, taskRepo)
 
 	index := &bleve.Index{}
-	if err := index.Open("./bleve/index"); err != nil {
+	if err := index.Open("./tonight/bleve/index"); err != nil {
 		log.Fatal(err)
 	}
 	defer index.Close()
@@ -82,19 +82,12 @@ func main() {
 		return fmt.Errorf("route %s (method %s) not found", c.Request().URL, c.Request().Method)
 	}
 
-	if err := tonight.RegisterTemplateRenderer(srv, "views"); err != nil {
-		log.Fatal(err)
-	}
-
 	srv.HTTPErrorHandler = tonight.HTTPErrorHandler
 	srv.Use(middleware.Logger())
 	srv.Use(middleware.Recover())
 
 	// Login handler
 	tonight.RegisterLoginHandler(srv, jwtKey, userRepo)
-
-	// UI handler
-	tonight.RegisterUIHandler(srv, jwtKey, taskRepo, index, planningRepo, userRepo)
 
 	// API handler
 	tonight.RegisterAPIHandler(srv, jwtKey, taskRepo, index, planningRepo, userRepo)

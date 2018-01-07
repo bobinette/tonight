@@ -514,10 +514,10 @@ func (r *TaskRepository) dependentTasksIDs(ctx context.Context, ids []uint, buff
 		}
 	}
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT task_id
+		SELECT dependency_task_id
 		FROM task_dependencies
 		JOIN tasks ON tasks.id = task_id
-		WHERE dependency_task_id IN (%s) AND tasks.deleted = 0
+		WHERE task_id IN (%s) AND tasks.deleted = 0
 	`, join("?", ",", len(ids)),
 	), append(params)...)
 	if err != nil {
