@@ -9,9 +9,9 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
-	"github.com/bobinette/tonight"
-	"github.com/bobinette/tonight/bleve"
-	"github.com/bobinette/tonight/mysql"
+	"github.com/bobinette/tonight/tonight"
+	"github.com/bobinette/tonight/tonight/bleve"
+	"github.com/bobinette/tonight/tonight/mysql"
 )
 
 func main() {

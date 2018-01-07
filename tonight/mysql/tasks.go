@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bobinette/tonight"
+	"github.com/bobinette/tonight/tonight"
 )
 
 type TaskRepository struct {

@@ -5,7 +5,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/bobinette/tonight"
+	"github.com/bobinette/tonight/tonight"
 )
 
 func join(s, sep string, n int) string {

@@ -14,7 +14,7 @@ import (
 	"github.com/blevesearch/bleve/mapping"
 	"github.com/blevesearch/bleve/search/query"
 
-	"github.com/bobinette/tonight"
+	"github.com/bobinette/tonight/tonight"
 )
 
 type Index struct {

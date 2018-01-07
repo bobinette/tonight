@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/bobinette/tonight"
+	"github.com/bobinette/tonight/tonight"
 )
 
 func TestTaskRepository(t *testing.T, repo tonight.TaskRepository) {

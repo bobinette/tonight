@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/bobinette/tonight"
+	"github.com/bobinette/tonight/tonight"
 )
 
 type PlanningRepository struct {
