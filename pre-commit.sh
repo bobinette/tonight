@@ -12,10 +12,8 @@ echo "Running tests. This may take a while. Use --no-verify to skip"
 go test ./...
 RESULT=$?
 
-STASHES=$(git stash list)
-if [[ $STASHES == "$STASH_NAME" ]]; then
-  git stash pop -q
-fi
+STASHES=$(git stash list -n 1)
+(echo $STASHES | grep $STASH_NAME && git stash pop -q) || echo "Failed to restore stash"
 
 # Fail if tests failed
 [ $RESULT -ne 0 ] && exit 1
