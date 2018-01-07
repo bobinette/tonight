@@ -24,14 +24,9 @@ h6 {
     font-family: 'Lato', Arial, sans-serif;
 }
 
-ul {
-    list-style: none;
-    padding-left: 0;
-
-    &.list-group {
-        padding-left: inherit;
-        padding-right: inherit;
-    }
+ul.list-group {
+    padding-left: inherit;
+    padding-right: inherit;
 }
 
 textarea {

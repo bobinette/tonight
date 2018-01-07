@@ -369,8 +369,6 @@ export default {
 }
 
 .progress-tracker {
-  margin-top: 1rem;
-
   .progress-marker {
     right: - $marker-size;
 
