@@ -27,7 +27,7 @@ var (
 		"stop":     LogTypePause,
 		"start":    LogTypeStart,
 		"resume":   LogTypeStart,
-		"done":     LogTypeCompletion,
+		"done":     LogTypeProgress,
 		"won't do": LogTypeWontDo,
 	}
 	logKeywordRegex = func(m map[string]LogType) *regexp.Regexp {
@@ -154,7 +154,7 @@ func parse(content string) (Task, error) {
 
 func parseLog(desc string) Log {
 	log := Log{
-		Type:       LogTypeCompletion,
+		Type:       LogTypeComment,
 		Completion: 0,
 	}
 
@@ -162,16 +162,23 @@ func parseLog(desc string) Log {
 		log.Type = logKeywordMapping[keywordMatch[1]]
 		desc = logKeywordRegex.ReplaceAllString(desc, "")
 
+		if strings.HasPrefix(desc, ":") {
+			desc = desc[1:]
+		}
+
 		if keywordMatch[1] == "done" {
 			log.Completion = 100
+			log.Type = LogTypeProgress
 		}
 	} else if completionMatch := logCompletionRegex.FindStringSubmatch(desc); len(completionMatch) > 0 {
 		log.Completion, _ = strconv.Atoi(completionMatch[1])
+		log.Type = LogTypeProgress
 		desc = logCompletionRegex.ReplaceAllString(desc, "")
 	} else if fractionMatch := logFractionRegex.FindStringSubmatch(desc); len(fractionMatch) > 0 {
 		num, _ := strconv.Atoi(fractionMatch[1])
 		den, _ := strconv.Atoi(fractionMatch[2])
 		log.Completion = (num * 100) / den
+		log.Type = LogTypeProgress
 		desc = logFractionRegex.ReplaceAllString(desc, "")
 	}
 

@@ -12,6 +12,7 @@ echo "Running tests. This may take a while. Use --no-verify to skip"
 go test ./...
 RESULT=$?
 
+# Deleted files seem to be restored for some reason.
 STASHES=$(git stash list -n 1)
 (echo $STASHES | grep $STASH_NAME && git stash pop -q) || echo "Failed to restore stash"
 

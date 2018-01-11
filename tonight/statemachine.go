@@ -79,10 +79,11 @@ func isTransitionAllowed(task Task, transition LogType) bool {
 			not(isDone),
 			not(isWontDo),
 		},
-		LogTypeCompletion: {
+		LogTypeProgress: {
 			not(isDone),
 			not(isWontDo),
 		},
+		LogTypeComment: {},
 	}
 
 	for _, check := range stateMachine[transition] {

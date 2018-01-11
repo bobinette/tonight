@@ -48,7 +48,7 @@ func TestTaskRepository(t *testing.T, repo tonight.TaskRepository) {
 
 	// Add a log
 	log := tonight.Log{
-		Type:        tonight.LogTypeCompletion,
+		Type:        tonight.LogTypeProgress,
 		Completion:  17,
 		Description: "log",
 	}

@@ -127,23 +127,27 @@ func TestParseLog(t *testing.T) {
 	}{
 		"with completion": {
 			content:  "25% this is the description",
-			expected: Log{Type: LogTypeCompletion, Description: "this is the description", Completion: 25},
+			expected: Log{Type: LogTypeProgress, Description: "this is the description", Completion: 25},
 		},
 		"0%% should work": {
 			content:  "0% this is the description",
-			expected: Log{Type: LogTypeCompletion, Description: "this is the description", Completion: 0},
+			expected: Log{Type: LogTypeProgress, Description: "this is the description", Completion: 0},
 		},
 		"fractions": {
 			content:  "2/8 has a completion of 25%%",
-			expected: Log{Type: LogTypeCompletion, Description: "has a completion of 25%%", Completion: 25},
+			expected: Log{Type: LogTypeProgress, Description: "has a completion of 25%%", Completion: 25},
 		},
 		"fractions again": {
 			content:  "2/7 is truncated to 28%%",
-			expected: Log{Type: LogTypeCompletion, Description: "is truncated to 28%%", Completion: 28},
+			expected: Log{Type: LogTypeProgress, Description: "is truncated to 28%%", Completion: 28},
 		},
 		"done": {
 			content:  "done c'est fini",
-			expected: Log{Type: LogTypeCompletion, Description: "c'est fini", Completion: 100},
+			expected: Log{Type: LogTypeProgress, Description: "c'est fini", Completion: 100},
+		},
+		"comment": {
+			content:  "this is a simple comment",
+			expected: Log{Type: LogTypeComment, Description: "this is a simple comment", Completion: 0},
 		},
 	}
 

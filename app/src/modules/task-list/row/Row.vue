@@ -229,15 +229,15 @@ export default {
       }
 
       return {
-        COMPLETION: ['inner-circle'],
-        COMMENT: ['fa fa-comment-o'], // No used yet
+        PROGRESS: ['inner-circle'],
+        COMMENT: ['fa fa-comment'], // No used yet
         START: ['fa fa-flag-checkered'],
         PAUSE: ['fa fa-coffee'],
         WONT_DO: ['fa fa-times'],
       }[log.type];
     },
     markerClass(log) {
-      if (log.type === 'COMPLETION' && log.completion === 100) {
+      if (log.type === 'PROGRESS' && log.completion === 100) {
         return ['success-bg', 'no-bottom-padding'];
       }
 
@@ -245,7 +245,7 @@ export default {
         return ['warning-bg'];
       }
 
-      if (log.type === 'COMPLETION') {
+      if (log.type === 'PROGRESS') {
         return ['no-bottom-padding'];
       }
 

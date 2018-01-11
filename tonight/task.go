@@ -14,10 +14,11 @@ var (
 type LogType string
 
 const (
-	LogTypeCompletion LogType = "COMPLETION"
-	LogTypePause              = "PAUSE"
-	LogTypeStart              = "START"
-	LogTypeWontDo             = "WONT_DO"
+	LogTypeProgress LogType = "PROGRESS"
+	LogTypePause            = "PAUSE"
+	LogTypeStart            = "START"
+	LogTypeWontDo           = "WONT_DO"
+	LogTypeComment          = "COMMENT"
 )
 
 type Status int
