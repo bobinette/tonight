@@ -22,7 +22,7 @@
       </div>
       <div>
         <span v-for="tag in task.tags" :key="tag" class="dropdown Tag" :class="{show: openTag === tag}" >
-          <button class="btn btn-link badge badge-primary" :style="tagColourStyle(tag)" @click.stop="openTagColourInput(tag)">#{{ tag }}</button>
+          <button class="btn btn-link" :class="{ 'custom-tag': customTag(tag) }" :style="tagColourStyle(tag)" @click.stop="openTagColourInput(tag)">#{{ tag }}</button>
           <div class="dropdown-menu TagColour" v-click-outside="hideTagColourInput" @click.stop="() => {}" >
             <div class="flex flex-align-center">
               <div :style="lastValidColour ? {'background-color': lastValidColour} : {}" class="color-preview"></div>
@@ -289,6 +289,9 @@ export default {
         })
         .catch();
     },
+    customTag(tag) {
+      return !!this.$store.state.user.user.tagColours[tag];
+    },
     tagColourStyle(tag) {
       const tagColour = this.$store.state.user.user.tagColours[tag];
       return tagColour ? { 'background-color': tagColour } : {};
@@ -398,16 +401,10 @@ textarea {
   background-color: transparent;
 }
 
-.Tag .btn.btn-link.badge.badge-primary {
+.Tag .btn.btn-link {
   cursor: pointer;
-  color: $body-bg;
-
-  &:hover,
-  &:focus {
-    text-decoration: none;
-    color: $body-bg;
-    background-color: $brand-primary;
-  }
+  font-size: 0.8rem;
+  font-weight: bold;
 }
 
 .Tag .dropdown-menu {
@@ -424,5 +421,11 @@ textarea {
   border-radius: $input-border-radius/2;
   background-color: $brand-primary;
   margin-right: 0.2rem;
+}
+
+.custom-tag {
+  color: $body-bg;
+  padding: 0.2rem;
+  border-radius: $border-radius;
 }
 </style>
