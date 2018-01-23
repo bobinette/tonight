@@ -17,7 +17,9 @@ func buildDependencyTrees(tasks []Task) map[uint]*dependencyTree {
 
 	for _, task := range tasks {
 		for _, dep := range task.Dependencies {
-			trees[dep.ID].children = append(trees[dep.ID].children, trees[task.ID])
+			if _, ok := trees[dep.ID]; ok {
+				trees[dep.ID].children = append(trees[dep.ID].children, trees[task.ID])
+			}
 		}
 	}
 
