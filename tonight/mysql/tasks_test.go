@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,6 +21,18 @@ func TestTaskRepository(t *testing.T) {
 		"3306",
 		"tonight_test",
 	)
+
+	if os.Getenv("TRAVIS") == "true" {
+		mysqlAddr = fmt.Sprintf(
+			"%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
+			"tonight",
+			"tonight",
+			"127.0.0.1",
+			"3307",
+			"tonight_test",
+		)
+	}
+
 	db, err := sql.Open("mysql", mysqlAddr)
 	require.NoError(t, err)
 
