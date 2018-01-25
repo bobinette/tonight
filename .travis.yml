@@ -14,7 +14,7 @@ install:
     docker run \
       -d -p 127.0.0.1:3307:3306 \
       --name mysqld \
-      -e MYSQL_DATABASE=tonight \
+      -e MYSQL_DATABASE=tonight_test \
       -e MYSQL_USER=tonight \
       -e MYSQL_PASSWORD=tonight \
       -e MYSQL_ROOT_PASSWORD=root \
@@ -27,14 +27,23 @@ install:
 
   # Update dependencies
   - go get -u -v github.com/kardianos/govendor/...
-  - govendor sync -v
+  - cd tonight && govendor sync -v && cd -
 
   # Make sure mysql is up before continuing
   - .travis/wait_mysql.sh
 
   # Run migrations
   - git clone https://github.com/mbucc/shmig.git ./mysql/shmig
-  - ./mysql/shmig/shmig -t mysql -H 127.0.0.1 -P 3307 -l tonight -p tonight -d tonight -m ./mysql/migrations up
+  - |
+    ./mysql/shmig/shmig \
+      -t mysql \
+      -H 127.0.0.1 \
+      -P 3307 \
+      -l tonight \
+      -p tonight \
+      -d tonight_test \
+      -m ./tonight/mysql/migrations \
+      up
 
 # Default is `make`
 script:
