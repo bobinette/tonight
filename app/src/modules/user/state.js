@@ -1,29 +1,17 @@
 import axios from 'axios';
-import Cookies from 'js-cookie';
 
 import { NOTIFICATION_FAILURE } from '@/modules/notifications/state';
 
-// Cookie
-export const LOAD_COOKIE = 'LOAD_COOKIE';
-export const COOKIE_LOADED = 'COOKIE_LOADED';
-
 // User
+export const LOGIN = 'LOGIN';
+export const LOGOUT = 'LOGOUT';
 export const LOAD_USER = 'LOAD_USER';
 export const USER_LOADED = 'USER_LOADED';
 
 // Colours
 export const CUSTOMIZE_COLOUR = 'CUSTOMIZE_COLOUR';
 
-export const plugins = [
-  store =>
-    store.subscribe(mutation => {
-      if (mutation.type !== COOKIE_LOADED) {
-        return;
-      }
-
-      store.dispatch({ type: LOAD_USER }).catch(); // No need to handle the error here
-    }),
-];
+export const plugins = [];
 
 export default {
   state: {
@@ -33,26 +21,13 @@ export default {
       name: '',
       tagColours: {},
     },
-    cookie: {
-      loaded: false,
-      token: null,
-    },
   },
   getters: {
-    accessToken({ cookie }) {
-      return cookie.token;
-    },
     username({ user }) {
       return user.name;
     },
   },
   mutations: {
-    [COOKIE_LOADED]: (state, { token }) => {
-      state.cookie = {
-        loaded: true,
-        token,
-      };
-    },
     [USER_LOADED]: (state, { id, name, tagColours }) => {
       state.user = {
         loaded: true,
@@ -63,10 +38,6 @@ export default {
     },
   },
   actions: {
-    [LOAD_COOKIE]: context => {
-      const token = Cookies.get('access_token');
-      context.commit(COOKIE_LOADED, { token });
-    },
     [LOAD_USER]: context =>
       axios
         .get('http://127.0.0.1:9090/api/me')
@@ -94,6 +65,47 @@ export default {
           context.dispatch({
             type: NOTIFICATION_FAILURE,
             text: `Error saving custom tag colour: ${message}`,
+          });
+          throw err;
+        }),
+    [LOGIN]: (context, { username }) =>
+      axios
+        .post('http://127.0.0.1:9090/api/login', { username })
+        .then(() => {
+          context.dispatch({ type: LOAD_USER });
+        })
+        .catch(err => {
+          let message = err.message;
+          if (err.response && err.response.data && err.response.data.error) {
+            message = err.response.data.error;
+          }
+
+          context.dispatch({
+            type: NOTIFICATION_FAILURE,
+            text: `Error logging in: ${message}`,
+          });
+          throw err;
+        }),
+    [LOGOUT]: context =>
+      axios
+        .post('http://127.0.0.1:9090/api/logout')
+        .then(() => {
+          context.commit({
+            type: USER_LOADED,
+            id: 0,
+            username: '',
+            tagColours: {},
+          });
+        })
+        .catch(err => {
+          let message = err.message;
+          if (err.response && err.response.data && err.response.data.error) {
+            message = err.response.data.error;
+          }
+
+          context.dispatch({
+            type: NOTIFICATION_FAILURE,
+            text: `Error logging out: ${message}`,
           });
           throw err;
         }),

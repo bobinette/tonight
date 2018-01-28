@@ -7,6 +7,9 @@
           Tonight
         </h1>
         <span class="col-md-2 Username">
+          <button class="btn btn-link white" @click="logout" v-if="userid !== 0">
+            <i class="fa fa-sign-out"></i>
+          </button>
           <span>{{ username }}</span>
         </span>
       </div>
@@ -15,6 +18,7 @@
 </template>
 
 <script>
+import { LOGOUT } from '@/modules/user/state';
 import logo from '@/assets/logo-i.png';
 
 export default {
@@ -25,8 +29,21 @@ export default {
     };
   },
   computed: {
+    userid() {
+      return this.$store.state.user.user.id;
+    },
     username() {
       return this.$store.getters.username;
+    },
+  },
+  methods: {
+    logout() {
+      this.$store
+        .dispatch({ type: LOGOUT })
+        .then(() => {
+          this.$router.push({ path: '/login' });
+        })
+        .catch();
     },
   },
 };

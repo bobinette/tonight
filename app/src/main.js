@@ -4,6 +4,8 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import VueAutosize from 'vue-autosize';
 
+import router from './router';
+
 // Start by loading my custom CSS
 import '@/style/base.scss';
 
@@ -25,6 +27,7 @@ Vue.config.keyCodes.esc = 27;
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
+  router,
   template: '<App/>',
   components: { App },
 

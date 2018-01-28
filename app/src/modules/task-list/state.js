@@ -115,17 +115,6 @@ export default {
           context.commit({ type: TASKS_RECEIVED, tasks });
           return tasks;
         })
-        .then(tasks => {
-          window.history.replaceState(
-            {},
-            '',
-            `/?${qs.stringify(
-              { q, statuses, sortBy },
-              { skipNulls: true, indices: false }
-            )}`
-          );
-          return tasks;
-        })
         .catch(err => {
           console.log(err);
           throw err;
@@ -184,19 +173,14 @@ export default {
           console.log(err);
           throw err;
         }),
-    [LOAD_FILTERS]: (context, { query }) => {
-      let search = query;
-      if (search[0] === '?') {
-        search = search.substr(1);
-      }
-
+    [LOAD_FILTERS]: (context, { query: { q, sortBy, statuses } }) => {
       const filters = Object.assign(
         {
           q: context.state.q,
           statuses: context.state.statuses,
           sortBy: context.state.sortBy,
         },
-        qs.parse(search)
+        { q, sortBy, statuses }
       );
 
       // CHECK ARRAY
