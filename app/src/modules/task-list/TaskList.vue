@@ -207,6 +207,17 @@ export default {
   directives: {
     ClickOutside,
   },
+  watch: {
+    tasks() {
+      this.$router.push({
+        query: {
+          q: this.q,
+          sortBy: this.$store.state.tasks.sortBy,
+          statuses: this.$store.state.tasks.statuses,
+        },
+      });
+    },
+  },
 };
 </script>
 

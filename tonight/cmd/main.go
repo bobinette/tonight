@@ -68,7 +68,7 @@ func main() {
 	planningRepo := mysql.NewPlanningRepository(db, taskRepo)
 
 	index := &bleve.Index{}
-	if err := index.Open("./tonight/bleve/index"); err != nil {
+	if err := index.Open("./bleve/index"); err != nil {
 		log.Fatal(err)
 	}
 	defer index.Close()
@@ -103,13 +103,8 @@ func main() {
 	srv.POST("/api/reindex", indexer.IndexAll)
 
 	// Assets
-	srv.Static("/css", "front/static/css")
-	srv.Static("/fonts", "front/static/fonts")
-	srv.Static("/images", "front/static/images")
-	srv.Static("/js", "front/static/js")
-
-	srv.Static("/", "app/dist")
-	srv.Static("/static", "app/dist/static")
+	srv.Static("/", "../app/dist")
+	srv.Static("/static", "../app/dist/static")
 
 	if err := srv.Start(":9090"); err != nil {
 		log.Fatal(err)

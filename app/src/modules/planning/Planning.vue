@@ -32,7 +32,7 @@ import { formatDuration, plural } from '@/utils/formats';
 
 import Row from '@/modules/task-list/row/Row';
 
-import { completion, isPending } from '@/utils/tasks';
+import { completion } from '@/utils/tasks';
 
 import { START_PLANNING, DISMISS_PLANNING } from './state';
 

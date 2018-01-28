@@ -17,9 +17,8 @@ func RegisterLoginHandler(e *echo.Echo, jwtKey []byte, userRepository UserReposi
 		},
 	}
 
-	e.GET("/login", h.loginPage)
-	e.POST("/login", h.login)
-	e.POST("/logout", h.logout)
+	e.POST("/api/login", h.login)
+	e.POST("/api/logout", h.logout)
 }
 
 type loginHandler struct {
