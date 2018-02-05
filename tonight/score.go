@@ -16,7 +16,7 @@ func scoreMany(tasks []Task, scoreFunc func(task Task) float64) map[uint]float64
 	for taskID, tree := range trees {
 		tree.traverseBottomUp(func(t *dependencyTree) {
 			if t.node.ID != taskID { // Don't count multiple times
-				scores[taskID] += scores[t.node.ID]
+				scores[taskID] += scores[t.node.ID] + 1
 			}
 		})
 	}
