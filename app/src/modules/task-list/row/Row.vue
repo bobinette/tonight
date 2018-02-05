@@ -3,7 +3,7 @@
     <div v-if="!editMode" class="w-100">
       <div class="flex flex-align-center flex-space-between w-100 RowHeader" @click.stop="open">
         <span class="flex flex-align-center w-100">
-          <h6>{{ task.title }}</h6>
+          <h6>{{ task.id }}. {{ task.title }}</h6>
           <span class="badge badge-pill badge-danger RowPriority">{{ priority }}</span>
         </span>
         <span class="flex flex-align-center Actions">
