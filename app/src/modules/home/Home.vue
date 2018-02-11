@@ -12,6 +12,7 @@ import Planning from '@/modules/planning/Planning';
 import NewTaskInput from '@/modules/new-task/NewTask';
 
 import { LOAD_FILTERS } from '@/modules/task-list/state';
+import { FETCH_PLANNING } from '@/modules/planning/state';
 
 export default {
   components: {
@@ -22,6 +23,10 @@ export default {
   mounted() {
     this.$store
       .dispatch({ type: LOAD_FILTERS, query: this.$route.query })
+      .catch();
+
+    this.$store
+      .dispatch({ type: FETCH_PLANNING, query: this.$route.query })
       .catch();
   },
 };
