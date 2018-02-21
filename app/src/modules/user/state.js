@@ -70,9 +70,9 @@ export default {
         }),
     [LOGIN]: (context, { username }) =>
       axios
-        .post('http://127.0.0.1:9090/api/login', { username })
-        .then(() => {
-          context.dispatch({ type: LOAD_USER });
+        .get('http://127.0.0.1:9090/api/oauth2/login', { username })
+        .then(response => {
+          window.location = response.data.url;
         })
         .catch(err => {
           let message = err.message;

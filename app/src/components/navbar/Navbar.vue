@@ -2,15 +2,20 @@
   <nav id="navbar" class="navbar navbar-row navbar-top navbar-inverse bg-primary">
     <div class="container">
       <div class="row flex-align-center">
-        <h1 class="col-md-8 offset-md-2">
+        <h1 class="col-md-6 offset-md-3">
           <img :src="logo" height="36" width="36">
           Tonight
         </h1>
-        <span class="col-md-2 Username">
-          <button class="btn btn-link white" @click="logout" v-if="userid !== 0">
+        <span class="col-md-3 Username" v-if="userid !== 0">
+          <span>{{ username }}</span>
+          <button class="btn btn-link white" @click="logout" >
             <i class="fa fa-sign-out"></i>
           </button>
-          <span>{{ username }}</span>
+        </span>
+        <span  class="col-md-3 Username" v-else>
+          <button class="btn btn-link white" @click="login" >
+            <i class="fa fa-sign-in"></i>
+          </button>
         </span>
       </div>
     </div>
@@ -18,7 +23,7 @@
 </template>
 
 <script>
-import { LOGOUT } from '@/modules/user/state';
+import { LOGIN, LOGOUT } from '@/modules/user/state';
 import logo from '@/assets/logo-i.png';
 
 export default {
@@ -37,13 +42,11 @@ export default {
     },
   },
   methods: {
+    login() {
+      this.$store.dispatch({ type: LOGIN }).catch();
+    },
     logout() {
-      this.$store
-        .dispatch({ type: LOGOUT })
-        .then(() => {
-          this.$router.push({ path: '/login' });
-        })
-        .catch();
+      this.$store.dispatch({ type: LOGOUT }).catch();
     },
   },
 };

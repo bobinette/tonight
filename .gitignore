@@ -17,3 +17,6 @@ external/*
 fonts/*
 tonight/bleve/index/*
 tonight/vendor/*/*
+
+config.toml
+config.*.toml

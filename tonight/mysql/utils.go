@@ -1,12 +1,24 @@
 package mysql
 
 import (
+	"fmt"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/bobinette/tonight/tonight"
 )
+
+func Format(user, password, host, port, database string) string {
+	return fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
+		user,
+		password,
+		host,
+		port,
+		database,
+	)
+}
 
 func join(s, sep string, n int) string {
 	a := make([]string, n)
