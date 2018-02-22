@@ -7,6 +7,9 @@ services:
   - docker
   - mysql
 
+env:
+  ENV=travis
+
 install:
   # Install mysql 5.7 via docker
   - docker pull mysql:5.7

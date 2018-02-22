@@ -39,13 +39,13 @@ func TestScoreMany(t *testing.T) {
 		{ID: 122, Dependencies: []Dependency{{ID: 12}}},
 	}
 
-	scores := scoreMany(tasks, func(t Task) float64 { return 1 })
+	scores := scoreMany(tasks, func(task Task) float64 { return 1 })
 	expected := map[uint]float64{
-		1:   5,
-		11:  1,
-		12:  3,
-		121: 1,
-		122: 1,
+		1:   9, // (5+1)[12] + (1+1)[11] + 1
+		11:  1, // 1
+		12:  5, // (1+1)[121] + (1+1)[122] + 1
+		121: 1, // 1
+		122: 1, // 1
 	}
 	assert.Equal(t, expected, scores)
 }

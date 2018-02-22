@@ -518,7 +518,7 @@ func (r *TaskRepository) dependentTasksIDs(ctx context.Context, ids []uint, buff
 		FROM task_dependencies
 		JOIN tasks ON tasks.id = task_id
 		WHERE task_id IN (%s) AND tasks.deleted = 0
-	`, join("?", ",", len(ids)),
+	`, join("?", ",", len(params)),
 	), append(params)...)
 	if err != nil {
 		return nil, err

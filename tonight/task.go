@@ -316,15 +316,26 @@ func (ts *taskService) log(ctx context.Context, taskID uint, input string) (Task
 		return Task{}, err
 	}
 
-	tasks, err = ts.repo.List(ctx, []uint{taskID})
+	tasks, err = ts.repo.DependencyTrees(ctx, taskID)
 	if err != nil {
 		return Task{}, err
 	}
 
-	// Ensure completion does not go down
-	task = tasks[0]
-	if err := ts.index.Index(ctx, task); err != nil {
-		return Task{}, err
+	scores := scoreMany(tasks, score)
+	for taskID, s := range scores {
+		for i, task := range tasks {
+			if task.ID != taskID {
+				continue
+			}
+
+			tasks[i].Score = s
+		}
+	}
+
+	for _, task := range tasks {
+		if err := ts.index.Index(ctx, task); err != nil {
+			return Task{}, err
+		}
 	}
 
 	return task, nil

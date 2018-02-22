@@ -1,9 +1,9 @@
 import axios from 'axios';
 import qs from 'qs';
 
-import Vue from 'vue';
-
 import { isDone } from '@/utils/tasks';
+
+import { LOGOUT } from '@/modules/user/state';
 
 // Tasks
 // -- List
@@ -45,6 +45,7 @@ export const plugins = [
         TASK_DELETED,
         UPDATE_STATUS_FILTER,
         UPDATE_SORT_OPTION,
+        LOGOUT,
       ];
 
       if (!types.find(t => t === mutation.type)) {

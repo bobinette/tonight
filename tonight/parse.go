@@ -13,7 +13,7 @@ var (
 	// Task
 	priorityRegex         = regexp.MustCompile(`^(!*)`)
 	dependenciesRegex     = regexp.MustCompile(`needs:((?:\d+,?)+)`)
-	tagsRegex             = regexp.MustCompile(`\B\#(\w+\b)`)
+	tagsRegex             = regexp.MustCompile(`\B\#((?:\w|\-|\:)+)\b`)
 	durationRegex         = regexp.MustCompile(`\B~([0-9a-zA-Z]+)`) // a-zA-Z to have a meaningful error message
 	deadlineRegex         = regexp.MustCompile(`\B>(\d{4}-\d{1,2}-\d{1,2})`)
 	titleDescriptionRegex = regexp.MustCompile(`([^:]*)(?::(.*))?`)

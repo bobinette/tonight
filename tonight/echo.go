@@ -14,13 +14,7 @@ func HTTPErrorHandler(err error, c echo.Context) {
 	}
 
 	if err == middleware.ErrJWTMissing {
-		c.Redirect(http.StatusSeeOther, "/login")
-		return
-	}
-
-	if code == http.StatusUnauthorized {
-		c.Render(code, "login", nil)
-		return
+		code = http.StatusUnauthorized
 	}
 
 	c.JSON(code, map[string]interface{}{"error": err.Error()})
