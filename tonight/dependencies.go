@@ -5,24 +5,30 @@ type dependencyTree struct {
 	children []*dependencyTree
 }
 
-func buildDependencyTrees(tasks []Task) map[uint]*dependencyTree {
-	trees := make(map[uint]*dependencyTree)
-
+func buildDependencyTrees(tasks []Task) []*dependencyTree {
 	// Create all the nodes
+	roots := make(map[uint]struct{})
+	nodes := make(map[uint]*dependencyTree)
 	for i, task := range tasks {
-		trees[task.ID] = &dependencyTree{
+		nodes[task.ID] = &dependencyTree{
 			node: &tasks[i],
 		}
+		roots[task.ID] = struct{}{}
 	}
 
 	for _, task := range tasks {
 		for _, dep := range task.Dependencies {
-			if _, ok := trees[dep.ID]; ok {
-				trees[dep.ID].children = append(trees[dep.ID].children, trees[task.ID])
+			if _, ok := nodes[dep.ID]; ok {
+				nodes[dep.ID].children = append(nodes[dep.ID].children, nodes[task.ID])
+				delete(roots, task.ID)
 			}
 		}
 	}
 
+	trees := make([]*dependencyTree, 0)
+	for rootID := range roots {
+		trees = append(trees, nodes[rootID])
+	}
 	return trees
 }
 

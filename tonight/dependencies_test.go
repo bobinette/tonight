@@ -1,6 +1,7 @@
 package tonight
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -87,22 +88,31 @@ func TestDependencyTree_buildDependencyTrees(t *testing.T) {
 		{ID: 12, Dependencies: []Dependency{{ID: 1}}},
 		{ID: 121, Dependencies: []Dependency{{ID: 12}}},
 		{ID: 122, Dependencies: []Dependency{{ID: 12}}},
+		{ID: 2},
+		{ID: 21, Dependencies: []Dependency{{ID: 2}}},
+		{ID: 211, Dependencies: []Dependency{{ID: 21}}},
 	}
 
 	trees := buildDependencyTrees(tasks)
-	ids := make(map[uint][]uint)
-	for taskID, tree := range trees {
+	sort.Sort(byRootID(trees))
+	ids := make([][]uint, len(trees))
+	for i, tree := range trees {
+		treeIDs := make([]uint, 0)
 		tree.traverseBottomUp(func(t *dependencyTree) {
-			ids[taskID] = append(ids[taskID], t.node.ID)
+			treeIDs = append(treeIDs, t.node.ID)
 		})
+		ids[i] = treeIDs
 	}
 
-	expected := map[uint][]uint{
-		1:   []uint{122, 121, 12, 11, 1},
-		11:  []uint{11},
-		12:  []uint{122, 121, 12},
-		121: []uint{121},
-		122: []uint{122},
+	expected := [][]uint{
+		[]uint{122, 121, 12, 11, 1},
+		[]uint{211, 21, 2},
 	}
 	assert.Equal(t, expected, ids)
 }
+
+type byRootID []*dependencyTree
+
+func (l byRootID) Len() int           { return len(l) }
+func (l byRootID) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
+func (l byRootID) Less(i, j int) bool { return l[i].node.ID < l[j].node.ID }
