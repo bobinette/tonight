@@ -29,6 +29,7 @@ var (
 		"resume":   LogTypeStart,
 		"done":     LogTypeProgress,
 		"won't do": LogTypeWontDo,
+		"postpone": LogTypePostpone,
 	}
 	logKeywordRegex = func(m map[string]LogType) *regexp.Regexp {
 		keyWords := make([]string, len(m))
@@ -162,10 +163,6 @@ func parseLog(desc string) Log {
 		log.Type = logKeywordMapping[keywordMatch[1]]
 		desc = logKeywordRegex.ReplaceAllString(desc, "")
 
-		if strings.HasPrefix(desc, ":") {
-			desc = desc[1:]
-		}
-
 		if keywordMatch[1] == "done" {
 			log.Completion = 100
 			log.Type = LogTypeProgress
@@ -186,7 +183,7 @@ func parseLog(desc string) Log {
 		log.Completion = 100
 	}
 
-	log.Description = strings.TrimSpace(desc)
+	log.Description = strings.TrimSpace(strings.TrimPrefix(desc, ":"))
 
 	return log
 }

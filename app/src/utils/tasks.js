@@ -32,3 +32,5 @@ export const isWorkedOn = task => {
     .find(l => l.type === 'START' || l.type === 'PAUSE');
   return lastWorkflowStep && lastWorkflowStep.type === 'START';
 };
+
+export const isPostponed = task => !!task.postponedUntil;

@@ -38,9 +38,9 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 
 	now := time.Now()
 	res, err := r.db.ExecContext(ctx, `
-		INSERT INTO tasks (title, description, priority, duration, deadline, rank, created_at, updated_at)
-		     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, rank, now, now)
+		INSERT INTO tasks (title, description, priority, duration, deadline, postponed_until, rank, created_at, updated_at)
+		     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, t.PostponedUntil, rank, now, now)
 	if err != nil {
 		return err
 	}
@@ -112,9 +112,10 @@ func (r *TaskRepository) Update(ctx context.Context, t *tonight.Task) error {
 			priority = ?,
 			duration = ?,
 			deadline = ?,
+			postponed_until = ?,
 			updated_at = ?
 		WHERE id = ?
-	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, now, t.ID)
+	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, t.PostponedUntil, now, t.ID)
 	if err != nil {
 		return err
 	}
@@ -225,7 +226,7 @@ func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, 
 		params[i] = id
 	}
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, priority, rank, duration, deadline, created_at, updated_at
+		SELECT id, title, description, priority, rank, duration, deadline, postponed_until, created_at, updated_at
 		  FROM tasks
 		 WHERE id IN (%s)
 		   AND deleted = 0
@@ -264,9 +265,10 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		var rank uint
 		var duration string
 		var deadline *time.Time
+		var postponeUntil *time.Time
 		var createdAt time.Time
 		var updatedAt time.Time
-		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &postponeUntil, &createdAt, &updatedAt); err != nil {
 			return nil, err
 		}
 
@@ -278,8 +280,9 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 			Priority: priority,
 			Rank:     rank,
 
-			Duration: duration,
-			Deadline: deadline,
+			Duration:       duration,
+			Deadline:       deadline,
+			PostponedUntil: postponeUntil,
 
 			CreatedAt: createdAt,
 			UpdatedAt: updatedAt,
@@ -476,7 +479,7 @@ func (r *TaskRepository) All(ctx context.Context) ([]tonight.Task, error) {
 	rows, err := r.db.QueryContext(
 		ctx,
 		`
-		SELECT id, title, description, priority, rank, duration, deadline, created_at, updated_at
+		SELECT id, title, description, priority, rank, duration, deadline, postponed_until, created_at, updated_at
 		  FROM tasks
 		  WHERE deleted = ?
 		`,
@@ -498,7 +501,13 @@ func (r *TaskRepository) DependencyTrees(ctx context.Context, taskID uint) ([]to
 		return nil, err
 	}
 
-	return r.List(ctx, ids)
+	buffer = make(map[uint]struct{})
+	ids2, err := r.dependenciesTasksIDs(ctx, []uint{taskID}, buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.List(ctx, append(ids, ids2...))
 }
 
 func (r *TaskRepository) dependentTasksIDs(ctx context.Context, ids []uint, buffer map[uint]struct{}) ([]uint, error) {
@@ -513,6 +522,10 @@ func (r *TaskRepository) dependentTasksIDs(ctx context.Context, ids []uint, buff
 			buffer[id] = struct{}{}
 		}
 	}
+	if len(params) == 0 {
+		return nil, nil
+	}
+
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
 		SELECT dependency_task_id
 		FROM task_dependencies
@@ -543,6 +556,65 @@ func (r *TaskRepository) dependentTasksIDs(ctx context.Context, ids []uint, buff
 	}
 
 	deeperDependencies, err := r.dependentTasksIDs(ctx, dependencyIDs, buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, id := range ids {
+		if _, ok := dependencyIDsSet[id]; !ok {
+			dependencyIDs = append(dependencyIDs, id)
+		}
+	}
+
+	return append(dependencyIDs, deeperDependencies...), nil
+}
+
+func (r *TaskRepository) dependenciesTasksIDs(ctx context.Context, ids []uint, buffer map[uint]struct{}) ([]uint, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	params := make([]interface{}, 0, len(ids))
+	for _, id := range ids {
+		if _, ok := buffer[id]; !ok {
+			params = append(params, id)
+			buffer[id] = struct{}{}
+		}
+	}
+	if len(params) == 0 {
+		return nil, nil
+	}
+
+	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT task_id
+		FROM task_dependencies
+		JOIN tasks ON tasks.id = dependency_task_id
+		WHERE dependency_task_id IN (%s) AND tasks.deleted = 0
+	`, join("?", ",", len(params)),
+	), append(params)...)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	dependencyIDs := make([]uint, 0)
+	dependencyIDsSet := make(map[uint]struct{})
+	for rows.Next() {
+		var taskID uint
+		if err := rows.Scan(&taskID); err != nil {
+			return nil, err
+		}
+
+		dependencyIDs = append(dependencyIDs, taskID)
+		dependencyIDsSet[taskID] = struct{}{}
+	}
+
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	deeperDependencies, err := r.dependenciesTasksIDs(ctx, dependencyIDs, buffer)
 	if err != nil {
 		return nil, err
 	}

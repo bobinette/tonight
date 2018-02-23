@@ -26,9 +26,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-#planning {
-  margin-bottom: 2rem;
-}
-</style>

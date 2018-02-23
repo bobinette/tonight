@@ -91,6 +91,12 @@ export default {
 <style lang="scss" scoped>
 @import 'style/_variables';
 
+#planning {
+  margin-bottom: 2rem;
+  padding-left: inherit;
+  padding-right: inherit;
+}
+
 .card {
   padding: 0.75rem 1.25rem;
 }

@@ -3,6 +3,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import VueAutosize from 'vue-autosize';
+import { sync } from 'vuex-router-sync';
 
 import router from './router';
 
@@ -24,6 +25,11 @@ Vue.use(VueAutosize);
 // Define custom modifiers
 Vue.config.keyCodes.esc = 27;
 
+// Sync the router in the store to use the query string
+// in vuex
+const vuexStore = new Vuex.Store(store);
+sync(vuexStore, router);
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
@@ -31,5 +37,5 @@ new Vue({
   template: '<App/>',
   components: { App },
 
-  store: new Vuex.Store(store),
+  store: vuexStore,
 });

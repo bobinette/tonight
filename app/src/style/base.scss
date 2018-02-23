@@ -44,7 +44,7 @@ h6 {
 }
 
 // New classes
-
+// -- flex
 .flex {
     display: flex;
 }
@@ -65,6 +65,7 @@ h6 {
     background: $gray-lighter;
 }
 
+// -- colors
 .success {
     color: $brand-success;
 }
@@ -83,6 +84,11 @@ h6 {
 
 .warning-bg {
     background: $brand-warning;
+}
+
+// -- text alignment
+.text-align-center {
+    text-align: center;
 }
 
 // Custom corrections of bootstrap

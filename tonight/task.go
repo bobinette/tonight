@@ -19,6 +19,7 @@ const (
 	LogTypeStart            = "START"
 	LogTypeWontDo           = "WONT_DO"
 	LogTypeComment          = "COMMENT"
+	LogTypePostpone         = "POSTPONE"
 )
 
 type Status int
@@ -62,8 +63,9 @@ type Task struct {
 	Rank     uint     `json:"rank"`
 	Tags     []string `json:"tags"`
 
-	Duration string     `json:"duration"`
-	Deadline *time.Time `json:"deadline"`
+	Duration       string     `json:"duration"`
+	Deadline       *time.Time `json:"deadline"`
+	PostponedUntil *time.Time `json:"postponedUntil"`
 
 	Score float64 `json:"score"`
 
@@ -300,6 +302,21 @@ func (ts *taskService) log(ctx context.Context, taskID uint, input string) (Task
 		return Task{}, ErrTaskNotFound
 	}
 	task := tasks[0]
+
+	// Handle special case of postponing...
+	if log.Type == LogTypePostpone {
+		date, err := time.Parse("2006-01-02", log.Description)
+		if err != nil {
+			return Task{}, fmt.Errorf("error decoding date for postponing: %v", err)
+		}
+
+		task.PostponedUntil = &date
+		if err := ts.repo.Update(ctx, &task); err != nil {
+			return Task{}, err
+		}
+
+		log.Description = fmt.Sprintf("postponed until %s", log.Description)
+	}
 
 	if !isTransitionAllowed(task, log.Type) {
 		return Task{}, fmt.Errorf("Log type %s not allowed for task %d right now", log.Type, task.ID)

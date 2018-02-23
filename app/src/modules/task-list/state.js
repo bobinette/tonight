@@ -3,7 +3,8 @@ import qs from 'qs';
 
 import { isDone } from '@/utils/tasks';
 
-import { LOGOUT } from '@/modules/user/state';
+import { USER_LOADED, LOGOUT } from '@/modules/user/state';
+import { NOTIFICATION_FAILURE } from '@/modules/notifications/state';
 
 // Tasks
 // -- List
@@ -53,6 +54,16 @@ export const plugins = [
       }
 
       store.dispatch({ type: FETCH_TASKS }).catch(() => {});
+    }),
+  store =>
+    store.subscribe(mutation => {
+      const types = [USER_LOADED];
+
+      if (!types.find(t => t === mutation.type)) {
+        return;
+      }
+
+      store.dispatch({ type: LOAD_FILTERS }).catch(() => {});
     }),
 ];
 
@@ -148,7 +159,15 @@ export default {
           return task;
         })
         .catch(err => {
-          console.log(err);
+          let message = err.message;
+          if (err.response && err.response.data && err.response.data.error) {
+            message = err.response.data.error;
+          }
+
+          context.dispatch({
+            type: NOTIFICATION_FAILURE,
+            text: `Error adding log to task: ${message}`,
+          });
           throw err;
         }),
     [UPDATE_TASK]: (context, { taskId, content }) =>
@@ -174,7 +193,8 @@ export default {
           console.log(err);
           throw err;
         }),
-    [LOAD_FILTERS]: (context, { query: { q, sortBy, statuses } }) => {
+    [LOAD_FILTERS]: context => {
+      const { q, sortBy, statuses } = context.rootState.route.query;
       const filters = Object.assign(
         {
           q: context.state.q,

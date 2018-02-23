@@ -1,8 +1,17 @@
 <template>
   <div class="container">
-    <Planning class="col-md-12" id="planning"></Planning>
-    <TaskList class="col-md-12"></TaskList>
-    <NewTaskInput></NewTaskInput>
+    <div v-if="userLoggedIn">
+      <Planning class="col-md-12" id="planning"></Planning>
+      <TaskList class="col-md-12"></TaskList>
+      <NewTaskInput></NewTaskInput>
+    </div>
+    <div v-if="displayEmptyState" class="text-align-center">
+      <button class="btn btn-link" @click="login">Login</button>
+      or
+      <button class="btn btn-link" @click="login">sign up</button>
+      (both via Google)
+      to start using Tonight
+    </div>
   </div>
 </template>
 
@@ -11,8 +20,7 @@ import TaskList from '@/modules/task-list/TaskList';
 import Planning from '@/modules/planning/Planning';
 import NewTaskInput from '@/modules/new-task/NewTask';
 
-import { LOAD_FILTERS } from '@/modules/task-list/state';
-import { FETCH_PLANNING } from '@/modules/planning/state';
+import { LOGIN } from '@/modules/user/state';
 
 export default {
   components: {
@@ -20,14 +28,25 @@ export default {
     Planning,
     TaskList,
   },
-  mounted() {
-    this.$store
-      .dispatch({ type: LOAD_FILTERS, query: this.$route.query })
-      .catch();
-
-    this.$store
-      .dispatch({ type: FETCH_PLANNING, query: this.$route.query })
-      .catch();
+  computed: {
+    userLoggedIn() {
+      return this.$store.state.user.user.id !== 0;
+    },
+    displayEmptyState() {
+      return (
+        this.$store.state.user.user.loaded &&
+        this.$store.state.user.user.id === 0
+      );
+    },
+  },
+  methods: {
+    login() {
+      this.$store.dispatch({ type: LOGIN }).catch();
+    },
   },
 };
 </script>
+
+<style lang="scss">
+
+</style>

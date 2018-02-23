@@ -46,7 +46,11 @@ export default {
           return response.data;
         })
         .catch(err => {
-          console.log(err);
+          if (err.response && err.response.status === 401) {
+            context.commit(USER_LOADED, { id: 0, name: '', tagColours: {} });
+            return;
+          }
+
           throw err;
         }),
     [CUSTOMIZE_COLOUR]: (context, { tag, colour }) =>
