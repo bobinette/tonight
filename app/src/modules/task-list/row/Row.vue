@@ -409,6 +409,14 @@ export default {
 
 textarea {
   background-color: transparent;
+
+  width: 100%;
+  max-height: 250px;
+  border: none;
+
+  &:focus {
+    outline: none;
+  }
 }
 
 .Tag .btn.btn-link {
