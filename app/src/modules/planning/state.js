@@ -3,15 +3,9 @@ import axios from 'axios';
 import { USER_LOADED, LOGOUT } from '@/modules/user/state';
 import { TASK_UPDATED, TASK_DELETED } from '@/modules/task-list/state';
 
-// Fetch
-export const FETCH_PLANNING = 'FETCH_PLANNING';
-export const PLANNING_RECEIVED = 'PLANNING_RECEIVED';
+import { FETCH_PLANNING, START_PLANNING, DISMISS_PLANNING } from './events';
 
-// Start
-export const START_PLANNING = 'START_PLANNING';
-
-// Dismiss
-export const DISMISS_PLANNING = 'DISMISS_PLANNING';
+const PLANNING_RECEIVED = 'PLANNING_RECEIVED';
 
 // Plugins
 export const plugins = [

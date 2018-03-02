@@ -60,18 +60,6 @@
 
     <!-- Rows -->
     <Row v-for="task in tasks" :key="task.id" :task="task"></Row>
-
-    <!-- New task input -->
-    <li class="list-group-item">
-      <textarea
-        v-autosize="newTaskContent"
-        v-model="newTaskContent"
-        @keydown.enter="createTask"
-        placeholder="Create a new task..."
-        rows="1"
-      >
-      </textarea>
-    </li>
   </ul>
 </template>
 
@@ -87,14 +75,12 @@ import {
   UPDATE_STATUS_FILTER,
   UPDATE_SORT_OPTION,
   FETCH_TASKS,
-  CREATE_TASK,
 } from './state';
 
 export default {
   name: 'task-list',
   data() {
     return {
-      newTaskContent: '',
       statusFilterOpen: false,
       sortOptionsOpen: false,
     };
@@ -174,19 +160,6 @@ export default {
     },
   },
   methods: {
-    createTask(evt) {
-      if (evt.shiftKey) {
-        return;
-      }
-
-      evt.preventDefault();
-      this.$store
-        .dispatch({ type: CREATE_TASK, content: this.newTaskContent })
-        .then(() => {
-          this.newTaskContent = '';
-        })
-        .catch(err => console.log(err));
-    },
     plural,
     updateQ(evt) {
       this.$store.commit({ type: UPDATE_Q, q: evt.target.value });
@@ -249,16 +222,6 @@ export default {
 
   &:focus-within {
     border-color: $input-border-focus;
-  }
-}
-
-textarea {
-  width: 100%;
-  max-height: 250px;
-  border: none;
-
-  &:focus {
-    outline: none;
   }
 }
 

@@ -7,7 +7,7 @@
         v-model="newTaskContent"
         placeholder="Create a new task..."
         @keydown.enter="createTask"
-        @keydown.esc="isOpen = false"
+        @keydown.esc="close"
         rows="5"
       >
       </textarea>
@@ -15,7 +15,7 @@
         Press enter to create <i class="fa fa-level-down fa-rotate-90"></i>
       </small>
     </div>
-    <button class="btn btn-success NewTaskButton" @click="isOpen = true">
+    <button class="btn btn-success NewTaskButton" @click="open">
       <i class="fa fa-plus"></i>
     </button>
   </div>
@@ -34,10 +34,15 @@ export default {
       newTaskContent: '',
     };
   },
+
   methods: {
     close() {
       this.isOpen = false;
     },
+    open() {
+      this.isOpen = true;
+    },
+
     createTask(evt) {
       if (evt.shiftKey) {
         return;
@@ -52,7 +57,7 @@ export default {
         .catch(err => console.log(err));
     },
   },
-  // Directives
+
   directives: {
     ClickOutside,
     focus,
@@ -66,7 +71,7 @@ export default {
 .NewTaskInput {
   text-align: right;
 
-  width: 15rem;
+  width: 33%;
   position: fixed;
   right: 1rem;
   bottom: 1rem;

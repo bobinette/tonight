@@ -1,3 +1,6 @@
+import Vue from 'vue';
+import Vuex from 'vuex';
+
 import notificationState from '@/modules/notifications/state';
 
 import planningState, {
@@ -10,7 +13,9 @@ import taskListState, {
 
 import userState, { plugins as userPlugins } from '@/modules/user/state';
 
-const store = {
+Vue.use(Vuex);
+
+const store = new Vuex.Store({
   modules: {
     notifications: notificationState,
     planning: planningState,
@@ -22,8 +27,8 @@ const store = {
   plugins: [...planningPlugins, ...userPlugins, ...taskListPlugins],
 
   // Raises errors when the state is mutated outside a mutation function
-  // Expensive =< do not run in production
+  // Expensive => do not run in production
   strict: process.NODE_ENV !== 'production',
-};
+});
 
 export default store;

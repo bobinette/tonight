@@ -2,11 +2,11 @@
   <nav id="navbar" class="navbar navbar-row navbar-top navbar-inverse bg-primary">
     <div class="container">
       <div class="row flex-align-center">
-        <h1 class="col-md-6 offset-md-3">
+        <h1 class="col-md-6 offset-md-3 NavBar__Title">
           <img :src="logo" height="36" width="36">
           Tonight
         </h1>
-        <span class="col-md-3 Username" v-if="userid !== 0">
+        <span class="col-md-3 NavBar__Username" v-if="userid !== 0">
           <span>{{ username }}</span>
           <button class="btn btn-link white" @click="logout" >
             <i class="fa fa-sign-out"></i>
@@ -23,8 +23,8 @@
 </template>
 
 <script>
-import { LOGIN, LOGOUT } from '@/modules/user/state';
 import logo from '@/assets/logo-i.png';
+import { LOGIN, LOGOUT } from '@/modules/user/state';
 
 export default {
   name: 'navbar',
@@ -61,12 +61,11 @@ export default {
   align-items: center;
   justify-content: center;
 
-  h1 {
-    // margin: 0;
+  .NavBar__Title {
     text-align: center;
   }
 
-  .Username {
+  .NavBar__Username {
     text-align: right;
   }
 }

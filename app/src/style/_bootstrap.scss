@@ -1,0 +1,20 @@
+// ============================================================================
+// Button
+// ============================================================================
+
+.btn.btn-link {
+    color: $brand-primary;
+    padding: 0;
+    cursor: pointer;
+
+    &:focus {
+        text-decoration: none;
+        outline: none;
+        box-shadow: none;
+    }
+}
+
+.list-group {
+    padding-left: inherit;
+    padding-right: inherit;
+}

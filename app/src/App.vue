@@ -7,13 +7,10 @@
 </template>
 
 <script>
-// Modules
+import Navbar from '@/components/nav-bar/Navbar';
 import Notifications from '@/modules/notifications/Notifications';
 
 import { LOAD_USER } from '@/modules/user/state';
-
-// Components
-import Navbar from '@/components/navbar/Navbar';
 
 export default {
   name: 'app',

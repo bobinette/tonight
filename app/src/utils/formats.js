@@ -1,11 +1,9 @@
 import moment from 'moment';
 
 // Plural
-
 export const plural = (word, n) => (n > 1 ? `${word}s` : word);
 
 // Duration
-
 const second = 1000000000; // 1M
 const minute = 60 * second;
 const hour = 60 * minute;
@@ -36,11 +34,10 @@ export const formatDuration = dur => {
 };
 
 // Raw task
-
 export const formatRaw = task => {
   let formatted = task.title;
 
-  // Add priority
+  // Add priority - +1 because of the join that operates in between elements
   formatted = `${Array(task.priority + 1).join('!')}${formatted}`;
 
   // Add the description

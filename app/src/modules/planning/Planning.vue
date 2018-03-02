@@ -34,7 +34,7 @@ import Row from '@/modules/task-list/row/Row';
 
 import { completion } from '@/utils/tasks';
 
-import { START_PLANNING, DISMISS_PLANNING } from './state';
+import { START_PLANNING, DISMISS_PLANNING } from './events';
 
 export default {
   data() {

@@ -1,6 +1,10 @@
 <template>
   <transition-group name="notifications" tag="ul" class="notifications">
-    <li v-for="notification in notifications" class="alert" :class="{[`alert-${notification.kind}`]: true}" :key="notification.id">
+    <li
+      v-for="notification in notifications"
+      :class="{alert: true, [`alert-${notification.kind}`]: true}"
+      :key="notification.id"
+    >
       {{ notification.text }}
     </li>
   </transition-group>
