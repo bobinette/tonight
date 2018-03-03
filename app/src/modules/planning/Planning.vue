@@ -1,18 +1,17 @@
 <template>
   <div>
-    <ul v-if="!!planning" class="list-group">
-      <li class="list-group-item list-group-item-header flex flex-space-between">
+    <TaskList :tasks="planning.tasks" v-if="!!planning">
+      <div slot="header" class="PlanningHeader flex flex-space-between">
         <strong>{{ planning.tasks.length}} {{ plural("task", planning.tasks.length)}}</strong>
         <span>
           <i class="fa fa-clock-o"></i>{{ q }}{{ strict }}{{ duration }}
         </span>
         <button class="btn btn-link" @click="dismiss">Dismiss</button>
-      </li>
+      </div>
       <li class="list-group-item progress">
         <div class="progress-bar progress-bar-small" role="progressbar" :style='{width: `${completion}%`}'></div>
       </li>
-      <Row v-for="task in planning.tasks" :key="task.id" :task="task"></Row>
-    </ul>
+    </TaskList>
     <div class="card EmptyPlanning" v-else>
       <h5>You currently have no planning</h5>
       <div>Start a new planning by entering below how long you want to work:</div>
@@ -30,7 +29,7 @@
 <script>
 import { formatDuration, plural } from '@/utils/formats';
 
-import Row from '@/modules/task-list/row/Row';
+import TaskList from '@/components/task-list/TaskList';
 
 import { completion } from '@/utils/tasks';
 
@@ -83,7 +82,7 @@ export default {
     },
   },
   components: {
-    Row,
+    TaskList,
   },
 };
 </script>
@@ -138,5 +137,9 @@ button.btn.btn-link {
       height: 8px;
     }
   }
+}
+
+.PlanningHeader {
+  width: 100%;
 }
 </style>

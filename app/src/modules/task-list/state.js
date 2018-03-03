@@ -4,7 +4,7 @@ import qs from 'qs';
 import { isDone } from '@/utils/tasks';
 
 import { USER_LOADED, LOGOUT } from '@/modules/user/state';
-import { NOTIFICATION_FAILURE } from '@/modules/notifications/state';
+import { NOTIFICATION_FAILURE } from '@/modules/notifications/events';
 
 // Tasks
 // -- List

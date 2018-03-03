@@ -1,7 +1,7 @@
 <template>
-  <ul class="list-group">
+  <TaskList :tasks="tasks">
     <!-- Header -->
-    <li class="list-group-item list-group-item-header ListHeader">
+    <div slot="header" class="ListHeader">
       <div class="col-md-1">
         <strong>{{ tasksLength }} {{ plural("task", tasksLength)}}</strong>
       </div>
@@ -56,11 +56,8 @@
       <div class="col-md-1 col-end">
         <i class="fa fa-circle-o-notch fa-spin" v-if="loading"></i>
       </div>
-    </li>
-
-    <!-- Rows -->
-    <Row v-for="task in tasks" :key="task.id" :task="task"></Row>
-  </ul>
+    </div>
+  </TaskList>
 </template>
 
 <script >
@@ -68,7 +65,7 @@ import ClickOutside from 'vue-click-outside';
 
 import { plural } from '@/utils/formats';
 
-import Row from './row/Row';
+import TaskList from '@/components/task-list/TaskList';
 
 import {
   UPDATE_Q,
@@ -175,7 +172,7 @@ export default {
     },
   },
   components: {
-    Row,
+    TaskList,
   },
   directives: {
     ClickOutside,
@@ -226,6 +223,11 @@ export default {
 }
 
 .ListHeader {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
   div:not(:last-child) {
     margin-right: 1rem;
   }

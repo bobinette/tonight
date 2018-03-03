@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { NOTIFICATION_FAILURE } from '@/modules/notifications/state';
+import { NOTIFICATION_FAILURE } from '@/modules/notifications/events';
 
 // User
 export const LOGIN = 'LOGIN';
