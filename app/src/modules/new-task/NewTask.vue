@@ -106,6 +106,14 @@ export default {
     background: transparent;
     border: none;
     max-height: 50vh;
+
+    width: 100%;
+    max-height: 250px;
+    border: none;
+
+    &:focus {
+      outline: none;
+    }
   }
 }
 </style>
