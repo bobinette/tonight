@@ -25,7 +25,7 @@
 import ClickOutside from 'vue-click-outside';
 import { focus } from 'vue-focus';
 
-import { CREATE_TASK } from '@/modules/task-list/state';
+import { CREATE_TASK } from './events';
 
 export default {
   data() {

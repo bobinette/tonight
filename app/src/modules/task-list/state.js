@@ -3,6 +3,7 @@ import qs from 'qs';
 
 import { isDone } from '@/utils/tasks';
 
+import { TASK_CREATED } from '@/modules/new-task/events';
 import { USER_LOADED, LOGOUT } from '@/modules/user/state';
 import { NOTIFICATION_FAILURE } from '@/modules/notifications/events';
 
@@ -19,10 +20,6 @@ export const TASKS_RECEIVED = 'TASKS_RECEIVED';
 export const UPDATE_Q = 'UPDATE_Q';
 export const UPDATE_STATUS_FILTER = 'UPDATE_STATUS_FILTER';
 export const UPDATE_SORT_OPTION = 'UPDATE_SORT_OPTION';
-
-// -- Create
-export const CREATE_TASK = 'CREATE_TASK';
-export const TASK_CREATED = 'TASK_CREATED';
 
 // -- Log
 export const LOG_FOR_TASK = 'LOG_FOR_TASK';
@@ -100,8 +97,6 @@ export default {
       state.loading = false;
       state.tasks = tasks;
     },
-    // CREATE
-    [TASK_CREATED]: () => {}, // Nothing to do
     // UPDATE
     [TASK_UPDATED]: () => {}, // Nothing to do
     [TASK_DELETED]: () => {}, // Nothing to do
@@ -132,18 +127,6 @@ export default {
           throw err;
         });
     },
-    [CREATE_TASK]: (context, { content }) =>
-      axios
-        .post('http://127.0.0.1:9090/api/tasks', { content })
-        .then(response => {
-          const task = response.data;
-          context.commit({ type: TASK_CREATED, task });
-          return task;
-        })
-        .catch(err => {
-          console.log(err);
-          throw err;
-        }),
     [LOG_FOR_TASK]: (context, { taskId, log }) =>
       axios
         .post(`http://127.0.0.1:9090/api/tasks/${taskId}/log`, { log })

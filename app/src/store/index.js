@@ -3,6 +3,8 @@ import Vuex from 'vuex';
 
 import notificationState from '@/modules/notifications/state';
 
+import newTaskState from '@/modules/new-task/state';
+
 import planningState, {
   plugins as planningPlugins,
 } from '@/modules/planning/state';
@@ -17,6 +19,7 @@ Vue.use(Vuex);
 
 const store = new Vuex.Store({
   modules: {
+    newTask: newTaskState,
     notifications: notificationState,
     planning: planningState,
     tasks: taskListState,

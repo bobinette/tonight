@@ -18,12 +18,12 @@ module.exports = {
     '<rootDir>/test/e2e'
   ],
   snapshotSerializers: ['<rootDir>/node_modules/jest-serializer-vue'],
-  setupFiles: ['<rootDir>/test/unit/setup'],
-  mapCoverage: true,
-  coverageDirectory: '<rootDir>/test/unit/coverage',
-  collectCoverageFrom: [
-    'src/**/*.{js,vue}',
-    '!src/main.js',
-    '!**/node_modules/**'
-  ]
+  setupFiles: ['<rootDir>/test/unit/setup']
+  // mapCoverage: true,
+  // coverageDirectory: '<rootDir>/test/unit/coverage',
+  // collectCoverageFrom: [
+  //   'src/**/*.{js,vue}',
+  //   '!src/main.js',
+  //   '!**/node_modules/**'
+  // ]
 }
