@@ -6,7 +6,7 @@
     </li>
 
     <!-- Default slot: holds the extra lines before the rows -->
-    <slot></slot>
+    <slot name="before"></slot>
 
     <!-- Rows -->
     <TaskRow v-for="task in tasks" :key="task.id" :task="task"></TaskRow>

@@ -8,7 +8,7 @@
         </span>
         <button class="btn btn-link" @click="dismiss">Dismiss</button>
       </div>
-      <li class="list-group-item progress">
+      <li class="list-group-item progress" slot="before">
         <div class="progress-bar progress-bar-small" role="progressbar" :style='{width: `${completion}%`}'></div>
       </li>
     </TaskList>
@@ -31,7 +31,7 @@ import { formatDuration, plural } from '@/utils/formats';
 
 import TaskList from '@/components/task-list/TaskList';
 
-import { completion } from '@/utils/tasks';
+import { completion, isWontDo } from '@/utils/tasks';
 
 import { START_PLANNING, DISMISS_PLANNING } from './events';
 
@@ -58,7 +58,7 @@ export default {
       const c =
         100 *
         this.planning.tasks.reduce(
-          (acc, task) => acc + completion(task) / 100,
+          (acc, task) => acc + (isWontDo(task) ? 1 : completion(task) / 100),
           0,
         );
       return Math.round(c / this.planning.tasks.length);
