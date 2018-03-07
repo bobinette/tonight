@@ -414,9 +414,11 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 			for _, log := range dependencyLogs[dep.ID] {
 				if log.Completion == 100 {
 					dep.Done = true
+					break
 				}
 
 				if log.Type == tonight.LogTypeWontDo {
+					dep.Done = true
 					break
 				}
 			}
