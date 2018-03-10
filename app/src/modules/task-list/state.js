@@ -1,6 +1,7 @@
 import axios from 'axios';
 import qs from 'qs';
 
+import apiUrl from '@/utils/apiUrl';
 import { isDone } from '@/utils/tasks';
 
 import { TASK_CREATED } from '@/modules/new-task/events';
@@ -112,7 +113,7 @@ export default {
       const { q, statuses, sortBy } = context.state;
       return axios
         .get(
-          `http://127.0.0.1:9090/api/tasks?${qs.stringify(
+          `${apiUrl}/api/tasks?${qs.stringify(
             { q, statuses, sortBy },
             { skipNulls: true, indices: false }
           )}`
@@ -129,7 +130,7 @@ export default {
     },
     [LOG_FOR_TASK]: (context, { taskId, log }) =>
       axios
-        .post(`http://127.0.0.1:9090/api/tasks/${taskId}/log`, { log })
+        .post(`${apiUrl}/api/tasks/${taskId}/log`, { log })
         .then(response => {
           const task = response.data;
           context.commit({ type: TASK_UPDATED, task });
@@ -155,7 +156,7 @@ export default {
         }),
     [UPDATE_TASK]: (context, { taskId, content }) =>
       axios
-        .post(`http://127.0.0.1:9090/api/tasks/${taskId}`, { content })
+        .post(`${apiUrl}/api/tasks/${taskId}`, { content })
         .then(response => {
           const updatedTask = response.data;
           context.commit({ type: TASK_UPDATED, task: updatedTask });
@@ -167,7 +168,7 @@ export default {
         }),
     [DELETE_TASK]: (context, { taskId }) =>
       axios
-        .delete(`http://127.0.0.1:9090/api/tasks/${taskId}`)
+        .delete(`${apiUrl}/api/tasks/${taskId}`)
         .then(() => {
           context.commit({ type: TASK_DELETED, taskId });
           return taskId;

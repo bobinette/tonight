@@ -3,6 +3,8 @@ import axios from 'axios';
 import { USER_LOADED, LOGOUT } from '@/modules/user/state';
 import { TASK_UPDATED, TASK_DELETED } from '@/modules/task-list/state';
 
+import apiUrl from '@/utils/apiUrl';
+
 import { FETCH_PLANNING, START_PLANNING, DISMISS_PLANNING } from './events';
 
 const PLANNING_RECEIVED = 'PLANNING_RECEIVED';
@@ -35,7 +37,7 @@ export default {
   actions: {
     [FETCH_PLANNING]: context =>
       axios
-        .get('http://127.0.0.1:9090/api/planning')
+        .get(`${apiUrl}/api/planning`)
         .then(response => {
           const planning = response.data;
           context.commit({ type: PLANNING_RECEIVED, planning });
@@ -47,7 +49,7 @@ export default {
         }),
     [START_PLANNING]: (context, { input }) =>
       axios
-        .post('http://127.0.0.1:9090/api/planning', { input })
+        .post(`${apiUrl}/api/planning`, { input })
         .then(response => {
           const planning = response.data;
           context.commit({ type: PLANNING_RECEIVED, planning });
@@ -59,7 +61,7 @@ export default {
         }),
     [DISMISS_PLANNING]: context =>
       axios
-        .delete('http://127.0.0.1:9090/api/planning')
+        .delete(`${apiUrl}/api/planning`)
         .then(() => {
           context.commit({ type: PLANNING_RECEIVED, planning: null });
         })

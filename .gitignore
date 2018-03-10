@@ -18,3 +18,11 @@ tonight/vendor/*/*
 
 config.toml
 config.*.toml
+
+tests-*.xml
+
+# Ignore the output directory
+bin/*
+
+# Ignore some files in the ops folder
+ops/vault_pass.txt
