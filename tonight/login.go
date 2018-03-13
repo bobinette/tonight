@@ -34,6 +34,10 @@ func RegisterLoginHandler(e *echo.Echo, jwtKey []byte, cookieSecret []byte, clie
 		},
 	}
 
+	// Activate this one to skip google oauth and use a fixed user for it.
+	// Check out the loginDev method to specify the user id to use.
+	// e.GET("/api/oauth2/login", h.loginDev)
+
 	e.GET("/api/oauth2/login", h.loginURL)
 	e.GET("/api/oauth2/callback", h.oauth2Callback)
 	e.POST("/api/logout", h.logout)
@@ -44,6 +48,22 @@ type loginHandler struct {
 
 	sessionStore sessions.Store
 	oauth2Config *oauth2.Config
+}
+
+func (h *loginHandler) loginDev(c echo.Context) error {
+	ctx := c.Request().Context()
+	accessToken, err := h.userService.token(ctx, User{ID: 3})
+	if err != nil {
+		return err
+	}
+
+	c.SetCookie(&http.Cookie{
+		Name:    "access_token",
+		Value:   accessToken,
+		Expires: time.Now().Add(60 * 24 * time.Hour),
+		Path:    "/",
+	})
+	return c.JSON(http.StatusOK, map[string]string{"url": "http://127.0.0.1:9090/"})
 }
 
 // From:
@@ -140,6 +160,7 @@ func (*loginHandler) logout(c echo.Context) error {
 		Name:    "access_token",
 		Value:   "",
 		Expires: time.Unix(0, 0),
+		Path:    "/",
 	})
 	return c.NoContent(http.StatusNoContent)
 }

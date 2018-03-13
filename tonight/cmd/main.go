@@ -2,9 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/BurntSushi/toml"
 
@@ -17,6 +17,10 @@ import (
 )
 
 func main() {
+	var env string
+	flag.StringVar(&env, "env", "dev", "")
+	flag.Parse()
+
 	var cfg struct {
 		MySQL struct {
 			User     string `toml:"user"`
@@ -40,11 +44,11 @@ func main() {
 			ClientSecret string `toml:"client_secret"`
 			RedirectURL  string `toml:"redirect_url"`
 		} `toml:"google"`
-	}
 
-	env := "dev"
-	if e := os.Getenv("ENV"); e != "" {
-		env = e
+		App struct {
+			Dir    string `toml:"dir"`
+			Assets string `toml:"assets"`
+		} `toml:"app"`
 	}
 
 	if _, err := toml.DecodeFile(fmt.Sprintf("config.%s.toml", env), &cfg); err != nil {
@@ -111,8 +115,8 @@ func main() {
 	srv.POST("/api/reindex", indexer.IndexAll)
 
 	// Assets
-	srv.Static("/", "../app/dist")
-	srv.Static("/static", "../app/dist/static")
+	srv.Static("/", cfg.App.Dir)
+	srv.Static("/static", cfg.App.Assets)
 
 	if err := srv.Start(":9090"); err != nil {
 		log.Fatal(err)

@@ -1,7 +1,7 @@
 <template>
-  <ul class="list-group">
+  <TaskList :tasks="tasks">
     <!-- Header -->
-    <li class="list-group-item list-group-item-header ListHeader">
+    <div slot="header" class="ListHeader">
       <div class="col-md-1">
         <strong>{{ tasksLength }} {{ plural("task", tasksLength)}}</strong>
       </div>
@@ -56,23 +56,8 @@
       <div class="col-md-1 col-end">
         <i class="fa fa-circle-o-notch fa-spin" v-if="loading"></i>
       </div>
-    </li>
-
-    <!-- Rows -->
-    <Row v-for="task in tasks" :key="task.id" :task="task"></Row>
-
-    <!-- New task input -->
-    <li class="list-group-item">
-      <textarea
-        v-autosize="newTaskContent"
-        v-model="newTaskContent"
-        @keydown.enter="createTask"
-        placeholder="Create a new task..."
-        rows="1"
-      >
-      </textarea>
-    </li>
-  </ul>
+    </div>
+  </TaskList>
 </template>
 
 <script >
@@ -80,21 +65,19 @@ import ClickOutside from 'vue-click-outside';
 
 import { plural } from '@/utils/formats';
 
-import Row from './row/Row';
+import TaskList from '@/components/task-list/TaskList';
 
 import {
   UPDATE_Q,
   UPDATE_STATUS_FILTER,
   UPDATE_SORT_OPTION,
   FETCH_TASKS,
-  CREATE_TASK,
 } from './state';
 
 export default {
   name: 'task-list',
   data() {
     return {
-      newTaskContent: '',
       statusFilterOpen: false,
       sortOptionsOpen: false,
     };
@@ -174,19 +157,6 @@ export default {
     },
   },
   methods: {
-    createTask(evt) {
-      if (evt.shiftKey) {
-        return;
-      }
-
-      evt.preventDefault();
-      this.$store
-        .dispatch({ type: CREATE_TASK, content: this.newTaskContent })
-        .then(() => {
-          this.newTaskContent = '';
-        })
-        .catch(err => console.log(err));
-    },
     plural,
     updateQ(evt) {
       this.$store.commit({ type: UPDATE_Q, q: evt.target.value });
@@ -202,7 +172,7 @@ export default {
     },
   },
   components: {
-    Row,
+    TaskList,
   },
   directives: {
     ClickOutside,
@@ -252,17 +222,12 @@ export default {
   }
 }
 
-textarea {
-  width: 100%;
-  max-height: 250px;
-  border: none;
-
-  &:focus {
-    outline: none;
-  }
-}
-
 .ListHeader {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
   div:not(:last-child) {
     margin-right: 1rem;
   }

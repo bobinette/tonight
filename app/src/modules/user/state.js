@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-import { NOTIFICATION_FAILURE } from '@/modules/notifications/state';
+import apiUrl from '@/utils/apiUrl';
+
+import { NOTIFICATION_FAILURE } from '@/modules/notifications/events';
 
 // User
 export const LOGIN = 'LOGIN';
@@ -40,18 +42,22 @@ export default {
   actions: {
     [LOAD_USER]: context =>
       axios
-        .get('http://127.0.0.1:9090/api/me')
+        .get(`${apiUrl}/api/me`)
         .then(response => {
           context.commit(USER_LOADED, response.data);
           return response.data;
         })
         .catch(err => {
-          console.log(err);
+          if (err.response && err.response.status === 401) {
+            context.commit(USER_LOADED, { id: 0, name: '', tagColours: {} });
+            return;
+          }
+
           throw err;
         }),
     [CUSTOMIZE_COLOUR]: (context, { tag, colour }) =>
       axios
-        .post(`http://127.0.0.1:9090/api/tags/${tag}`, { colour })
+        .post(`${apiUrl}/api/tags/${tag}`, { colour })
         .then(response => {
           context.commit(USER_LOADED, response.data);
           return response.data;
@@ -70,7 +76,7 @@ export default {
         }),
     [LOGIN]: (context, { username }) =>
       axios
-        .get('http://127.0.0.1:9090/api/oauth2/login', { username })
+        .get(`${apiUrl}/api/oauth2/login`, { username })
         .then(response => {
           window.location = response.data.url;
         })
@@ -88,7 +94,7 @@ export default {
         }),
     [LOGOUT]: context =>
       axios
-        .post('http://127.0.0.1:9090/api/logout')
+        .post(`${apiUrl}/api/logout`)
         .then(() => {
           context.commit({
             type: USER_LOADED,

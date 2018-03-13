@@ -4,6 +4,8 @@
 
 const path = require('path');
 
+const productionAssetRoot = path.resolve(__dirname, '../../bin/app');
+
 module.exports = {
     dev: {
         // Paths
@@ -28,6 +30,11 @@ module.exports = {
         showEslintErrorsInOverlay: false,
 
         /**
+        * Overwrite the output dir
+        */
+        assetsRoot: path.resolve(__dirname, '../dist'),
+
+        /**
      * Source Maps
      */
 
@@ -49,10 +56,10 @@ module.exports = {
 
     build: {
         // Template for index.html
-        index: path.resolve(__dirname, '../dist/index.html'),
+        index: path.join(productionAssetRoot, 'index.html'),
 
         // Paths
-        assetsRoot: path.resolve(__dirname, '../dist'),
+        assetsRoot: productionAssetRoot,
         assetsSubDirectory: 'static',
         assetsPublicPath: '/',
 

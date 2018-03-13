@@ -11,6 +11,7 @@ func plan(tasks []Task, d time.Duration, strict bool) []Task {
 	}
 
 	sort.Stable(byScore(tasks))
+	tasks = filterUndoneDependencies(tasks)
 
 	var cumDur time.Duration
 	planned := make([]Task, 0, len(tasks))
@@ -25,7 +26,7 @@ func plan(tasks []Task, d time.Duration, strict bool) []Task {
 		cumDur += task.LeftDuration()
 	}
 
-	return filterUndoneDependencies(planned)
+	return planned
 }
 
 func planNext(tasks []Task, planning Planning, afterID uint) []Task {
@@ -34,6 +35,7 @@ func planNext(tasks []Task, planning Planning, afterID uint) []Task {
 	}
 
 	sort.Stable(byScore(tasks))
+	tasks = filterUndoneDependencies(tasks)
 
 	var cumDur time.Duration
 	planned := make([]Task, 0, len(tasks))
@@ -63,7 +65,7 @@ func planNext(tasks []Task, planning Planning, afterID uint) []Task {
 		cumDur += task.LeftDuration()
 	}
 
-	return filterUndoneDependencies(planned)
+	return planned
 }
 
 func isPlanned(task Task, planning Planning) bool {

@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,8 +43,7 @@ func TestTaskRepository(t *testing.T, repo tonight.TaskRepository) {
 	taskCopy.Rank = 0 // reset rank to verify that it is still reloaded
 	err = repo.Update(ctx, &taskCopy)
 	assert.NoError(t, err)
-	// This works because the test runs fast so the updatedAt is actually the same.
-	// It needs to be improved though
+	taskCopy.UpdatedAt = task.UpdatedAt
 	assert.Equal(t, task, taskCopy)
 
 	// Add a log
@@ -107,28 +107,30 @@ func testDependencies(t *testing.T, repo tonight.TaskRepository) {
 
 	tests := map[int][]int{
 		// when updating x, the scores of ys... need to be updated
-		0: {0},
-		1: {1},
-		2: {2, 1},
-		3: {3, 2, 1},
-		4: {4, 2, 1},
-		5: {5, 0, 1},
+		0: {0, 5},
+		1: {1, 2, 3, 4, 5},
+		2: {1, 2, 3, 4},
+		3: {1, 2, 3},
+		4: {1, 2, 4},
+		5: {0, 1, 5},
 	}
 
 	for taskID, expectedIDs := range tests {
 		retrievedTasks, err := repo.DependencyTrees(ctx, tasks[taskID].ID)
 		assert.NoError(t, err)
 
-		taskIDs := make([]uint, 0)
+		taskIDs := make([]int, 0)
 		for _, task := range retrievedTasks {
-			taskIDs = append(taskIDs, task.ID)
+			taskIDs = append(taskIDs, int(task.ID))
 		}
 
-		expected := make([]uint, len(expectedIDs))
+		expected := make([]int, len(expectedIDs))
 		for i, idx := range expectedIDs {
-			expected[i] = tasks[idx].ID
+			expected[i] = int(tasks[idx].ID)
 		}
-		assert.Equal(t, expected, taskIDs)
+		sort.Ints(expected)
+		sort.Ints(taskIDs)
+		assert.Equal(t, expected, taskIDs, "%d", taskID)
 	}
 
 	if t.Failed() {

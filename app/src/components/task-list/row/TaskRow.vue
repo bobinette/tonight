@@ -7,6 +7,7 @@
           <span class="badge badge-pill badge-danger RowPriority">{{ priority }}</span>
         </span>
         <span class="flex flex-align-center Actions">
+          <span class="badge badge-pill badge-warning" v-if="isPostponed">Postponed</span>
           <button class="btn btn-link" @click.stop="deleteTask" v-if="isPending">
             <i class="fa fa-trash"></i>
           </button>
@@ -119,9 +120,19 @@ import html from 'remark-html';
 import { CUSTOMIZE_COLOUR } from '@/modules/user/state';
 
 import { formatRaw } from '@/utils/formats';
-import { isPending, isDone, isWontDo, isWorkedOn } from '@/utils/tasks';
+import {
+  isPending,
+  isPostponed,
+  isDone,
+  isWontDo,
+  isWorkedOn,
+} from '@/utils/tasks';
 
-import { LOG_FOR_TASK, UPDATE_TASK, DELETE_TASK } from '../state';
+import {
+  LOG_FOR_TASK,
+  UPDATE_TASK,
+  DELETE_TASK,
+} from '@/modules/task-list/state';
 
 export default {
   name: 'task-row',
@@ -158,6 +169,9 @@ export default {
     },
     isWorkedOn() {
       return isWorkedOn(this.task);
+    },
+    isPostponed() {
+      return isPostponed(this.task);
     },
     formattedDeadline() {
       const deadline = moment(this.task.deadline);
@@ -399,6 +413,14 @@ export default {
 
 textarea {
   background-color: transparent;
+
+  width: 100%;
+  max-height: 250px;
+  border: none;
+
+  &:focus {
+    outline: none;
+  }
 }
 
 .Tag .btn.btn-link {

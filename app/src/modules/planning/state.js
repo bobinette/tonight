@@ -1,23 +1,19 @@
 import axios from 'axios';
 
-import { LOGOUT } from '@/modules/user/state';
+import { USER_LOADED, LOGOUT } from '@/modules/user/state';
 import { TASK_UPDATED, TASK_DELETED } from '@/modules/task-list/state';
 
-// Fetch
-export const FETCH_PLANNING = 'FETCH_PLANNING';
-export const PLANNING_RECEIVED = 'PLANNING_RECEIVED';
+import apiUrl from '@/utils/apiUrl';
 
-// Start
-export const START_PLANNING = 'START_PLANNING';
+import { FETCH_PLANNING, START_PLANNING, DISMISS_PLANNING } from './events';
 
-// Dismiss
-export const DISMISS_PLANNING = 'DISMISS_PLANNING';
+const PLANNING_RECEIVED = 'PLANNING_RECEIVED';
 
 // Plugins
 export const plugins = [
   store =>
     store.subscribe(mutation => {
-      const types = [TASK_UPDATED, TASK_DELETED, LOGOUT];
+      const types = [USER_LOADED, TASK_UPDATED, TASK_DELETED, LOGOUT];
       if (!types.find(t => t === mutation.type)) {
         return;
       }
@@ -41,7 +37,7 @@ export default {
   actions: {
     [FETCH_PLANNING]: context =>
       axios
-        .get('http://127.0.0.1:9090/api/planning')
+        .get(`${apiUrl}/api/planning`)
         .then(response => {
           const planning = response.data;
           context.commit({ type: PLANNING_RECEIVED, planning });
@@ -53,7 +49,7 @@ export default {
         }),
     [START_PLANNING]: (context, { input }) =>
       axios
-        .post('http://127.0.0.1:9090/api/planning', { input })
+        .post(`${apiUrl}/api/planning`, { input })
         .then(response => {
           const planning = response.data;
           context.commit({ type: PLANNING_RECEIVED, planning });
@@ -65,7 +61,7 @@ export default {
         }),
     [DISMISS_PLANNING]: context =>
       axios
-        .delete('http://127.0.0.1:9090/api/planning')
+        .delete(`${apiUrl}/api/planning`)
         .then(() => {
           context.commit({ type: PLANNING_RECEIVED, planning: null });
         })

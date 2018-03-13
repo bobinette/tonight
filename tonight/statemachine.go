@@ -1,7 +1,5 @@
 package tonight
 
-import ()
-
 func isDone(task Task) bool {
 	for i := len(task.Log) - 1; i >= 0; i-- {
 		log := task.Log[i]
@@ -84,6 +82,11 @@ func isTransitionAllowed(task Task, transition LogType) bool {
 			not(isWontDo),
 		},
 		LogTypeComment: {},
+		LogTypePostpone: {
+			not(isDone),
+			not(isWontDo),
+			not(isStarted),
+		},
 	}
 
 	for _, check := range stateMachine[transition] {

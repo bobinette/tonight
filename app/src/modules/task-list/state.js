@@ -1,9 +1,12 @@
 import axios from 'axios';
 import qs from 'qs';
 
+import apiUrl from '@/utils/apiUrl';
 import { isDone } from '@/utils/tasks';
 
-import { LOGOUT } from '@/modules/user/state';
+import { TASK_CREATED } from '@/modules/new-task/events';
+import { USER_LOADED, LOGOUT } from '@/modules/user/state';
+import { NOTIFICATION_FAILURE } from '@/modules/notifications/events';
 
 // Tasks
 // -- List
@@ -18,10 +21,6 @@ export const TASKS_RECEIVED = 'TASKS_RECEIVED';
 export const UPDATE_Q = 'UPDATE_Q';
 export const UPDATE_STATUS_FILTER = 'UPDATE_STATUS_FILTER';
 export const UPDATE_SORT_OPTION = 'UPDATE_SORT_OPTION';
-
-// -- Create
-export const CREATE_TASK = 'CREATE_TASK';
-export const TASK_CREATED = 'TASK_CREATED';
 
 // -- Log
 export const LOG_FOR_TASK = 'LOG_FOR_TASK';
@@ -53,6 +52,16 @@ export const plugins = [
       }
 
       store.dispatch({ type: FETCH_TASKS }).catch(() => {});
+    }),
+  store =>
+    store.subscribe(mutation => {
+      const types = [USER_LOADED];
+
+      if (!types.find(t => t === mutation.type)) {
+        return;
+      }
+
+      store.dispatch({ type: LOAD_FILTERS }).catch(() => {});
     }),
 ];
 
@@ -89,8 +98,6 @@ export default {
       state.loading = false;
       state.tasks = tasks;
     },
-    // CREATE
-    [TASK_CREATED]: () => {}, // Nothing to do
     // UPDATE
     [TASK_UPDATED]: () => {}, // Nothing to do
     [TASK_DELETED]: () => {}, // Nothing to do
@@ -106,7 +113,7 @@ export default {
       const { q, statuses, sortBy } = context.state;
       return axios
         .get(
-          `http://127.0.0.1:9090/api/tasks?${qs.stringify(
+          `${apiUrl}/api/tasks?${qs.stringify(
             { q, statuses, sortBy },
             { skipNulls: true, indices: false }
           )}`
@@ -121,21 +128,9 @@ export default {
           throw err;
         });
     },
-    [CREATE_TASK]: (context, { content }) =>
-      axios
-        .post('http://127.0.0.1:9090/api/tasks', { content })
-        .then(response => {
-          const task = response.data;
-          context.commit({ type: TASK_CREATED, task });
-          return task;
-        })
-        .catch(err => {
-          console.log(err);
-          throw err;
-        }),
     [LOG_FOR_TASK]: (context, { taskId, log }) =>
       axios
-        .post(`http://127.0.0.1:9090/api/tasks/${taskId}/log`, { log })
+        .post(`${apiUrl}/api/tasks/${taskId}/log`, { log })
         .then(response => {
           const task = response.data;
           context.commit({ type: TASK_UPDATED, task });
@@ -148,12 +143,20 @@ export default {
           return task;
         })
         .catch(err => {
-          console.log(err);
+          let message = err.message;
+          if (err.response && err.response.data && err.response.data.error) {
+            message = err.response.data.error;
+          }
+
+          context.dispatch({
+            type: NOTIFICATION_FAILURE,
+            text: `Error adding log to task: ${message}`,
+          });
           throw err;
         }),
     [UPDATE_TASK]: (context, { taskId, content }) =>
       axios
-        .post(`http://127.0.0.1:9090/api/tasks/${taskId}`, { content })
+        .post(`${apiUrl}/api/tasks/${taskId}`, { content })
         .then(response => {
           const updatedTask = response.data;
           context.commit({ type: TASK_UPDATED, task: updatedTask });
@@ -165,7 +168,7 @@ export default {
         }),
     [DELETE_TASK]: (context, { taskId }) =>
       axios
-        .delete(`http://127.0.0.1:9090/api/tasks/${taskId}`)
+        .delete(`${apiUrl}/api/tasks/${taskId}`)
         .then(() => {
           context.commit({ type: TASK_DELETED, taskId });
           return taskId;
@@ -174,7 +177,8 @@ export default {
           console.log(err);
           throw err;
         }),
-    [LOAD_FILTERS]: (context, { query: { q, sortBy, statuses } }) => {
+    [LOAD_FILTERS]: context => {
+      const { q, sortBy, statuses } = context.rootState.route.query;
       const filters = Object.assign(
         {
           q: context.state.q,

@@ -25,10 +25,11 @@ export const isWorkedOn = task => {
     return false;
   }
 
-  // slice to prevent reversing the log array
   const lastWorkflowStep = task.log
-    .slice()
+    .slice() // Copy the list so reverse does not mutate the state
     .reverse()
     .find(l => l.type === 'START' || l.type === 'PAUSE');
   return lastWorkflowStep && lastWorkflowStep.type === 'START';
 };
+
+export const isPostponed = task => !!task.postponedUntil;

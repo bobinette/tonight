@@ -26,6 +26,13 @@ func scoreMany(tasks []Task, scoreFunc func(task Task) float64) map[uint]float64
 
 // score gives a score to task to be used when ranking for planning.
 func score(task Task) float64 {
+	// Postponed tasks have a score of 0. This way, if a postponed task is
+	// a dependency of a very urgent task, it will still be scored highly, but
+	// postponed tasks that are not depended on will be at the bottom of the ocean
+	if task.PostponedUntil != nil && task.PostponedUntil.After(time.Now()) {
+		return 0
+	}
+
 	// Start by using the priority of the task
 	s := float64(task.Priority)
 

@@ -7,9 +7,9 @@
     "scripts": {
         "dev": "webpack --config build/webpack.dev.conf.js",
         "start": "npm run dev",
-        "unit": "jest --config test/unit/jest.conf.js --coverage",
+        "unit": "jest --config test/unit/jest.conf.js",
         "e2e": "node test/e2e/runner.js",
-        "test": "npm run unit && npm run e2e",
+        "test": "npm run unit",
         "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs",
         "build": "node build/build.js"
     },
@@ -52,7 +52,7 @@
         "bootstrap": "^4.0.0-alpha.6",
         "chalk": "^2.0.1",
         "chromedriver": "^2.27.2",
-        "copy-webpack-plugin": "^4.0.1",
+        "copy-webpack-plugin": "^4.5.1",
         "cross-spawn": "^5.0.1",
         "css-loader": "^0.28.0",
         "eslint": "^3.19.0",
@@ -67,6 +67,7 @@
         "friendly-errors-webpack-plugin": "^1.6.1",
         "html-webpack-plugin": "^2.30.1",
         "jest": "^21.2.0",
+        "jest-junit": "^3.6.0",
         "jest-serializer-vue": "^0.3.0",
         "js-cookie": "^2.2.0",
         "nightwatch": "^0.9.12",
@@ -102,5 +103,8 @@
         "> 1%",
         "last 2 versions",
         "not ie <= 8"
-    ]
+    ],
+    "jest-junit": {
+        "output": "../tests-app.xml"
+    }
 }

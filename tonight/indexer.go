@@ -33,13 +33,11 @@ func (i *Indexer) IndexAll(c echo.Context) error {
 		}
 	}
 
-	count := 0
 	for _, task := range tasks {
 		if err := i.Index.Index(c.Request().Context(), task); err != nil {
 			return err
 		}
-		count++
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"count": count})
+	return c.JSON(http.StatusOK, map[string]interface{}{"count": len(tasks)})
 }

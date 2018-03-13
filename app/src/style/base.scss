@@ -1,124 +1,14 @@
 @import 'variables.scss';
 
-@import '~bootstrap/scss/variables';
 @import '~bootstrap/scss/bootstrap';
 
-@import 'node_modules/progress-tracker/app/styles/progress-tracker.scss';
+@import '_bootstrap.scss';
+@import '_classes.scss';
+@import '_flex.scss';
+@import '_progress_tracker.scss';
+@import '_tags.scss';
+
+@import '~progress-tracker/app/styles/progress-tracker.scss';
 
 // @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
 // @import url('https://fonts.googleapis.com/css?family=Lato');
-
-// Customize basic tags
-
-body {
-    font-family: 'Source Sans Pro', 'Roboto', Arial, sans-serif;
-    margin-bottom: 2rem;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family: 'Lato', Arial, sans-serif;
-}
-
-ul.list-group {
-    padding-left: inherit;
-    padding-right: inherit;
-}
-
-textarea {
-    resize: none;
-}
-
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    margin-bottom: 0;
-}
-
-// New classes
-
-.flex {
-    display: flex;
-}
-
-.flex-50 {
-    flex-basis: 50%;
-}
-
-.flex-align-center {
-    align-items: center;
-}
-
-.flex-space-between {
-    justify-content: space-between;
-}
-
-.list-group-item-header {
-    background: $gray-lighter;
-}
-
-.success {
-    color: $brand-success;
-}
-
-.success-bg {
-    background: $brand-success;
-}
-
-.danger {
-    color: $brand-danger !important;
-}
-
-.white {
-    color: $body-bg !important;
-}
-
-.warning-bg {
-    background: $brand-warning;
-}
-
-// Custom corrections of bootstrap
-
-.btn.btn-link {
-    color: $brand-primary;
-    padding: 0;
-    cursor: pointer;
-
-    &:focus {
-        text-decoration: none;
-        outline: none;
-        box-shadow: none;
-    }
-}
-
-// Custom corrections of progress-tracker
-
-ul.progress-tracker {
-    margin: 0;
-}
-
-li.progress-step:not(:last-child)::after {
-    z-index: 0;
-}
-
-ul.progress-tracker.progress-tracker--vertical {
-    & .progress-marker {
-        top: $marker-size-half;
-    }
-
-    .progress-step:not(:last-child)::after {
-        top: $marker-size;
-    }
-
-    .progress-step:not(:last-child) .progress-text {
-        padding-bottom: 1rem;
-    }
-}
