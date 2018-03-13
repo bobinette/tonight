@@ -1,41 +1,44 @@
 sudo: required
-language: go
-go:
-  - 1.9.1
+dist: trusty
 
 services:
   - docker
-  - mysql
 
 env:
   ENV=travis
 
 install:
+  # Inspect some variables
+  - pwd
+  - ls -lash
+
+  # Node
+  - npm -v
+  - node -v
+
+  # Go
+  - eval "$(gimme 1.9.4)"
+  - go version
+  - go env
+  - mkdir -p /home/travis/gopath/src/github.com/bobinette
+  - ln -s /home/travis/build/bobinette/tonight /home/travis/gopath/src/github.com/bobinette/tonight
+
   # Install mysql 5.7 via docker
-  - docker pull mysql:5.7
-  - |
-    docker run \
-      -d -p 127.0.0.1:3307:3306 \
-      --name mysqld \
-      -e MYSQL_DATABASE=tonight_test \
-      -e MYSQL_USER=tonight \
-      -e MYSQL_PASSWORD=tonight \
-      -e MYSQL_ROOT_PASSWORD=root \
-      mysql:5.7 \
-      --innodb_log_file_size=256MB \
-      --innodb_buffer_pool_size=512MB \
-      --max_allowed_packet=16MB
-  - cp .travis/docker.cnf ~/.my.cnf
-  - mysql --print-defaults
+  - .travis/install_mysql.sh
 
-  # Update dependencies
+  # Install Go dependencies
   - go get -u -v github.com/kardianos/govendor/...
-  - cd tonight && govendor sync -v && cd -
+  - cd /home/travis/gopath/src/github.com/bobinette/tonight/tonight
+  - govendor sync -v
+  - cd /home/travis/build/bobinette/tonight
 
-  # Make sure mysql is up before continuing
-  - .travis/wait_mysql.sh
+  # Install front dependencies
+  - cd /home/travis/build/bobinette/tonight/app
+  - npm install
+  - cd /home/travis/build/bobinette/tonight
 
-  # Run migrations
+  # Wait for mysql to be up
+  - ".travis/wait_mysql.sh"
   - git clone https://github.com/mbucc/shmig.git ./mysql/shmig
   - |
     ./mysql/shmig/shmig \
@@ -50,7 +53,48 @@ install:
 
 # Default is `make`
 script:
-  - go test ./... -v
+  # Go
+  - >
+    cd /home/travis/gopath/src/github.com/bobinette/tonight/tonight &&
+    go test ./... -v &&
+    cd /home/travis/build/bobinette/tonight
+
+  # JS
+  - >
+    cd /home/travis/build/bobinette/tonight/app anpm run test &&
+    npm run test &&
+    cd /home/travis/build/bobinette/tonight
+
+before_deploy:
+  # Build web server linux
+  - >
+    cd /home/travis/build/bobinette/tonight &&
+    GOOS=linux GOARCH=amd64 go build -o bin/tonight tonight/cmd/main.go &&
+    cd /home/travis/build/bobinette/tonight
+
+  - >
+    cd /home/travis/build/bobinette/tonight/app &&
+    npm run build &&
+    cd /home/travis/build/bobinette/tonight
+
+  # bundle it all
+  - tar -zcvf bin/tonight-linux.tar.gz bin/* tonight/bleve/mapping.json
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: BQBUdNUPuiIMgXhvhhNOUBqmRLycsUGMo1QX71pgWGbA63Q8MqmETS6PsshXpheCzKKCu1sRZhmr2p8S4JMcsuiqwTRkCGlQ5HpqpoOx71/bPMnFSba9x6jNbjZQ3D0nXBaWU8NOQzcZzMPWbnmuo5CGLRHPeC5FhDPWblKQ6kxFczFhA9HKLEVs4WZ74NmXSJg6OLgYbIjqLhQGmZlUMP2uYyBidPH8Phrg8slZu0tOu2+5Dgs9+/YZCVa6U5gojMDHsaMgqNqjgffpK2dQqA9Eu9n2174Jp7zC175yGXxHdCSy2/ngYY1+azXKCeSRoDJ0ANM4d619EFH2vnca8r48uoBfJrEIVSC9LgIFTUmFHvGq5XC5sU27qs56XGeHxD/JP4zIUfmy5dzm2XC6c2WUpThIUpyDKn5PIILQIKvXHU5ZgX9TUlfz0NP1ipIVrXbBgbyOF9ZDbdOZSbcvAqFijeOhf/Z8RTxSLcGg2V6G+2t4TXmBWlHKz8ON+0ThOxxcA66gF8ujLsA4al/DAMRjL1g7uKy4meGOGqyhs2iMaKs0E7JX/y8+LUusUmjeFz04b9r3Z7np67N0VBg9UlnYucImV2DcoklqIDXrxeId4/d40Wr58Wwf9DgLuQP7yhCzQOJEDbL+u6cloqOleaGebaQr0d1xeWqVUi346bA=
+  file:
+    - bin/tonight-linux.tar.gz
+  on:
+    tags: true
+    repo: bobinette/tonight
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
 
 # Build only the master branch. The PRs will still be built
 branches:

@@ -43,8 +43,7 @@ func TestTaskRepository(t *testing.T, repo tonight.TaskRepository) {
 	taskCopy.Rank = 0 // reset rank to verify that it is still reloaded
 	err = repo.Update(ctx, &taskCopy)
 	assert.NoError(t, err)
-	// This works because the test runs fast so the updatedAt is actually the same.
-	// It needs to be improved though
+	taskCopy.UpdatedAt = task.UpdatedAt
 	assert.Equal(t, task, taskCopy)
 
 	// Add a log

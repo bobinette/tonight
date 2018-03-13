@@ -9,7 +9,7 @@
         "start": "npm run dev",
         "unit": "jest --config test/unit/jest.conf.js",
         "e2e": "node test/e2e/runner.js",
-        "test": "npm run unit && npm run e2e",
+        "test": "npm run unit",
         "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs",
         "build": "node build/build.js"
     },
@@ -23,8 +23,7 @@
         "remark-html": "^7.0.0",
         "v-tooltip": "^2.0.0-rc.25",
         "vue": "^2.5.2",
-        "vue-autosize":
-            "git+https://git@github.com/morr/vue-autosize.git#initial-page-load-fix",
+        "vue-autosize": "git+https://git@github.com/morr/vue-autosize.git#initial-page-load-fix",
         "vue-click-outside": "^1.0.7",
         "vue-focus": "^2.1.0",
         "vue-router": "^3.0.1",
@@ -53,7 +52,7 @@
         "bootstrap": "^4.0.0-alpha.6",
         "chalk": "^2.0.1",
         "chromedriver": "^2.27.2",
-        "copy-webpack-plugin": "^4.0.1",
+        "copy-webpack-plugin": "^4.5.1",
         "cross-spawn": "^5.0.1",
         "css-loader": "^0.28.0",
         "eslint": "^3.19.0",
@@ -100,7 +99,11 @@
         "node": ">= 4.0.0",
         "npm": ">= 3.0.0"
     },
-    "browserslist": ["> 1%", "last 2 versions", "not ie <= 8"],
+    "browserslist": [
+        "> 1%",
+        "last 2 versions",
+        "not ie <= 8"
+    ],
     "jest-junit": {
         "output": "../tests-app.xml"
     }
