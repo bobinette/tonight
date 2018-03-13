@@ -51,7 +51,6 @@ install:
       -m ./tonight/mysql/migrations \
       up
 
-# Default is `make`
 script:
   # Go
   - >
@@ -66,19 +65,27 @@ script:
     cd /home/travis/build/bobinette/tonight
 
 before_deploy:
+  # Create bin directory
+  - mkdir bin
+
   # Build web server linux
   - >
-    cd /home/travis/build/bobinette/tonight &&
-    GOOS=linux GOARCH=amd64 go build -o bin/tonight tonight/cmd/main.go &&
+    cd /home/travis/gopath/src/github.com/bobinette/tonight/tonight &&
+    GOOS=linux GOARCH=amd64 go build -o ../bin/tonight ./cmd/main.go &&
     cd /home/travis/build/bobinette/tonight
 
+  # Build front
   - >
     cd /home/travis/build/bobinette/tonight/app &&
     npm run build &&
     cd /home/travis/build/bobinette/tonight
 
   # bundle it all
-  - tar -zcvf bin/tonight-linux.tar.gz bin/* tonight/bleve/mapping.json
+  - mkdir bin/bleve
+  - cp tonight/bleve/mapping.json bin/bleve/mapping.json
+  - cd bin
+  - tar -zcvf ../tonight-linux.tar.gz .
+  - cd /home/travis/build/bobinette/tonight
 
 deploy:
   provider: releases
@@ -86,7 +93,7 @@ deploy:
   api_key:
     secure: BQBUdNUPuiIMgXhvhhNOUBqmRLycsUGMo1QX71pgWGbA63Q8MqmETS6PsshXpheCzKKCu1sRZhmr2p8S4JMcsuiqwTRkCGlQ5HpqpoOx71/bPMnFSba9x6jNbjZQ3D0nXBaWU8NOQzcZzMPWbnmuo5CGLRHPeC5FhDPWblKQ6kxFczFhA9HKLEVs4WZ74NmXSJg6OLgYbIjqLhQGmZlUMP2uYyBidPH8Phrg8slZu0tOu2+5Dgs9+/YZCVa6U5gojMDHsaMgqNqjgffpK2dQqA9Eu9n2174Jp7zC175yGXxHdCSy2/ngYY1+azXKCeSRoDJ0ANM4d619EFH2vnca8r48uoBfJrEIVSC9LgIFTUmFHvGq5XC5sU27qs56XGeHxD/JP4zIUfmy5dzm2XC6c2WUpThIUpyDKn5PIILQIKvXHU5ZgX9TUlfz0NP1ipIVrXbBgbyOF9ZDbdOZSbcvAqFijeOhf/Z8RTxSLcGg2V6G+2t4TXmBWlHKz8ON+0ThOxxcA66gF8ujLsA4al/DAMRjL1g7uKy4meGOGqyhs2iMaKs0E7JX/y8+LUusUmjeFz04b9r3Z7np67N0VBg9UlnYucImV2DcoklqIDXrxeId4/d40Wr58Wwf9DgLuQP7yhCzQOJEDbL+u6cloqOleaGebaQr0d1xeWqVUi346bA=
   file:
-    - bin/tonight-linux.tar.gz
+    - tonight-linux.tar.gz
   on:
     tags: true
     repo: bobinette/tonight

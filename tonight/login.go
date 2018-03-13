@@ -15,7 +15,11 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-const userInfoScope = "https://www.googleapis.com/auth/userinfo.email"
+const (
+	userInfoScope = "https://www.googleapis.com/auth/userinfo.email"
+
+	oauthFlowOriginURL = "from"
+)
 
 func RegisterLoginHandler(e *echo.Echo, jwtKey []byte, cookieSecret []byte, clientID, clientSecret, redirectURL string, userRepository UserRepository) {
 	h := loginHandler{
@@ -69,6 +73,8 @@ func (h *loginHandler) loginDev(c echo.Context) error {
 // From:
 // https://github.com/GoogleCloudPlatform/golang-samples/blob/master/getting-started/bookshelf/app/auth.go
 func (h *loginHandler) loginURL(c echo.Context) error {
+	originURL := c.QueryParam("from")
+
 	id, err := uuid.NewV4()
 	if err != nil {
 		return err
@@ -81,6 +87,7 @@ func (h *loginHandler) loginURL(c echo.Context) error {
 		return err
 	}
 	oauthFlowSession.Options.MaxAge = 10 * 60 // 10 minutes
+	oauthFlowSession.Values[oauthFlowOriginURL] = originURL
 
 	if err := oauthFlowSession.Save(r, c.Response()); err != nil {
 		return err
@@ -103,8 +110,15 @@ func (h *loginHandler) oauth2Callback(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if oauthFlowSession.Name() != state || state == "" {
 		return errors.New("invalid state")
+	}
+
+	originURL, ok := oauthFlowSession.Values[oauthFlowOriginURL].(string)
+	// Validate this callback request came from the app.
+	if !ok {
+		return errors.New("invalid origin url")
 	}
 
 	// Remove the session cookie
@@ -152,7 +166,7 @@ func (h *loginHandler) oauth2Callback(c echo.Context) error {
 		Path:    "/",
 	})
 
-	return c.Redirect(http.StatusFound, "http://127.0.0.1:9090/")
+	return c.Redirect(http.StatusFound, originURL)
 }
 
 func (*loginHandler) logout(c echo.Context) error {

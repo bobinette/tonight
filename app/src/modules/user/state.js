@@ -76,7 +76,7 @@ export default {
         }),
     [LOGIN]: (context, { username }) =>
       axios
-        .get(`${apiUrl}/api/oauth2/login`, { username })
+        .get(`${apiUrl}/api/oauth2/login?from=${encodeURI(window.location)}`, { username })
         .then(response => {
           window.location = response.data.url;
         })

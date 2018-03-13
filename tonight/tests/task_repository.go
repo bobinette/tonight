@@ -43,7 +43,7 @@ func TestTaskRepository(t *testing.T, repo tonight.TaskRepository) {
 	taskCopy.Rank = 0 // reset rank to verify that it is still reloaded
 	err = repo.Update(ctx, &taskCopy)
 	assert.NoError(t, err)
-	taskCopy.UpdatedAt = task.UpdatedAt
+	task.UpdatedAt = taskCopy.UpdatedAt
 	assert.Equal(t, task, taskCopy)
 
 	// Add a log
@@ -131,11 +131,5 @@ func testDependencies(t *testing.T, repo tonight.TaskRepository) {
 		sort.Ints(expected)
 		sort.Ints(taskIDs)
 		assert.Equal(t, expected, taskIDs, "%d", taskID)
-	}
-
-	if t.Failed() {
-		for i, task := range tasks {
-			t.Log(i, task.ID, dependencies[i])
-		}
 	}
 }
