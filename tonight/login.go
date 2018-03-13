@@ -36,9 +36,9 @@ func RegisterLoginHandler(e *echo.Echo, jwtKey []byte, cookieSecret []byte, clie
 
 	// Activate this one to skip google oauth and use a fixed user for it.
 	// Check out the loginDev method to specify the user id to use.
-	e.GET("/api/oauth2/login", h.loginDev)
+	// e.GET("/api/oauth2/login", h.loginDev)
 
-	// e.GET("/api/oauth2/login", h.loginURL)
+	e.GET("/api/oauth2/login", h.loginURL)
 	e.GET("/api/oauth2/callback", h.oauth2Callback)
 	e.POST("/api/logout", h.logout)
 }
