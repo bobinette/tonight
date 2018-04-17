@@ -16,6 +16,9 @@ func scoreMany(tasks []Task, scoreFunc func(task Task) float64) map[uint]float64
 	for _, tree := range trees {
 		tree.traverseBottomUp(func(t *dependencyTree) {
 			for _, child := range t.children {
+				if t.node.PostponedUntil != nil && t.node.PostponedUntil.After(time.Now()) {
+					continue
+				}
 				scores[t.node.ID] += scores[child.node.ID] + 1
 			}
 		})
