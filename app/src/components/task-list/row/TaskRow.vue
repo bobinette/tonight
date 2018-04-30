@@ -5,6 +5,15 @@
         <span class="flex flex-align-center w-100">
           <h6>{{ task.id }}. {{ task.title }}</h6>
           <span class="badge badge-pill badge-danger RowPriority">{{ priority }}</span>
+          <div class="Actions PriorityActions">
+            <button class="btn btn-link btn-sm" @click.stop="incrementPriority" v-if="isPending">
+              <i class="fa fa-plus"></i>
+            </button>
+            /
+            <button class="btn btn-link btn-sm" @click.stop="decrementPriority" v-if="isPending">
+              <i class="fa fa-minus"></i>
+            </button>
+          </div>
         </span>
         <span class="flex flex-align-center Actions">
           <span class="badge badge-pill badge-warning" v-if="isPostponed">Postponed</span>
@@ -222,6 +231,29 @@ export default {
         })
         .catch();
     },
+    incrementPriority() {
+      const raw = `!${formatRaw(this.task)}`;
+      this.$store
+        .dispatch({
+          type: UPDATE_TASK,
+          taskId: this.task.id,
+          content: raw,
+        })
+        .catch();
+    },
+    decrementPriority() {
+      let raw = formatRaw(this.task);
+      if (raw && raw[0] === "!") {
+        raw = raw.substr(1);
+      }
+      this.$store
+        .dispatch({
+          type: UPDATE_TASK,
+          taskId: this.task.id,
+          content: raw,
+        })
+        .catch();
+    },
     switchToEditMode(evt) {
       evt.preventDefault();
 
@@ -371,6 +403,19 @@ export default {
     &:hover {
       color: $body-color;
     }
+  }
+}
+
+.PriorityActions {
+  font-size: 0.8rem;
+
+  button.btn {
+    margin: 0;
+    border: none;
+  }
+
+  .btn .fa {
+    font-size: 0.8rem;
   }
 }
 
