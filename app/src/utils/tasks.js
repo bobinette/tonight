@@ -32,4 +32,30 @@ export const isWorkedOn = task => {
   return lastWorkflowStep && lastWorkflowStep.type === 'START';
 };
 
-export const isPostponed = task => !!task.postponedUntil;
+const postponeRegex = /postponed until (\d{4}-\d{2}-\d{2})/;
+
+export const isPostponed = task => {
+  const d = postponedUntil(task);
+  return d && Date.now() - d < 0;
+};
+
+export const postponedUntil = task => {
+  if (!task.log) {
+    return null;
+  }
+
+  const lastWorkflowStep = task.log
+    .slice() // Copy the list so reverse does not mutate the state
+    .reverse()
+    .find(l => l.type === 'POSTPONE');
+  if (!lastWorkflowStep) {
+    return null;
+  }
+
+  const match = lastWorkflowStep.description.match(postponeRegex);
+  if (!match) {
+    return null;
+  }
+
+  return Date.parse(match[1]);
+};
