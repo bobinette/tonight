@@ -38,9 +38,9 @@ func (r *TaskRepository) Create(ctx context.Context, t *tonight.Task) error {
 
 	now := time.Now()
 	res, err := r.db.ExecContext(ctx, `
-		INSERT INTO tasks (title, description, priority, duration, deadline, postponed_until, rank, created_at, updated_at)
-		     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, t.PostponedUntil, rank, now, now)
+		INSERT INTO tasks (title, description, priority, duration, deadline, rank, created_at, updated_at)
+		     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, rank, now, now)
 	if err != nil {
 		return err
 	}
@@ -112,10 +112,9 @@ func (r *TaskRepository) Update(ctx context.Context, t *tonight.Task) error {
 			priority = ?,
 			duration = ?,
 			deadline = ?,
-			postponed_until = ?,
 			updated_at = ?
 		WHERE id = ?
-	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, t.PostponedUntil, now, t.ID)
+	`, t.Title, t.Description, t.Priority, t.Duration, t.Deadline, now, t.ID)
 	if err != nil {
 		return err
 	}
@@ -226,7 +225,7 @@ func (r *TaskRepository) List(ctx context.Context, ids []uint) ([]tonight.Task, 
 		params[i] = id
 	}
 	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id, title, description, priority, rank, duration, deadline, postponed_until, created_at, updated_at
+		SELECT id, title, description, priority, rank, duration, deadline, created_at, updated_at
 		  FROM tasks
 		 WHERE id IN (%s)
 		   AND deleted = 0
@@ -265,10 +264,9 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 		var rank uint
 		var duration string
 		var deadline *time.Time
-		var postponeUntil *time.Time
 		var createdAt time.Time
 		var updatedAt time.Time
-		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &postponeUntil, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&id, &title, &description, &priority, &rank, &duration, &deadline, &createdAt, &updatedAt); err != nil {
 			return nil, err
 		}
 
@@ -280,9 +278,8 @@ func (r *TaskRepository) loadTasks(ctx context.Context, rows *sql.Rows) ([]tonig
 			Priority: priority,
 			Rank:     rank,
 
-			Duration:       duration,
-			Deadline:       deadline,
-			PostponedUntil: postponeUntil,
+			Duration: duration,
+			Deadline: deadline,
 
 			CreatedAt: createdAt,
 			UpdatedAt: updatedAt,
@@ -481,7 +478,7 @@ func (r *TaskRepository) All(ctx context.Context) ([]tonight.Task, error) {
 	rows, err := r.db.QueryContext(
 		ctx,
 		`
-		SELECT id, title, description, priority, rank, duration, deadline, postponed_until, created_at, updated_at
+		SELECT id, title, description, priority, rank, duration, deadline, created_at, updated_at
 		  FROM tasks
 		  WHERE deleted = ?
 		`,
