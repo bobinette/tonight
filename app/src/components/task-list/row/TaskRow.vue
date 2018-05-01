@@ -16,7 +16,7 @@
           </div>
         </span>
         <span class="flex flex-align-center Actions">
-          <span class="badge badge-pill badge-warning" v-if="isPostponed">Postponed</span>
+          <span class="badge badge-pill badge-warning" v-if="isPostponed">Postponed: {{ postponedUntil }}</span>
           <button class="btn btn-link" @click.stop="deleteTask" v-if="isPending">
             <i class="fa fa-trash"></i>
           </button>
@@ -135,6 +135,7 @@ import {
   isDone,
   isWontDo,
   isWorkedOn,
+  postponedUntil,
 } from '@/utils/tasks';
 
 import {
@@ -181,6 +182,14 @@ export default {
     },
     isPostponed() {
       return isPostponed(this.task);
+    },
+    postponedUntil() {
+      const d = postponedUntil(this.task);
+      if (!d) {
+        return null;
+      }
+
+      return moment(d).format('L');
     },
     formattedDeadline() {
       const deadline = moment(this.task.deadline);
@@ -243,7 +252,7 @@ export default {
     },
     decrementPriority() {
       let raw = formatRaw(this.task);
-      if (raw && raw[0] === "!") {
+      if (raw && raw[0] === '!') {
         raw = raw.substr(1);
       }
       this.$store

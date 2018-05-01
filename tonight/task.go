@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"time"
 )
 
@@ -28,6 +29,10 @@ const (
 	StatusPending Status = iota
 	StatusDone
 	StatusWontDo
+)
+
+var (
+	postponedUntilRegex = regexp.MustCompile(`postponed until (\d{4}-\d{2}-\d{2})`)
 )
 
 func StatusFromString(s string) Status {
@@ -63,9 +68,8 @@ type Task struct {
 	Rank     uint     `json:"rank"`
 	Tags     []string `json:"tags"`
 
-	Duration       string     `json:"duration"`
-	Deadline       *time.Time `json:"deadline"`
-	PostponedUntil *time.Time `json:"postponedUntil"`
+	Duration string     `json:"duration"`
+	Deadline *time.Time `json:"deadline"`
 
 	Score float64 `json:"score"`
 
@@ -117,6 +121,26 @@ func (t Task) DoneAt() *time.Time {
 			return &doneAt
 		}
 	}
+	return nil
+}
+
+func (t Task) PostponedUntil() *time.Time {
+	for i := len(t.Log); i > 0; i-- {
+		log := t.Log[i-1]
+		if log.Type != LogTypePostpone {
+			continue
+		}
+
+		match := postponedUntilRegex.FindStringSubmatch(log.Description)
+		if len(match) == 0 {
+			continue
+		}
+
+		if t, err := time.Parse("2006-01-02", match[1]); err == nil {
+			return &t
+		}
+	}
+
 	return nil
 }
 
@@ -305,14 +329,9 @@ func (ts *taskService) log(ctx context.Context, taskID uint, input string) (Task
 
 	// Handle special case of postponing...
 	if log.Type == LogTypePostpone {
-		date, err := time.Parse("2006-01-02", log.Description)
-		if err != nil {
-			return Task{}, fmt.Errorf("error decoding date for postponing: %v", err)
-		}
 
-		task.PostponedUntil = &date
-		if err := ts.repo.Update(ctx, &task); err != nil {
-			return Task{}, err
+		if _, err := time.Parse("2006-01-02", log.Description); err != nil {
+			return Task{}, fmt.Errorf("error decoding date for postponing: %v", err)
 		}
 
 		log.Description = fmt.Sprintf("postponed until %s", log.Description)

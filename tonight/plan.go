@@ -17,6 +17,12 @@ func plan(tasks []Task, d time.Duration, strict bool) []Task {
 	planned := make([]Task, 0, len(tasks))
 	for i := 0; cumDur < d && i < len(tasks); i++ {
 		task := tasks[i]
+
+		// Skip posponed tasks
+		if pp := task.PostponedUntil(); pp != nil && pp.After(time.Now()) {
+			continue
+		}
+
 		if strict && cumDur+task.LeftDuration() > d {
 			// This task does not fit
 			continue
