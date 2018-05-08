@@ -80,6 +80,12 @@ before_deploy:
     npm run build &&
     cd /home/travis/build/bobinette/tonight
 
+  # Add the shmig migration files to the archive
+  - >
+    cd /home/travis/gopath/src/github.com/bobinette/tonight/tonight &&
+    cp -r mysql/migrations ../bin/migrations &&
+    cd /home/travis/build/bobinette/tonight
+
   # bundle it all
   - mkdir bin/bleve
   - cp tonight/bleve/mapping.json bin/bleve/mapping.json
