@@ -58,6 +58,10 @@ func RegisterAPIHandler(
 	apiGroup.GET("/planning", h.currentPlanning)
 	apiGroup.POST("/planning", h.createPlanning)
 	apiGroup.DELETE("/planning", h.dismissPlanning)
+
+	// Admin
+	adminGroup := e.Group("/admin", AdminMiddleware())
+	adminGroup.POST("/reindex", h.indexAll)
 }
 
 type apiHandler struct {
@@ -316,4 +320,32 @@ func (h *apiHandler) dismissPlanning(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+func (h *apiHandler) indexAll(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	tasks, err := h.repo.All(c.Request().Context())
+	if err != nil {
+		return err
+	}
+
+	scores := scoreMany(tasks, score)
+	for taskID, s := range scores {
+		for i, task := range tasks {
+			if task.ID != taskID {
+				continue
+			}
+
+			tasks[i].Score = s
+		}
+	}
+
+	for _, task := range tasks {
+		if err := h.index.Index(c.Request().Context(), task); err != nil {
+			return err
+		}
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{"count": len(tasks)})
 }

@@ -169,6 +169,8 @@ type TaskRepository interface {
 	DependencyTrees(ctx context.Context, taskID uint) ([]Task, error)
 
 	Delete(ctx context.Context, taskID uint) error
+
+	All(ctx context.Context) ([]Task, error)
 }
 
 type TaskSearchParameters struct {
