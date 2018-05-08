@@ -115,7 +115,7 @@ func main() {
 	clis := tonight.RegisterCLI(taskRepo, index)
 
 	if len(os.Args) > 1 {
-		if fn, ok := clis[os.Args[1]]; ok {
+		if fn, ok := clis[os.Args[len(os.Args)-1]]; ok {
 			fmt.Printf("Running cli: %s\n", os.Args[1])
 			fn()
 			return
