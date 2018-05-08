@@ -8,8 +8,9 @@ import (
 )
 
 type User struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
+	ID      uint   `json:"id"`
+	Name    string `json:"name"`
+	IsAdmin bool   `json:"isAdmin"`
 
 	TaskIDs []uint `json:"-"`
 

@@ -2,6 +2,7 @@ package tonight
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -49,6 +50,23 @@ func UserMiddleware(key []byte, userRepository UserRepository) echo.MiddlewareFu
 			}
 
 			c.Set("user", user)
+			return next(c)
+		}
+	}
+}
+
+func AdminMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			user, err := loadUser(c)
+			if err != nil {
+				return err
+			}
+
+			if !user.IsAdmin {
+				return c.JSON(http.StatusForbidden, map[string]string{"error": "insufficient permissions"})
+			}
+
 			return next(c)
 		}
 	}

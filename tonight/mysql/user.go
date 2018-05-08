@@ -17,19 +17,20 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 }
 
 func (r *UserRepository) Get(ctx context.Context, id uint) (tonight.User, error) {
-	row := r.db.QueryRowContext(ctx, "SELECT id, username FROM users WHERE id = ?", id)
+	row := r.db.QueryRowContext(ctx, "SELECT id, username, is_admin FROM users WHERE id = ?", id)
 	return r.get(ctx, row)
 }
 
 func (r *UserRepository) GetByName(ctx context.Context, username string) (tonight.User, error) {
-	row := r.db.QueryRowContext(ctx, "SELECT id, username FROM users WHERE username = ?", username)
+	row := r.db.QueryRowContext(ctx, "SELECT id, username, is_admin FROM users WHERE username = ?", username)
 	return r.get(ctx, row)
 }
 
 func (r *UserRepository) get(ctx context.Context, row *sql.Row) (tonight.User, error) {
 	var id uint
 	var username string
-	if err := row.Scan(&id, &username); err != nil {
+	var isAdmin bool
+	if err := row.Scan(&id, &username, &isAdmin); err != nil {
 		if err == sql.ErrNoRows {
 			return tonight.User{}, nil
 		}
@@ -80,6 +81,7 @@ func (r *UserRepository) get(ctx context.Context, row *sql.Row) (tonight.User, e
 	return tonight.User{
 		ID:         id,
 		Name:       username,
+		IsAdmin:    isAdmin,
 		TaskIDs:    taskIDs,
 		TagColours: tagColours,
 	}, nil

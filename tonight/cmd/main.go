@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/BurntSushi/toml"
 
@@ -107,16 +108,19 @@ func main() {
 	// Ping
 	srv.GET("/api/ping", tonight.Ping)
 
-	// API
-	indexer := tonight.Indexer{
-		Repository: taskRepo,
-		Index:      index,
-	}
-	srv.POST("/api/reindex", indexer.IndexAll)
-
 	// Assets
 	srv.Static("/", cfg.App.Dir)
 	srv.Static("/static", cfg.App.Assets)
+
+	clis := tonight.RegisterCLI(taskRepo, index)
+
+	if len(os.Args) > 1 {
+		if fn, ok := clis[os.Args[1]]; ok {
+			fmt.Printf("Running cli: %s\n", os.Args[1])
+			fn()
+			return
+		}
+	}
 
 	if err := srv.Start(":9090"); err != nil {
 		log.Fatal(err)
