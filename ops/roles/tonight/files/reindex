@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Because the index is based on bolt, I need
+# to stop the interface for now...
+
+sudo service tonight stop
+
+cd /var/www/tonigh
+./tonight -env=prod reindex.all
+
+sudo service tonight start

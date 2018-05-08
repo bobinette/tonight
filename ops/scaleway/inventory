@@ -1,0 +1,4 @@
+scaleway ansible_ssh_host=51.15.141.48
+
+[tonight]
+scaleway
