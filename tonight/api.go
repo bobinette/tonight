@@ -21,6 +21,7 @@ func RegisterAPIHandler(
 	index TaskIndex,
 	planningRepo PlanningRepository,
 	userRepo UserRepository,
+	tagReader TagReader,
 ) {
 	h := apiHandler{
 		taskService: taskService{
@@ -37,6 +38,7 @@ func RegisterAPIHandler(
 			jwtKey: jwtKey,
 			repo:   userRepo,
 		},
+		tagReader: tagReader,
 	}
 
 	apiGroup := e.Group("/api")
@@ -53,6 +55,7 @@ func RegisterAPIHandler(
 	apiGroup.POST("/tasks/:id", h.update)
 	apiGroup.DELETE("/tasks/:id", h.delete)
 	apiGroup.POST("/tasks/:id/log", h.log)
+	apiGroup.GET("/tags", h.tags)
 
 	// Planning
 	apiGroup.GET("/planning", h.currentPlanning)
@@ -71,6 +74,8 @@ type apiHandler struct {
 	taskService     taskService
 	planningService planningService
 	userService     userService
+
+	tagReader TagReader
 }
 
 func (h *apiHandler) me(c echo.Context) error {
@@ -348,4 +353,19 @@ func (h *apiHandler) indexAll(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{"count": len(tasks)})
+}
+
+func (h *apiHandler) tags(c echo.Context) error {
+	user, err := loadUser(c)
+	if err != nil {
+		return err
+	}
+
+	q := c.QueryParam("q")
+	tags, err := h.tagReader.Tags(c.Request().Context(), user.Name, q)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{"tags": tags})
 }

@@ -71,6 +71,7 @@ func main() {
 	taskRepo := mysql.NewTaskRepository(db)
 	userRepo := mysql.NewUserRepository(db)
 	planningRepo := mysql.NewPlanningRepository(db, taskRepo)
+	tagReader := mysql.NewTagReader(db)
 
 	index := &bleve.Index{}
 	if err := index.Open(cfg.Bleve.Path); err != nil {
@@ -103,7 +104,7 @@ func main() {
 	)
 
 	// API handler
-	tonight.RegisterAPIHandler(srv, jwtKey, taskRepo, index, planningRepo, userRepo)
+	tonight.RegisterAPIHandler(srv, jwtKey, taskRepo, index, planningRepo, userRepo, tagReader)
 
 	// Ping
 	srv.GET("/api/ping", tonight.Ping)
