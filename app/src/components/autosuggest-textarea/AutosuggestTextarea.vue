@@ -253,6 +253,7 @@ export default {
 
 .AutosuggestTextarea {
   position: relative;
+  z-index: 1000;
 }
 
 textarea {

@@ -104,16 +104,16 @@
       </div>
     </div>
     <div v-else class="w-100">
-      <textarea
-        v-autosize="raw"
-        v-focus="editMode"
-        v-model="raw"
+      <AutosuggestTextarea
+        :autofocus="editMode"
+        :value="raw"
+        placeholder="Edit the task..."
+        @input="input"
         @keydown.enter="edit"
         @keydown.esc="editMode = false"
-        placeholder="Edit the task..."
         rows="1"
       >
-      </textarea>
+      </AutosuggestTextarea>
     </div>
   </li>
 </template>
@@ -126,6 +126,7 @@ import moment from 'moment';
 import remark from 'remark';
 import html from 'remark-html';
 
+import AutosuggestTextarea from '@/components/autosuggest-textarea/AutosuggestTextarea';
 import { CUSTOMIZE_COLOUR } from '@/modules/user/state';
 
 import { formatRaw } from '@/utils/formats';
@@ -205,6 +206,9 @@ export default {
   methods: {
     hideAll() {
       this.logInputVisible = false;
+    },
+    input(value) {
+      this.raw = value;
     },
     addLog(evt) {
       if (evt.shiftKey) {
@@ -365,6 +369,9 @@ export default {
     focus,
     // ProgressTracker,
     // StepItem,
+  },
+  components: {
+    AutosuggestTextarea,
   },
 };
 </script>
