@@ -1,16 +1,17 @@
 <template>
   <div class="NewTaskInput">
     <div class="NewTaskTextArea" v-if="isOpen" v-click-outside="close">
-      <textarea
-        v-autosize="newTaskContent"
-        v-focus="isOpen"
-        v-model="newTaskContent"
+      <AutosuggestTextarea
+        :autofocus="isOpen"
+        :value="newTaskContent"
         placeholder="Create a new task..."
+        @input="updateContent"
         @keydown.enter="createTask"
         @keydown.esc="close"
         rows="5"
+        ref="textarea"
       >
-      </textarea>
+      </AutosuggestTextarea>
       <small class="text-muted NewTaskTextAreaHelp">
         Press enter to create <i class="fa fa-level-down fa-rotate-90"></i>
       </small>
@@ -23,7 +24,8 @@
 
 <script>
 import ClickOutside from 'vue-click-outside';
-import { focus } from 'vue-focus';
+
+import AutosuggestTextarea from '@/components/autosuggest-textarea/AutosuggestTextarea';
 
 import { CREATE_TASK } from './events';
 
@@ -42,7 +44,9 @@ export default {
     open() {
       this.isOpen = true;
     },
-
+    updateContent(value) {
+      this.newTaskContent = value;
+    },
     createTask(evt) {
       if (evt.shiftKey) {
         return;
@@ -58,9 +62,12 @@ export default {
     },
   },
 
+  components: {
+    AutosuggestTextarea,
+  },
+
   directives: {
     ClickOutside,
-    focus,
   },
 };
 </script>
