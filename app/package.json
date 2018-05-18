@@ -16,11 +16,13 @@
     "dependencies": {
         "axios": "^0.17.1",
         "font-awesome": "^4.7.0",
+        "lodash.debounce": "^4.0.8",
         "moment": "^2.20.1",
         "progress-tracker": "^1.4.0",
         "qs": "^6.5.1",
         "remark": "^8.0.0",
         "remark-html": "^7.0.0",
+        "textarea-caret": "^3.1.0",
         "v-tooltip": "^2.0.0-rc.25",
         "vue": "^2.5.2",
         "vue-autosize": "git+https://git@github.com/morr/vue-autosize.git#initial-page-load-fix",
