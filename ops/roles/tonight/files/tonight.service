@@ -1,0 +1,9 @@
+[Unit]
+Description=Job that runs the tonight server
+
+[Service]
+WorkingDirectory=/var/www/tonight
+ExecStart=/var/www/tonight/tonight -env=prod
+
+[Install]
+WantedBy=multi-user.target

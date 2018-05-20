@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+#
+# Greatly inspired by https://gist.github.com/maxim/6e15aa45ba010ab030c4
+#
+# This script downloads an asset from the latest release of a public Github
+# repository. If you need to download from a private repository see the
+# original script at the link above.
+#
+# PREREQUISITES
+#
+# curl, wget, jq
+
+REPO="{{ github.username }}/{{ github.repository }}"
+FILE="{{ github.filename }}"
+GITHUB="https://api.github.com"
+RELEASE_FILE="release_id.txt"
+
+alias errcho='>&2 echo'
+
+id_parser=".id"
+parser=".assets | map(select(.name == \"$FILE\"))[0].id"
+
+release_content=`curl -s $GITHUB/repos/$REPO/releases/latest`
+release_id=`echo $release_content | jq $id_parser`
+
+# Check if there is a new release
+if [ -f $RELEASE_FILE ]; then
+    previous_release_id=`cat $RELEASE_FILE`
+    if [ "$previous_release_id" -eq "$release_id" ]; then
+        echo "Same release as last time, not downloading"
+        exit 0
+    fi
+fi
+
+# Get file
+asset_id=`echo $release_content | jq "$parser"`
+if [ "$asset_id" = "null" ]; then
+  errcho "ERROR: no asset with name $FILE could be extracted"
+  exit 1
+fi;
+wget https://api.github.com/repos/$REPO/releases/assets/$asset_id -q --header='Accept:application/octet-stream' -O ./$FILE
+
+# Save release id
+echo $release_id > $RELEASE_FILE

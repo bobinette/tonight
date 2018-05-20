@@ -1,0 +1,21 @@
+---
+user: papernet
+
+mysql:
+  user: tonight
+  password: tonight
+  host: "127.0.0.1"
+
+jwt:
+  key: tonight_secret
+
+google:
+  cookie_secret: cookie_secret
+  client_id: client_id
+  client_secret: client_secret
+  redirect_url: redirect_url
+
+github:
+  username: bobinette
+  repository: tonight
+  filename: tonight-linux.tar.gz

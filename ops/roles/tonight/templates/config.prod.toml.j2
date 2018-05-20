@@ -1,0 +1,22 @@
+[mysql]
+user = "{{ mysql.user }}"
+password = "{{ mysql.password }}"
+host = "{{ mysql.host }}"
+port = "3306"
+database = "tonight"
+
+[bleve]
+path = "./bleve/index"
+
+[jwt]
+key = "{{ jwt.key }}"
+
+[google]
+cookie_secret = "{{ google.cookie_secret }}"
+client_id = "{{ google.client_id }}"
+client_secret = "{{ google.client_secret }}"
+redirect_url = "{{ google.redirect_url }}"
+
+[app]
+dir = "./app"
+assets = "./app/static"
