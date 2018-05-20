@@ -5,7 +5,7 @@
         <span class="flex flex-align-center w-100">
           <h6>{{ task.id }}. {{ task.title }}</h6>
           <span class="badge badge-pill badge-danger RowPriority">{{ priority }}</span>
-          <div class="Actions PriorityActions">
+          <div class="Actions PriorityActions" v-if="isPending">
             <button class="btn btn-link btn-sm" @click.stop="incrementPriority" v-if="isPending">
               <i class="fa fa-plus"></i>
             </button>
@@ -30,16 +30,57 @@
           </button>
         </span>
       </div>
-      <div>
-        <span v-for="tag in task.tags" :key="tag" class="dropdown Tag" :class="{show: openTag === tag}" >
-          <button class="btn btn-link" :class="{ 'custom-tag': customTag(tag) }" :style="tagColourStyle(tag)" @click.stop="openTagColourInput(tag)">#{{ tag }}</button>
-          <div class="dropdown-menu TagColour" v-click-outside="hideTagColourInput" @click.stop="() => {}" >
-            <div class="flex flex-align-center">
-              <div :style="lastValidColour ? {'background-color': lastValidColour} : {}" class="color-preview"></div>
-              <input class="form-control" type="text" v-model="tagColour" @keydown.enter="customizeColour" @keydown.esc="hideTagColourInput" :class="{ danger: !colourIsValid }">
+      <div class="flex flex-align-center flex-space-between">
+        <div>
+          <span
+            v-for="tag in task.tags"
+            :key="tag"
+            class="dropdown Tag"
+            :class="{show: openTag === tag}"
+          >
+            <button
+              class="btn btn-link"
+              :class="{ 'custom-tag': customTag(tag) }"
+              :style="tagColourStyle(tag)"
+              @click.stop="openTagColourInput(tag)"
+            >
+              #{{ tag }}
+            </button>
+            <div
+              v-click-outside="hideTagColourInput"
+              class="dropdown-menu TagColour"
+              @click.stop="() => {}"
+            >
+              <div class="flex flex-align-center">
+                <div
+                  class="color-preview"
+                  :style="lastValidColour ? {'background-color': lastValidColour} : {}"
+                ></div>
+                <input
+                  class="form-control"
+                  :class="{ danger: !colourIsValid }"
+                  type="text"
+                  v-model="tagColour"
+                  @keydown.enter="customizeColour"
+                  @keydown.esc="hideTagColourInput"
+                >
+              </div>
             </div>
+          </span>
+        </div>
+        <div class="flex flex-align-center flex-space-between">
+          <div class="text-muted small RowDetail">
+            <i class="fa fa-clock-o"></i>
+            <span v-if="task.duration">
+              {{ task.duration }}
+            </span>
+            <span v-if="task.duration && task.log && task.log.length">&#9679;</span>
+            <span v-if="task.log && task.log.length > 0">
+              <span v-if="task.log.length === 1">1 comment</span>
+              <span v-else>{{ task.log.length }} comments</span>
+            </span>
           </div>
-        </span>
+        </div>
       </div>
       <div v-if="isOpen" class="Smaller">
         <div v-if="task.description">
@@ -60,10 +101,7 @@
         </div>
         <div class="flex flex-align-center flex-space-between">
           <div class="flex flex-align-center flex-space-between">
-            <div class="text-muted RowDetail" v-if="task.duration">
-              <i class="fa fa-clock-o"></i>
-              {{ task.duration }}
-              &#9679;
+            <div class="text-muted RowDetail">
               created {{ formatDate(task.createdAt) }}
               <span v-if="task.createdAt !== task.updatedAt">
                 &#9679;
