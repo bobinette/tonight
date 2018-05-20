@@ -132,7 +132,7 @@
                 v-autosize="log"
                 v-model="log"
                 @keydown.enter="addLog"
-                placeholder="Add a new step..."
+                placeholder="Type here to add a new step..."
                 rows="1"
               >
               </textarea>

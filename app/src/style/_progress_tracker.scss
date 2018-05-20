@@ -26,10 +26,7 @@ ul.progress-tracker.progress-tracker--vertical {
         top: $marker-size-half;
     }
 
-    .progress-step:not(:last-child)::after {
-    }
-
-    .progress-step:not(:last-child) .progress-text {
-        padding-bottom: 1rem;
+    .progress-step .progress-text {
+        padding-bottom: 0;
     }
 }
