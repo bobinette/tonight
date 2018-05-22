@@ -249,7 +249,7 @@ export default {
       this.raw = value;
     },
     addLog(evt) {
-      if (evt.shiftKey) {
+      if (evt.shiftKey || !this.log) {
         return;
       }
       evt.preventDefault();
