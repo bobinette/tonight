@@ -20,6 +20,7 @@ const (
 	LogTypeWontDo           = "WONT_DO"
 	LogTypeComment          = "COMMENT"
 	LogTypePostpone         = "POSTPONE"
+	LogTypeDuration         = "DURATION"
 )
 
 type Status int

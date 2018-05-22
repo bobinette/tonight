@@ -157,6 +157,22 @@ func (ts *taskService) log(ctx context.Context, taskID uint, input string) (Task
 		}
 
 		log.Description = fmt.Sprintf("postponed until %s", log.Description)
+	} else if log.Type == LogTypeDuration {
+		// Check that the duration is valid
+		if _, err := time.ParseDuration(log.Description); err != nil {
+			return Task{}, err
+		}
+
+		oldDuration := task.Duration
+		if oldDuration == "" {
+			oldDuration = "(none)"
+		}
+		task.Duration = log.Description
+		log.Description = fmt.Sprintf("duration updated: %s -> %s", oldDuration, task.Duration)
+
+		if err := ts.repo.Update(ctx, &task); err != nil {
+			return Task{}, err
+		}
 	}
 
 	if !isTransitionAllowed(task, log.Type) {

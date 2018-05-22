@@ -283,16 +283,18 @@ export default {
       return deadline.fromNow();
     },
     markerIcon(log) {
-      if (log.completion === 100) {
+      if (log.type === 'PROGRESS' && log.completion === 100) {
         return ['fa fa-check'];
       }
 
+      console.log(log);
       return {
         PROGRESS: ['inner-circle'],
-        COMMENT: ['fa fa-comment'], // No used yet
+        COMMENT: ['fa fa-comment'], // Not used yet
         START: ['fa fa-flag-checkered'],
         PAUSE: ['fa fa-coffee'],
         WONT_DO: ['fa fa-times'],
+        DURATION: ['fa fa-clock-o marker-padding-top'],
       }[log.type];
     },
     markerClass(log) {
@@ -510,5 +512,9 @@ textarea {
   color: $body-bg;
   padding: 0.2rem;
   border-radius: $border-radius;
+}
+
+.marker-padding-top {
+  padding-top: 2px;
 }
 </style>
