@@ -29,7 +29,9 @@ var (
 		"resume":   LogTypeStart,
 		"done":     LogTypeProgress,
 		"won't do": LogTypeWontDo,
+		"wont do":  LogTypeWontDo, // To allow not typing the '
 		"postpone": LogTypePostpone,
+		"duration": LogTypeDuration,
 	}
 	logKeywordRegex = func(m map[string]LogType) *regexp.Regexp {
 		keyWords := make([]string, len(m))
