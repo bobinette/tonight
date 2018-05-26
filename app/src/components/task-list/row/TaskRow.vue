@@ -74,19 +74,21 @@
             <span v-if="task.duration">
               {{ task.duration }}
             </span>
-            <span v-if="task.duration && task.log && task.log.length">&#9679;</span>
-            <span v-if="task.log && task.log.length > 0">
-              <span v-if="task.log.length === 1">1 comment</span>
-              <span v-else>{{ task.log.length }} comments</span>
+            <span v-if="task.duration && displayableLogs && displayableLogs.length">&#9679;</span>
+            <span v-if="displayableLogs && displayableLogs.length > 0">
+              <span v-if="displayableLogs.length === 1">1 comment</span>
+              <span v-else>{{ displayableLogs.length }} comments</span>
             </span>
           </div>
         </div>
       </div>
       <div v-if="isOpen" class="Smaller">
-        <div v-if="task.description">
+        <div v-if="task.description" class="TaskRow__Details">
+          <strong>Description: </strong>
           <span v-html="markdown(task.description)"></span>
         </div>
-        <div v-if="task.dependencies && task.dependencies.length" class="Smaller">
+        <div v-if="task.dependencies && task.dependencies.length" class="TaskRow__Details">
+          <strong>Needs: </strong>
           <ul>
             <li v-for="dep in task.dependencies">
               <i class="fa" :class="{
@@ -99,46 +101,24 @@
             </li>
           </ul>
         </div>
-        <div class="flex flex-align-center flex-space-between">
-          <div class="flex flex-align-center flex-space-between">
-            <div class="text-muted RowDetail">
-              created {{ formatDate(task.createdAt) }}
-              <span v-if="task.createdAt !== task.updatedAt">
-                &#9679;
-                updated {{ formatDate(task.updatedAt) }}
-              </span>
-            </div>
-            <div class="text-muted RowDetail" v-if="task.deadline">
-              <i class="fa fa-calendar"></i>
-              <em>{{ formattedDeadline }}</em>
-            </div>
+        <TaskLog
+          :logs="displayableLogs"
+          :canAddLog="isPending"
+          @addLog="addLog"
+        ></TaskLog>
+        <div class="flex flex-align-center w-100 TaskRow__Details TaskRow__Details__Date">
+          <div class="text-muted RowDetail">
+            created {{ formatDate(task.createdAt) }}
+            <span v-if="task.createdAt !== task.updatedAt">
+              &#9679;
+              updated {{ formatDate(task.updatedAt) }}
+            </span>
+          </div>
+          <div class="text-muted RowDetail" v-if="task.deadline">
+            <i class="fa fa-calendar"></i>
+            <em>{{ formattedDeadline }}</em>
           </div>
         </div>
-        <ul class="progress-tracker progress-tracker--text progress-tracker--vertical">
-          <li v-for="log in task.log" class="progress-step is-complete ">
-            <span class="progress-marker" :class="markerClass(log)">
-              <i class="ProgressIcon" :class="markerIcon(log)"></i>
-            </span>
-            <span class="progress-text">
-              <small class="text-muted"><em>{{ formatDate(log.createdAt) }}</em></small>
-              <div v-if="log.description" v-html="markdown(log.description)"></div>
-              <div v-else><em class="text-muted">(No description for this step)</em></div>
-            </span>
-          </li>
-          <li class="progress-step" v-if="isPending">
-            <span class="progress-marker bg-success no-bottom-padding"><i class="fa fa-plus"></i></span>
-            <span class="progress-text">
-              <textarea
-                v-autosize="log"
-                v-model="log"
-                @keydown.enter="addLog"
-                placeholder="Type here to add a new step..."
-                rows="1"
-              >
-              </textarea>
-            </span>
-          </li>
-        </ul>
       </div>
     </div>
     <div v-else class="w-100">
@@ -182,6 +162,8 @@ import {
   UPDATE_TASK,
   DELETE_TASK,
 } from '@/modules/task-list/state';
+
+import TaskLog from './TaskLog';
 
 export default {
   name: 'task-row',
@@ -240,6 +222,13 @@ export default {
         this.tagColour.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
       );
     },
+    displayableLogs() {
+      if (!this.task.log) {
+        return [];
+      }
+
+      return this.task.log.filter(l => l.description);
+    },
   },
   methods: {
     hideAll() {
@@ -249,7 +238,7 @@ export default {
       this.raw = value;
     },
     addLog(evt) {
-      if (evt.shiftKey) {
+      if (evt.shiftKey || !this.log) {
         return;
       }
       evt.preventDefault();
@@ -320,36 +309,6 @@ export default {
       const deadline = moment(date);
       return deadline.fromNow();
     },
-    markerIcon(log) {
-      if (log.type === 'PROGRESS' && log.completion === 100) {
-        return ['fa fa-check'];
-      }
-
-      console.log(log);
-      return {
-        PROGRESS: ['inner-circle'],
-        COMMENT: ['fa fa-comment'], // Not used yet
-        START: ['fa fa-flag-checkered'],
-        PAUSE: ['fa fa-coffee'],
-        WONT_DO: ['fa fa-times'],
-        DURATION: ['fa fa-clock-o marker-padding-top'],
-      }[log.type];
-    },
-    markerClass(log) {
-      if (log.type === 'PROGRESS' && log.completion === 100) {
-        return ['success-bg', 'no-bottom-padding'];
-      }
-
-      if (log.type === 'WONT_DO') {
-        return ['warning-bg'];
-      }
-
-      if (log.type === 'PROGRESS') {
-        return ['no-bottom-padding'];
-      }
-
-      return [];
-    },
     deleteTask() {
       const r = confirm(`Do you really want to delete the task:\n${this.task.title}`);
       if (r) {
@@ -412,6 +371,7 @@ export default {
   },
   components: {
     AutosuggestTextarea,
+    TaskLog,
   },
 };
 </script>
@@ -433,7 +393,6 @@ export default {
 
 .Smaller {
   font-size: 0.9rem;
-  margin: 0.5rem 0;
 }
 
 .Tag .badge {
@@ -475,53 +434,8 @@ export default {
   }
 }
 
-.ProgressIcon {
-  margin: auto;
-}
-
-.inner-circle {
-  background: $body-bg;
-  width: 80%;
-  height: 80%;
-  border-radius: 50%;
-}
-
-.progress-tracker {
-  .progress-marker {
-    right: - $marker-size;
-
-    &.no-bottom-padding {
-      padding-bottom: 0;
-    }
-
-    &.success-bg {
-      background-color: $brand-success;
-    }
-
-    &.warning-bg {
-      background-color: $brand-warning;
-    }
-  }
-}
-
-.progress-step:not(:last-child)::after {
-  right: - $marker-size - $marker-size-half;
-}
-
 .highlight {
   background-color: lighten($brand-primary, 55);
-}
-
-textarea {
-  background-color: transparent;
-
-  width: 100%;
-  max-height: 250px;
-  border: none;
-
-  &:focus {
-    outline: none;
-  }
 }
 
 .Tag .btn.btn-link {
@@ -552,7 +466,12 @@ textarea {
   border-radius: $border-radius;
 }
 
-.marker-padding-top {
-  padding-top: 2px;
+.TaskRow__Details__Date {
+  margin-top: 0.5rem;
+}
+
+.TaskRow__Details__Date {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
 }
 </style>

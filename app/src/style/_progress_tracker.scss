@@ -29,4 +29,8 @@ ul.progress-tracker.progress-tracker--vertical {
     .progress-step .progress-text {
         padding-bottom: 0;
     }
+
+    .progress-step:not(:last-child) .progress-text {
+        padding-bottom: 0.5rem;
+    }
 }
