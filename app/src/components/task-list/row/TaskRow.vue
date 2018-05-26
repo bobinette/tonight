@@ -175,8 +175,6 @@ export default {
   },
   data() {
     return {
-      log: '',
-      logInputVisible: false,
       editMode: false,
       isOpen: false,
       raw: '',
@@ -231,26 +229,15 @@ export default {
     },
   },
   methods: {
-    hideAll() {
-      this.logInputVisible = false;
-    },
     input(value) {
       this.raw = value;
     },
-    addLog(evt) {
-      if (evt.shiftKey || !this.log) {
-        return;
-      }
-      evt.preventDefault();
-
+    addLog(log) {
       this.$store
         .dispatch({
           type: LOG_FOR_TASK,
           taskId: this.task.id,
-          log: this.log,
-        })
-        .then(() => {
-          this.log = '';
+          log,
         })
         .catch();
     },
