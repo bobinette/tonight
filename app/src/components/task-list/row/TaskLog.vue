@@ -49,7 +49,7 @@ export default {
   },
   methods: {
     addLog(evt) {
-      if (evt.shiftKey || !this.log) {
+      if (evt.shiftKey || !this.newLog) {
         return;
       }
       evt.preventDefault();
