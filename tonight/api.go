@@ -16,7 +16,6 @@ var (
 
 func RegisterAPIHandler(
 	e *echo.Echo,
-	jwtKey []byte,
 	repo TaskRepository,
 	index TaskIndex,
 	planningRepo PlanningRepository,
@@ -35,15 +34,13 @@ func RegisterAPIHandler(
 			taskIndex: index,
 		},
 		userService: userService{
-			jwtKey: jwtKey,
-			repo:   userRepo,
+			repo: userRepo,
 		},
 		tagReader: tagReader,
 	}
 
 	apiGroup := e.Group("/api")
-	apiGroup.Use(JWTMiddleware(jwtKey))
-	apiGroup.Use(UserMiddleware(jwtKey, userRepo))
+	apiGroup.Use(UserMiddleware(userRepo))
 
 	// User
 	apiGroup.GET("/me", h.me)

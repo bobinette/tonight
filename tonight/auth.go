@@ -6,7 +6,6 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 )
 
 var (
@@ -22,31 +21,25 @@ type tonightClaims struct {
 	jwt.StandardClaims
 }
 
-func JWTMiddleware(key []byte) echo.MiddlewareFunc {
-	return middleware.JWTWithConfig(middleware.JWTConfig{
-		Claims:      &tonightClaims{},
-		SigningKey:  key,
-		ContextKey:  "access_token",
-		TokenLookup: "cookie:access_token",
-	})
-}
-
-func UserMiddleware(key []byte, userRepository UserRepository) echo.MiddlewareFunc {
+func UserMiddleware(userRepository UserRepository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			token, ok := c.Get("access_token").(*jwt.Token)
-			if !ok {
-				return ErrMissingToken
-			}
+			email := c.Request().Header.Get("X-Forwarded-Email")
 
-			claims, ok := token.Claims.(*tonightClaims)
-			if !ok {
-				return ErrInvalidClaims
-			}
-
-			user, err := userRepository.Get(c.Request().Context(), claims.UserID)
+			user, err := userRepository.GetByName(c.Request().Context(), email)
 			if err != nil {
 				return err
+			}
+
+			if user.Name == "" {
+				// Not found, we insert the user
+				user = User{
+					Name:    email,
+					IsAdmin: false,
+				}
+				if err := userRepository.Insert(c.Request().Context(), &user); err != nil {
+					return err
+				}
 			}
 
 			c.Set("user", user)

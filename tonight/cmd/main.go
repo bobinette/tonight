@@ -35,17 +35,6 @@ func main() {
 			Path string `toml:"path"`
 		} `toml:"bleve"`
 
-		JWT struct {
-			Key string `toml:"key"`
-		} `toml:"key"`
-
-		Google struct {
-			CookieSecret string `toml:"cookie_secret"`
-			ClientID     string `toml:"client_id"`
-			ClientSecret string `toml:"client_secret"`
-			RedirectURL  string `toml:"redirect_url"`
-		} `toml:"google"`
-
 		App struct {
 			Dir    string `toml:"dir"`
 			Assets string `toml:"assets"`
@@ -79,8 +68,6 @@ func main() {
 	}
 	defer index.Close()
 
-	jwtKey := []byte(cfg.JWT.Key)
-
 	// Create server + register routes
 	srv := echo.New()
 
@@ -92,19 +79,8 @@ func main() {
 	srv.Use(middleware.Logger())
 	// srv.Use(middleware.Recover())
 
-	// Login handler
-	tonight.RegisterLoginHandler(
-		srv,
-		jwtKey,
-		[]byte(cfg.Google.CookieSecret),
-		cfg.Google.ClientID,
-		cfg.Google.ClientSecret,
-		cfg.Google.RedirectURL,
-		userRepo,
-	)
-
 	// API handler
-	tonight.RegisterAPIHandler(srv, jwtKey, taskRepo, index, planningRepo, userRepo, tagReader)
+	tonight.RegisterAPIHandler(srv, taskRepo, index, planningRepo, userRepo, tagReader)
 
 	// Ping
 	srv.GET("/api/ping", tonight.Ping)

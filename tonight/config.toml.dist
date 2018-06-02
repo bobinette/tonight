@@ -11,12 +11,6 @@ path = "./bleve/index"
 [jwt]
 key = "tonight_secret"
 
-[google]
-cookie_secret = "cookie_secret"
-client_id = "client_id"
-client_secret = "client_secret-"
-redirect_url = "http://127.0.0.1:9090/api/oauth2/callback"
-
 [app]
 dir = "../app/dist"
 assets = "../app/dist/assets"
