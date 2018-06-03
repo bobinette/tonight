@@ -14,7 +14,7 @@ describe('create task', () => {
     const res = await createTask({ commit }, { content });
     expect(res).toEqual(task);
     expect(axios.call()).toEqual({
-      url: 'http://127.0.0.1:9090/api/tasks',
+      url: 'http://127.0.0.1:9093/api/tasks',
       body: { content },
     });
     expect(commit).toHaveBeenCalledWith({ type: TASK_CREATED, task });
