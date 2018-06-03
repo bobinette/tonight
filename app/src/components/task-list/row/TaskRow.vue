@@ -1,5 +1,5 @@
 <template>
-  <li class="list-group-item TaskRow flex-column align-items-start" :class="{ highlight: isWorkedOn }" v-click-outside="hideAll">
+  <li class="list-group-item TaskRow flex-column align-items-start" :class="{ highlight: isWorkedOn }">
     <div v-if="!editMode" class="w-100">
       <div class="flex flex-align-center flex-space-between w-100 RowHeader" @click.stop="open">
         <span class="flex flex-align-center w-100">
@@ -121,7 +121,7 @@
         </div>
       </div>
     </div>
-    <div v-else class="w-100">
+    <div v-else class="w-100 TaskRow__Edit">
       <AutosuggestTextarea
         :autofocus="editMode"
         :value="raw"
@@ -130,8 +130,12 @@
         @keydown.enter="edit"
         @keydown.esc="editMode = false"
         rows="1"
+        :disabled="busy"
       >
       </AutosuggestTextarea>
+      <span>
+        <i class="fa fa-circle-o-notch fa-spin" v-if="busy"></i>
+      </span>
     </div>
   </li>
 </template>
@@ -175,6 +179,7 @@ export default {
   },
   data() {
     return {
+      busy: false,
       editMode: false,
       isOpen: false,
       raw: '',
@@ -232,19 +237,25 @@ export default {
     input(value) {
       this.raw = value;
     },
-    addLog(log) {
+    addLog(log, { success, failure }) {
       this.$store
         .dispatch({
           type: LOG_FOR_TASK,
           taskId: this.task.id,
           log,
         })
-        .catch();
+        .then(() => {
+          success();
+        })
+        .catch(() => {
+          failure();
+        });
     },
     edit(evt) {
       if (evt.shiftKey) {
         return;
       }
+      this.busy = true;
       evt.preventDefault();
 
       this.$store
@@ -254,9 +265,12 @@ export default {
           content: this.raw,
         })
         .then(() => {
+          this.busy = false;
           this.editMode = false;
         })
-        .catch();
+        .catch(() => {
+          this.busy = false;
+        });
     },
     incrementPriority() {
       const raw = `!${formatRaw(this.task)}`;
@@ -460,5 +474,13 @@ export default {
 .TaskRow__Details__Date {
   margin-top: 0.5rem;
   font-size: 0.8rem;
+}
+
+.TaskRow__Edit {
+  display: flex;
+
+  > .AutosuggestTextarea {
+    flex: 1;
+  }
 }
 </style>
