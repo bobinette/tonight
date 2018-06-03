@@ -8,6 +8,7 @@
       ref="textarea"
       @keydown="keydown"
       @input="input"
+      :disabled="disabled"
     >
     </textarea>
     <div
@@ -59,6 +60,7 @@ export default {
     value: { type: String, required: true },
     placeholder: { type: String, default: '' },
     autofocus: { type: Boolean, default: false },
+    disabled: { type: Boolean, default: false },
   },
 
   data() {

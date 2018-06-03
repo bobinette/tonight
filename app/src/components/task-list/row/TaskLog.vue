@@ -11,14 +11,20 @@
       </span>
     </li>
     <li class="progress-step" v-if="canAddLog">
-      <span class="progress-marker bg-success no-bottom-padding"><i class="fa fa-plus"></i></span>
-      <span class="progress-text">
+      <span class="progress-marker bg-success no-bottom-padding" v-if="!busy">
+        <i class="fa fa-plus"></i>
+      </span>
+      <span class="progress-marker no-bottom-padding" v-else>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+      </span>
+      <span class="progress-text NewLogInput">
         <textarea
           v-autosize="newLog"
           v-model="newLog"
           @keydown.enter="addLog"
           placeholder="Type here to add a new step..."
           rows="1"
+          :disabled="busy"
         >
         </textarea>
       </span>
@@ -44,6 +50,7 @@ export default {
   },
   data() {
     return {
+      busy: false,
       newLog: '',
     };
   },
@@ -54,7 +61,21 @@ export default {
       }
       evt.preventDefault();
 
-      this.$emit('addLog', this.newLog);
+      this.busy = true;
+      const done = {};
+      const promise = new Promise((resolve, reject) => {
+        done.success = resolve;
+        done.failure = reject;
+      })
+        .then(() => {
+          this.newLog = '';
+          this.busy = false;
+        })
+        .catch(() => {
+          this.busy = false;
+        });
+
+      this.$emit('addLog', this.newLog, done);
     },
     formatDate(date) {
       const deadline = moment(date);
@@ -142,12 +163,16 @@ export default {
 textarea {
   background-color: transparent;
 
-  width: 100%;
+  flex: 1;
   max-height: 250px;
   border: none;
 
   &:focus {
     outline: none;
   }
+}
+
+.NewLogInput {
+  display: flex;
 }
 </style>
