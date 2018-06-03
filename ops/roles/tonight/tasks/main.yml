@@ -199,4 +199,5 @@
   with_items:
     - nginx
     - tonight
+    - tonight_oauth2
   become: true
