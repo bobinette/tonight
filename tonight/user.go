@@ -2,9 +2,6 @@ package tonight
 
 import (
 	"context"
-	"time"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
 type User struct {
@@ -27,8 +24,7 @@ type UserRepository interface {
 }
 
 type userService struct {
-	jwtKey []byte
-	repo   UserRepository
+	repo UserRepository
 }
 
 func (us *userService) getOrCreate(ctx context.Context, username string) (User, error) {
@@ -50,23 +46,6 @@ func (us *userService) getOrCreate(ctx context.Context, username string) (User, 
 	}
 
 	return user, nil
-}
-
-func (us *userService) token(ctx context.Context, user User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tonightClaims{
-		UserID: user.ID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().AddDate(0, 2, 0).Unix(),
-			Issuer:    "tonight",
-		},
-	})
-
-	tokenStr, err := token.SignedString(us.jwtKey)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenStr, nil
 }
 
 func (us *userService) customizeColour(ctx context.Context, user User, tag, colour string) (User, error) {
