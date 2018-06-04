@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import Vuex from 'vuex'
+import Vuex from 'vuex';
 
 import NavBar from './NavBar.vue';
 
@@ -11,9 +11,9 @@ test('render navbar', () => {
     getters: {
       userid: () => 1,
       username: () => 'test',
-    }
-  })
-  const vm = new Constructor({store}).$mount();
+    },
+  });
+  const vm = new Constructor({ store }).$mount();
 
   expect(vm.$el).toMatchSnapshot();
-})
+});
