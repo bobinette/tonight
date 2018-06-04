@@ -35,7 +35,7 @@ export default {
   },
   computed: {
     userid() {
-      return this.$store.state.user.user.id;
+      return this.$store.getters.userid;
     },
     username() {
       return this.$store.getters.username;
