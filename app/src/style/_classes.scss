@@ -2,24 +2,28 @@
 // Colours
 // ============================================================================
 
+.white {
+  color: $body-bg !important;
+}
+
+.primary-bg {
+  color: $brand-primary;
+}
+
 .success {
-    color: $brand-success;
+  color: $brand-success;
 }
 
 .success-bg {
-    background: $brand-success;
+  background: $brand-success;
 }
 
 .danger {
-    color: $brand-danger !important;
-}
-
-.white {
-    color: $body-bg !important;
+  color: $brand-danger !important;
 }
 
 .warning-bg {
-    background: $brand-warning;
+  background: $brand-warning;
 }
 
 // ============================================================================
@@ -27,7 +31,19 @@
 // ============================================================================
 
 .text-align-center {
-    text-align: center;
+  text-align: center;
+}
+
+.text-align-right {
+  text-align: right;
+}
+
+// ============================================================================
+// Margins / paddings
+// ============================================================================
+
+.margin-top-1 {
+  margin-top: 1rem;
 }
 
 // ============================================================================
@@ -35,5 +51,6 @@
 // ============================================================================
 
 .list-group-item-header {
-    background: $gray-lighter;
+  background: $gray-lighter;
 }
+
