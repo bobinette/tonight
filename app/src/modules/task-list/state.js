@@ -119,7 +119,7 @@ export default {
           )}`,
         )
         .then(response => {
-          const { tasks } = response.data;
+          const tasks = response.data.tasks || [];
           context.commit({ type: TASKS_RECEIVED, tasks });
           return tasks;
         })
