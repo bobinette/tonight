@@ -2,7 +2,9 @@ package tonight
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -169,6 +171,23 @@ func (ts *taskService) log(ctx context.Context, taskID uint, input string) (Task
 		}
 		task.Duration = log.Description
 		log.Description = fmt.Sprintf("duration updated: %s -> %s", oldDuration, task.Duration)
+
+		if err := ts.repo.Update(ctx, &task); err != nil {
+			return Task{}, err
+		}
+	} else if log.Type == LogTypeDependency {
+		dependencyID, err := strconv.ParseUint(log.Description, 10, 64)
+		if err != nil {
+			return Task{}, err
+		}
+
+		for _, dep := range task.Dependencies {
+			if dep.ID == uint(dependencyID) {
+				return Task{}, errors.New("already in dependencies")
+			}
+		}
+
+		task.Dependencies = append(task.Dependencies, Dependency{ID: uint(dependencyID)})
 
 		if err := ts.repo.Update(ctx, &task); err != nil {
 			return Task{}, err

@@ -6,8 +6,7 @@
       </span>
       <span class="progress-text">
         <small class="text-muted"><em>{{ formatDate(log.createdAt) }}</em></small>
-        <div v-if="log.description" v-html="markdown(log.description)"></div>
-        <div v-else><em class="text-muted">(No description for this step)</em></div>
+        <div v-html="markdown(log)"></div>
       </span>
     </li>
     <li class="progress-step" v-if="canAddLog">
@@ -63,7 +62,7 @@ export default {
 
       this.busy = true;
       const done = {};
-      const promise = new Promise((resolve, reject) => {
+      new Promise((resolve, reject) => {
         done.success = resolve;
         done.failure = reject;
       })
@@ -81,10 +80,15 @@ export default {
       const deadline = moment(date);
       return deadline.fromNow();
     },
-    markdown(text) {
+    markdown(log) {
+      let description = log.description;
+      if (log.type === 'DEPENDENCY') {
+        description = `*Added task ${description} as dependency*`;
+      }
+
       const md = remark()
         .use(html, { sanitize: true })
-        .processSync(text);
+        .processSync(description);
       return md.contents;
     },
     markerIcon(log) {
@@ -99,6 +103,7 @@ export default {
         PAUSE: ['fa fa-coffee'],
         WONT_DO: ['fa fa-times'],
         DURATION: ['fa fa-clock-o marker-padding-top'],
+        DEPENDENCY: ['fa fa-check'],
       }[log.type];
     },
     markerClass(log) {
@@ -110,7 +115,7 @@ export default {
         return ['warning-bg'];
       }
 
-      if (log.type === 'PROGRESS') {
+      if (log.type === 'PROGRESS' || log.type === 'DEPENDENCY') {
         return ['no-bottom-padding'];
       }
 

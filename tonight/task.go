@@ -14,13 +14,14 @@ var (
 type LogType string
 
 const (
-	LogTypeProgress LogType = "PROGRESS"
-	LogTypePause            = "PAUSE"
-	LogTypeStart            = "START"
-	LogTypeWontDo           = "WONT_DO"
-	LogTypeComment          = "COMMENT"
-	LogTypePostpone         = "POSTPONE"
-	LogTypeDuration         = "DURATION"
+	LogTypeProgress   LogType = "PROGRESS"
+	LogTypePause              = "PAUSE"
+	LogTypeStart              = "START"
+	LogTypeWontDo             = "WONT_DO"
+	LogTypeComment            = "COMMENT"
+	LogTypePostpone           = "POSTPONE"
+	LogTypeDuration           = "DURATION"
+	LogTypeDependency         = "DEPENDENCY"
 )
 
 type Status int
