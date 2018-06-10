@@ -230,7 +230,7 @@ export default {
         return [];
       }
 
-      return this.task.log.filter(l => l.description);
+      return this.task.log;
     },
   },
   methods: {
