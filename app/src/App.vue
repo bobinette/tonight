@@ -1,13 +1,13 @@
 <template>
   <div id="app">
     <Navbar></Navbar>
-    <router-view/>
+    <router-view class="margin-top-1"/>
     <Notifications></Notifications>
   </div>
 </template>
 
 <script>
-import Navbar from '@/components/nav-bar/Navbar';
+import Navbar from '@/components/nav-bar/NavBar';
 import Notifications from '@/modules/notifications/Notifications';
 
 import { LOAD_USER } from '@/modules/user/state';

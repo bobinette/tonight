@@ -34,11 +34,6 @@ export const isWorkedOn = task => {
 
 const postponeRegex = /postponed until (\d{4}-\d{2}-\d{2})/;
 
-export const isPostponed = task => {
-  const d = postponedUntil(task);
-  return d && Date.now() - d < 0;
-};
-
 export const postponedUntil = task => {
   if (!task.log) {
     return null;
@@ -58,4 +53,9 @@ export const postponedUntil = task => {
   }
 
   return Date.parse(match[1]);
+};
+
+export const isPostponed = task => {
+  const d = postponedUntil(task);
+  return d && Date.now() - d < 0;
 };

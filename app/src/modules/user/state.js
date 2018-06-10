@@ -25,6 +25,9 @@ export default {
     },
   },
   getters: {
+    userid({ user }) {
+      return user.id;
+    },
     username({ user }) {
       return user.name;
     },

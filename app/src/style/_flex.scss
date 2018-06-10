@@ -1,17 +1,21 @@
 .flex {
-    display: flex;
+  display: flex;
 }
 
 .flex-50 {
-    flex-basis: 50%;
+  flex-basis: 50%;
 }
 
 .flex-align-center {
-    align-items: center;
+  align-items: center;
+}
+
+.flex-align-items-start {
+  align-items: start;
 }
 
 .flex-space-between {
-    justify-content: space-between;
+  justify-content: space-between;
 }
 
 .flex-end {

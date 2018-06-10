@@ -10,11 +10,15 @@
 
     <!-- Rows -->
     <TaskRow v-for="task in tasks" :key="task.id" :task="task"></TaskRow>
+
+    <!-- Empty state -->
+    <EmptyState v-if="!tasks.length"></EmptyState>
   </ul>
 </template>
 
 <script>
 import TaskRow from './row/TaskRow';
+import EmptyState from './empty/EmptyState';
 
 export default {
   name: 'task-list',
@@ -26,6 +30,7 @@ export default {
   },
   components: {
     TaskRow,
+    EmptyState,
   },
 };
 </script>

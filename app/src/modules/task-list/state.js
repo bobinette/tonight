@@ -115,11 +115,11 @@ export default {
         .get(
           `${apiUrl}/api/tasks?${qs.stringify(
             { q, statuses, sortBy },
-            { skipNulls: true, indices: false }
-          )}`
+            { skipNulls: true, indices: false },
+          )}`,
         )
         .then(response => {
-          const { tasks } = response.data;
+          const tasks = response.data.tasks || [];
           context.commit({ type: TASKS_RECEIVED, tasks });
           return tasks;
         })
@@ -185,7 +185,7 @@ export default {
           statuses: context.state.statuses,
           sortBy: context.state.sortBy,
         },
-        { q, sortBy, statuses }
+        { q, sortBy, statuses },
       );
 
       // CHECK ARRAY
