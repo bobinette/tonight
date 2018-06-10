@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import Navbar from '@/components/nav-bar/Navbar';
+import Navbar from '@/components/nav-bar/NavBar';
 import Notifications from '@/modules/notifications/Notifications';
 
 import { LOAD_USER } from '@/modules/user/state';

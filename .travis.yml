@@ -13,6 +13,8 @@ install:
   - ls -lash
 
   # Node
+  - nvm install v9.8.0
+  - npm install -g npm@5.7.1
   - npm -v
   - node -v
 
@@ -60,7 +62,7 @@ script:
 
   # JS
   - >
-    cd /home/travis/build/bobinette/tonight/app anpm run test &&
+    cd /home/travis/build/bobinette/tonight/app &&
     npm run test &&
     cd /home/travis/build/bobinette/tonight
 
