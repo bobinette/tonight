@@ -23,6 +23,10 @@ func main() {
 	flag.Parse()
 
 	var cfg struct {
+		Web struct {
+			Bind string `toml:"bind"`
+		} `toml:"web"`
+
 		MySQL struct {
 			User     string `toml:"user"`
 			Password string `toml:"password"`
@@ -39,6 +43,10 @@ func main() {
 			Dir    string `toml:"dir"`
 			Assets string `toml:"assets"`
 		} `toml:"app"`
+
+		Dev struct {
+			ForwardedEmail string `toml:"forwarded_email"`
+		} `toml:"dev"`
 	}
 
 	if _, err := toml.DecodeFile(fmt.Sprintf("config.%s.toml", env), &cfg); err != nil {
@@ -77,7 +85,17 @@ func main() {
 
 	srv.HTTPErrorHandler = tonight.HTTPErrorHandler
 	srv.Use(middleware.Logger())
-	// srv.Use(middleware.Recover())
+
+	if cfg.Dev.ForwardedEmail != "" {
+		srv.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				if c.Request().Header.Get("X-Forwarded-Email") == "" {
+					c.Request().Header.Set("X-Forwarded-Email", cfg.Dev.ForwardedEmail)
+				}
+				return next(c)
+			}
+		})
+	}
 
 	// API handler
 	tonight.RegisterAPIHandler(srv, taskRepo, index, planningRepo, userRepo, tagReader)
@@ -99,7 +117,7 @@ func main() {
 		}
 	}
 
-	if err := srv.Start(":9090"); err != nil {
+	if err := srv.Start(cfg.Web.Bind); err != nil {
 		log.Fatal(err)
 	}
 }
