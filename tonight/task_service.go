@@ -153,12 +153,12 @@ func (ts *taskService) log(ctx context.Context, taskID uint, input string) (Task
 
 	// Handle special case of postponing...
 	if log.Type == LogTypePostpone {
-
-		if _, err := time.Parse("2006-01-02", log.Description); err != nil {
+		date, err := parseDate(log.Description)
+		if err != nil {
 			return Task{}, fmt.Errorf("error decoding date for postponing: %v", err)
 		}
 
-		log.Description = fmt.Sprintf("postponed until %s", log.Description)
+		log.Description = fmt.Sprintf("postponed until %s", date.Format(dateFormat))
 	} else if log.Type == LogTypeDuration {
 		// Check that the duration is valid
 		if _, err := time.ParseDuration(log.Description); err != nil {

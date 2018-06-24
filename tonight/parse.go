@@ -113,7 +113,7 @@ func parse(content string) (Task, error) {
 				return s
 			}
 
-			if deadline, err := time.Parse("2006-01-02", matches[1]); err == nil {
+			if deadline, err := parseDate(matches[1]); err == nil {
 				deadline = deadline.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
 				task.Deadline = &deadline
 			}
