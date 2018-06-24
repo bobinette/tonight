@@ -334,6 +334,12 @@
 			"revisionTime": "2018-02-09T19:22:18Z"
 		},
 		{
+			"checksumSHA1": "142if3uKuopT2LXXR4jXUxBxYMU=",
+			"path": "github.com/karrick/tparse",
+			"revision": "b24fe6eb26fe017920b4a500118e7c473d1e37ee",
+			"revisionTime": "2018-04-02T15:08:03Z"
+		},
+		{
 			"checksumSHA1": "XrZEtlBpnMAoH98a260ZUtaU9is=",
 			"path": "github.com/labstack/echo",
 			"revision": "b28538b2e3f5446fe6e0e47ee34cd74b662ca2ab",

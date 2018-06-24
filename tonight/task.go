@@ -137,7 +137,7 @@ func (t Task) PostponedUntil() *time.Time {
 			continue
 		}
 
-		if t, err := time.Parse("2006-01-02", match[1]); err == nil {
+		if t, err := parseDate(match[1]); err == nil {
 			return &t
 		}
 	}
