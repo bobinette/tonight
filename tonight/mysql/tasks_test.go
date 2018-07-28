@@ -39,7 +39,7 @@ func TestTaskRepository(t *testing.T) {
 	_, err = db.Exec("DELETE FROM tasks")
 	require.NoError(t, err)
 	defer func() {
-		_, err := db.Exec("DELETE FROM tasks")
+		// _, err := db.Exec("DELETE FROM tasks")
 		assert.NoError(t, err)
 		assert.NoError(t, db.Close())
 	}()

@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"testing"
 
@@ -132,4 +133,15 @@ func testDependencies(t *testing.T, repo tonight.TaskRepository) {
 		sort.Ints(taskIDs)
 		assert.Equal(t, expected, taskIDs, "%d", taskID)
 	}
+
+	// Test the cycle protection
+	task := tasks[1]
+	task.Dependencies = []tonight.Dependency{tonight.Dependency{ID: tasks[2].ID}}
+	tasks[1] = task
+	fmt.Println(tasks[1].ID, tasks[2].ID)
+	require.NoError(t, repo.Update(ctx, &tasks[1]))
+
+	deps, err := repo.DependencyTrees(ctx, task.ID)
+	require.NoError(t, err)
+	fmt.Printf("%+v\n", deps)
 }
