@@ -2,6 +2,7 @@ package tonight
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -56,8 +57,13 @@ func (ps *planningService) current(ctx context.Context, user User) (Planning, er
 		return Planning{}, err
 	}
 
-	if planning.Done() {
-		return Planning{}, nil
+	if len(planning.Tasks) > 0 && planning.Done() {
+		// recreate a planning with the same search
+		input := planning.Duration.String()
+		if planning.Q != "" {
+			input = fmt.Sprintf("%s for %s", planning.Q, input)
+		}
+		return ps.plan(ctx, user, input)
 	}
 
 	return planning, nil
