@@ -1,3 +1,0 @@
-- hosts: tonight
-  roles:
-    - tonight
