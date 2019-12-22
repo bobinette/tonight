@@ -1,0 +1,20 @@
+localhost:9090 {
+    proxy / :9091 {
+        transparent
+    }
+
+    gzip
+
+    jwt {
+        path /
+        except /favicon.ico
+        redirect /login?backTo={rewrite_uri}
+    }
+
+    login {
+        google client_id=client_id,client_secret=client_secret
+        # for testing, where no https is available, don't set the secure flag for the.
+        cookie_secure false
+        redirect_check_referer false
+    }
+}
