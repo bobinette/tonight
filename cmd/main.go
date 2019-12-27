@@ -91,10 +91,14 @@ func main() {
 	// Register and start
 	eventStore := mysql.NewEventStore(db)
 	taskStore := mysql.NewTaskStore(db)
+	projectStore := mysql.NewProjectStore(db)
+	userStore := mysql.NewUserStore(db)
 	tonight.RegisterHTTP(
 		srv.Group("/api"),
 		eventStore,
 		taskStore,
+		projectStore,
+		userStore,
 	)
 
 	// @TODO: not prod ready. Use the config to determine what should be used

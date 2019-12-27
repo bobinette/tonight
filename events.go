@@ -9,11 +9,19 @@ import (
 
 type EventType string
 
+// Event types
+const (
+	TaskCreate EventType = "TaskCreate"
+
+	ProjectCreate EventType = "ProjectCreate"
+)
+
 // An Event is used to record every mutation requested
 // by users.
 type Event struct {
 	UUID      uuid.UUID
 	Type      EventType
+	UserID    string
 	Payload   []byte
 	CreatedAt time.Time
 }
