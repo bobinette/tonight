@@ -3,7 +3,6 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	uuid "github.com/satori/go.uuid"
 
@@ -20,10 +19,22 @@ func NewTaskStore(db *sql.DB) TaskStore {
 
 func (s TaskStore) Upsert(ctx context.Context, t tonight.Task) error {
 	query := `
-INSERT INTO tasks (uuid, title, project_uuid, created_at, updated_at)
-VALUE (?, ?, ?, ?, ?)
+INSERT INTO tasks (uuid, title, status, project_uuid, created_at, updated_at)
+VALUE (?, ?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+	status = ?
 `
-	_, err := s.db.ExecContext(ctx, query, t.UUID, t.Title, t.Project.UUID, t.CreatedAt, t.UpdatedAt)
+	_, err := s.db.ExecContext(
+		ctx,
+		query,
+		t.UUID,
+		t.Title,
+		t.Status,
+		t.Project.UUID,
+		t.CreatedAt,
+		t.UpdatedAt,
+		t.Status,
+	)
 	if err != nil {
 		return err
 	}
@@ -31,106 +42,25 @@ VALUE (?, ?, ?, ?, ?)
 	return nil
 }
 
-func (s TaskStore) Get(ctx context.Context, uuid uuid.UUID) (tonight.Task, error) {
-	return tonight.Task{}, nil
-}
-
-func (s TaskStore) List(ctx context.Context) ([]tonight.Task, error) {
+func (s TaskStore) Get(ctx context.Context, uuid uuid.UUID, user tonight.User) (tonight.Task, error) {
 	query := `
-SELECT uuid, title, project_uuid, created_at, updated_at
+SELECT tasks.uuid, tasks.title, tasks.status, tasks.project_uuid, tasks.created_at, tasks.updated_at
 FROM tasks
-ORDER BY created_at
+JOIN user_permission_on_project ON user_permission_on_project.project_uuid = tasks.project_uuid
+WHERE user_permission_on_project.user_id = ? AND tasks.uuid = ?
 `
-	rows, err := s.db.QueryContext(ctx, query)
+	row := s.db.QueryRowContext(ctx, query, user.ID, uuid)
+	var t tonight.Task
+	err := row.Scan(
+		&t.UUID,
+		&t.Title,
+		&t.Status,
+		&t.Project.UUID,
+		&t.CreatedAt,
+		&t.UpdatedAt,
+	)
 	if err != nil {
-		return nil, err
+		return tonight.Task{}, err
 	}
-	defer rows.Close()
-
-	tasks := make([]tonight.Task, 0)
-	projectUUIDsSet := make(map[string]struct{})
-	projectUUIDs := make([]string, 0)
-	for rows.Next() {
-		var t tonight.Task
-		err := rows.Scan(
-			&t.UUID,
-			&t.Title,
-			&t.Project.UUID,
-			&t.CreatedAt,
-			&t.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		uuidStr := t.Project.UUID.String()
-		if _, ok := projectUUIDsSet[uuidStr]; !ok {
-			projectUUIDsSet[uuidStr] = struct{}{}
-			projectUUIDs = append(projectUUIDs, uuidStr)
-		}
-		tasks = append(tasks, t)
-	}
-
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-
-	projects, err := s.loadProjects(ctx, projectUUIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	findProject := func(uuid string, ps []tonight.Project) *tonight.Project {
-		for _, p := range ps {
-			if p.UUID.String() == uuid {
-				p := p
-				return &p
-			}
-		}
-		return nil
-	}
-
-	for i, task := range tasks {
-		p := findProject(task.Project.UUID.String(), projects)
-		if p != nil {
-			task.Project = *p
-		}
-		tasks[i] = task
-	}
-
-	return tasks, nil
-}
-
-func (s TaskStore) loadProjects(ctx context.Context, uuids []string) ([]tonight.Project, error) {
-	qArgs, args := prepareArgs(uuids)
-	query := fmt.Sprintf(`
-SELECT uuid, name, created_at, updated_at
-FROM projects
-WHERE uuid IN %s
-`, qArgs...)
-	rows, err := s.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	projects := make([]tonight.Project, 0)
-	for rows.Next() {
-		var p tonight.Project
-		err := rows.Scan(
-			&p.UUID,
-			&p.Name,
-			&p.CreatedAt,
-			&p.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		projects = append(projects, p)
-	}
-
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	return projects, nil
+	return t, nil
 }

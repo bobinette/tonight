@@ -12,6 +12,7 @@ type EventType string
 // Event types
 const (
 	TaskCreate EventType = "TaskCreate"
+	TaskDone   EventType = "TaskDone"
 
 	ProjectCreate EventType = "ProjectCreate"
 )

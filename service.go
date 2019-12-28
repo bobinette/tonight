@@ -29,8 +29,8 @@ func RegisterHTTP(
 		userStore:    userStore,
 	}
 
+	srv.POST("/tasks/:uuid/done", s.markAsDone)
 	srv.POST("/tasks", s.createTask)
-	srv.GET("/tasks", s.listTasks)
 
 	srv.POST("/projects", s.createProject)
 	srv.GET("/projects", s.listProjects)
@@ -93,6 +93,7 @@ func (s service) createTask(c echo.Context) error {
 	}
 
 	t.UUID = id
+	t.Status = TODO
 	t.CreatedAt = now
 	t.UpdatedAt = now
 	if err := s.taskStore.Upsert(ctx, t); err != nil {
@@ -104,17 +105,53 @@ func (s service) createTask(c echo.Context) error {
 	})
 }
 
-func (s service) listTasks(c echo.Context) error {
-	fmt.Println(c.Request().Header)
-	ctx := c.Request().Context()
-	tasks, err := s.taskStore.List(ctx)
+func (s service) markAsDone(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	id, err := uuid.FromString(c.Param("uuid"))
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"data": tasks,
-	})
+	ctx := c.Request().Context()
+
+	user, err := userFromHeader(c)
+	if err != nil {
+		return err
+	}
+	if err := s.userStore.Ensure(ctx, &user); err != nil {
+		return fmt.Errorf("error ensuring user: %w", err)
+	}
+
+	task, err := s.taskStore.Get(ctx, id, user)
+	if err != nil {
+		return fmt.Errorf("error retrieving task: %w", err)
+	}
+	if task.UUID.String() == emptyUUID {
+		return fmt.Errorf("task %s not found", id)
+	}
+
+	eventUUID := uuid.NewV1()
+	now := time.Now()
+	evt := Event{
+		UUID:       eventUUID,
+		Type:       TaskDone,
+		EntityUUID: id,
+		UserID:     user.ID,
+		Payload:    []byte("{}"),
+		CreatedAt:  now,
+	}
+	if err := s.eventStore.Store(ctx, evt); err != nil {
+		return fmt.Errorf("error storing event: %w", err)
+	}
+
+	task.Status = DONE
+	task.UpdatedAt = time.Now()
+	if err := s.taskStore.Upsert(ctx, task); err != nil {
+		return fmt.Errorf("error updating task: %w", err)
+	}
+
+	return nil
 }
 
 func (s service) createProject(c echo.Context) error {

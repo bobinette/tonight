@@ -105,7 +105,7 @@ ORDER BY created_at
 func (s ProjectStore) loadTasks(ctx context.Context, uuids []string) (map[string][]tonight.Task, error) {
 	qArgs, args := prepareArgs(uuids)
 	query := fmt.Sprintf(`
-SELECT uuid, title, project_uuid, created_at, updated_at
+SELECT uuid, title, status, project_uuid, created_at, updated_at
 FROM tasks
 WHERE project_uuid IN %s
 ORDER BY created_at
@@ -123,6 +123,7 @@ ORDER BY created_at
 		err := rows.Scan(
 			&t.UUID,
 			&t.Title,
+			&t.Status,
 			&projectUUID,
 			&t.CreatedAt,
 			&t.UpdatedAt,

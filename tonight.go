@@ -7,11 +7,19 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+type TaskStatus string
+
+const (
+	TODO TaskStatus = "TODO"
+	DONE TaskStatus = "DONE"
+)
+
 // A Task is the basic object of Tonight.
 type Task struct {
 	UUID uuid.UUID `json:"uuid"`
 
-	Title string `json:"title"`
+	Title  string     `json:"title"`
+	Status TaskStatus `json:"status"`
 
 	Project Project `json:"project"`
 
@@ -23,8 +31,7 @@ type Task struct {
 // database.
 type TaskStore interface {
 	Upsert(ctx context.Context, t Task) error
-	List(ctx context.Context) ([]Task, error)
-	Get(ctx context.Context, uuid uuid.UUID) (Task, error)
+	Get(ctx context.Context, uuid uuid.UUID, u User) (Task, error)
 }
 
 // A Project groups tasks.
