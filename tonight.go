@@ -42,8 +42,8 @@ type Project struct {
 // A ProjectStore is responsible for storing projects, typically in a
 // database.
 type ProjectStore interface {
-	Upsert(ctx context.Context, t Project) error
-	List(ctx context.Context) ([]Project, error)
+	Upsert(ctx context.Context, p Project, u User) error
+	List(ctx context.Context, u User) ([]Project, error)
 	// Get(ctx context.Context, uuid uuid.UUID) (Project, error)
 }
 
@@ -54,4 +54,5 @@ type User struct {
 
 type UserStore interface {
 	Ensure(ctx context.Context, user *User) error
+	Permission(ctx context.Context, user User, projectUUID string) (string, error)
 }

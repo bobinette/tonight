@@ -40,3 +40,20 @@ VALUES (?, ?)
 	_, err := s.db.ExecContext(ctx, query, user.ID, user.Name)
 	return err
 }
+
+func (s UserStore) Permission(ctx context.Context, user tonight.User, projectUUID string) (string, error) {
+	query := `
+SELECT permission
+FROM user_permission_on_project
+WHERE user_id = ? AND project_uuid = ?
+`
+	row := s.db.QueryRowContext(ctx, query, user.ID, projectUUID)
+	var perm string
+	if err := row.Scan(&perm); err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	return perm, nil
+}

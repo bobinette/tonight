@@ -70,6 +70,14 @@ func (s service) createTask(c echo.Context) error {
 		return fmt.Errorf("error ensuring user: %w", err)
 	}
 
+	perm, err := s.userStore.Permission(ctx, user, t.Project.UUID.String())
+	if err != nil {
+		return err
+	}
+	if perm != "owner" {
+		return errors.New("insufficient permissions")
+	}
+
 	id := uuid.NewV1()
 	now := time.Now()
 	evt := Event{
@@ -149,7 +157,7 @@ func (s service) createProject(c echo.Context) error {
 	project.UUID = id
 	project.CreatedAt = now
 	project.UpdatedAt = now
-	if err := s.projectStore.Upsert(ctx, project); err != nil {
+	if err := s.projectStore.Upsert(ctx, project, user); err != nil {
 		return fmt.Errorf("error storing project: %w", err)
 	}
 
@@ -160,7 +168,16 @@ func (s service) createProject(c echo.Context) error {
 
 func (s service) listProjects(c echo.Context) error {
 	ctx := c.Request().Context()
-	projects, err := s.projectStore.List(ctx)
+
+	user, err := userFromHeader(c)
+	if err != nil {
+		return err
+	}
+	if err := s.userStore.Ensure(ctx, &user); err != nil {
+		return fmt.Errorf("error ensuring user: %w", err)
+	}
+
+	projects, err := s.projectStore.List(ctx, user)
 	if err != nil {
 		return err
 	}

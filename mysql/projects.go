@@ -16,26 +16,45 @@ func NewProjectStore(db *sql.DB) ProjectStore {
 	return ProjectStore{db: db}
 }
 
-func (s ProjectStore) Upsert(ctx context.Context, p tonight.Project) error {
+func (s ProjectStore) Upsert(ctx context.Context, p tonight.Project, u tonight.User) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	query := `
 INSERT INTO projects (uuid, name, created_at, updated_at)
 VALUE (?, ?, ?, ?)
 `
-	_, err := s.db.ExecContext(ctx, query, p.UUID, p.Name, p.CreatedAt, p.UpdatedAt)
-	if err != nil {
+	if _, err := tx.ExecContext(ctx, query, p.UUID, p.Name, p.CreatedAt, p.UpdatedAt); err != nil {
+		return err
+	}
+
+	query = `
+INSERT INTO user_permission_on_project (user_id, project_uuid, permission)
+VALUES (?, ?, ?)
+`
+	if _, err := tx.ExecContext(ctx, query, u.ID, p.UUID, "owner"); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s ProjectStore) List(ctx context.Context) ([]tonight.Project, error) {
+func (s ProjectStore) List(ctx context.Context, u tonight.User) ([]tonight.Project, error) {
 	query := `
-SELECT uuid, name, created_at, updated_at
+SELECT projects.uuid, projects.name, projects.created_at, projects.updated_at
 FROM projects
+JOIN user_permission_on_project ON user_permission_on_project.project_uuid = projects.uuid
+WHERE user_permission_on_project.user_id = ?
 ORDER BY created_at
 `
-	rows, err := s.db.QueryContext(ctx, query)
+	rows, err := s.db.QueryContext(ctx, query, u.ID)
 	if err != nil {
 		return nil, err
 	}
