@@ -19,11 +19,12 @@ const (
 // An Event is used to record every mutation requested
 // by users.
 type Event struct {
-	UUID      uuid.UUID
-	Type      EventType
-	UserID    string
-	Payload   []byte
-	CreatedAt time.Time
+	UUID       uuid.UUID
+	Type       EventType
+	EntityUUID uuid.UUID
+	UserID     string
+	Payload    []byte
+	CreatedAt  time.Time
 }
 
 // An EventStore should store and retrieve Events.

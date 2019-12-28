@@ -81,11 +81,12 @@ func (s service) createTask(c echo.Context) error {
 	id := uuid.NewV1()
 	now := time.Now()
 	evt := Event{
-		UUID:      id,
-		Type:      TaskCreate,
-		UserID:    user.ID,
-		Payload:   interceptor.raw,
-		CreatedAt: now,
+		UUID:       id,
+		Type:       TaskCreate,
+		EntityUUID: id,
+		UserID:     user.ID,
+		Payload:    interceptor.raw,
+		CreatedAt:  now,
 	}
 	if err := s.eventStore.Store(ctx, evt); err != nil {
 		return err
@@ -144,11 +145,12 @@ func (s service) createProject(c echo.Context) error {
 	id := uuid.NewV1()
 	now := time.Now()
 	evt := Event{
-		UUID:      id,
-		Type:      ProjectCreate,
-		UserID:    user.ID,
-		Payload:   interceptor.raw,
-		CreatedAt: now,
+		UUID:       id,
+		Type:       ProjectCreate,
+		EntityUUID: id,
+		UserID:     user.ID,
+		Payload:    interceptor.raw,
+		CreatedAt:  now,
 	}
 	if err := s.eventStore.Store(ctx, evt); err != nil {
 		return fmt.Errorf("error storing event: %w", err)

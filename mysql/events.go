@@ -17,10 +17,19 @@ func NewEventStore(db *sql.DB) EventStore {
 
 func (s EventStore) Store(ctx context.Context, e tonight.Event) error {
 	query := `
-INSERT INTO events (uuid, type, user_id, payload, created_at)
-VALUES (?, ?, ?, ?, ?)
+INSERT INTO events (uuid, type, entity_uuid, user_id, payload, created_at)
+VALUES (?, ?, ?, ?, ?, ?)
 `
-	_, err := s.db.ExecContext(ctx, query, e.UUID, e.Type, e.UserID, e.Payload, e.CreatedAt)
+	_, err := s.db.ExecContext(
+		ctx,
+		query,
+		e.UUID,
+		e.Type,
+		e.EntityUUID,
+		e.UserID,
+		e.Payload,
+		e.CreatedAt,
+	)
 	if err != nil {
 		return err
 	}
