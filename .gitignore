@@ -29,3 +29,6 @@ oauth2_config.cfg
 
 # Ignore some files in the ops folder
 ops/vault_pass.txt
+
+*.creds.json
+Caddyfile
