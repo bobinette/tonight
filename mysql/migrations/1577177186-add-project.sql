@@ -18,7 +18,7 @@ ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ALTER TABLE `tasks`
     ADD COLUMN `project_uuid` VARCHAR(36) NOT NULL AFTER `title`,
-    ADD CONSTRAINT `fk_task_project` FOREIGN KEY (`project_uuid`) REFERENCES `projects`(`uuid`);
+    ADD CONSTRAINT `fk_task_project` FOREIGN KEY (`project_uuid`) REFERENCES `projects`(`uuid`) ON DELETE CASCADE;
 
 COMMIT;
 

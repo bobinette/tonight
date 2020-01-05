@@ -22,12 +22,7 @@ func RegisterHTTP(
 	projectStore ProjectStore,
 	userStore UserStore,
 ) error {
-	s := service{
-		eventStore:   eventStore,
-		taskStore:    taskStore,
-		projectStore: projectStore,
-		userStore:    userStore,
-	}
+	s := newService(eventStore, taskStore, projectStore, userStore)
 
 	srv.POST("/tasks/:uuid/done", s.markAsDone)
 	srv.POST("/tasks", s.createTask)
@@ -43,6 +38,20 @@ type service struct {
 	taskStore    TaskStore
 	projectStore ProjectStore
 	userStore    UserStore
+}
+
+func newService(
+	eventStore EventStore,
+	taskStore TaskStore,
+	projectStore ProjectStore,
+	userStore UserStore,
+) service {
+	return service{
+		eventStore:   eventStore,
+		taskStore:    taskStore,
+		projectStore: projectStore,
+		userStore:    userStore,
+	}
 }
 
 func (s service) createTask(c echo.Context) error {
@@ -93,14 +102,14 @@ func (s service) createTask(c echo.Context) error {
 	}
 
 	t.UUID = id
-	t.Status = TODO
+	t.Status = TaskStatusTODO
 	t.CreatedAt = now
 	t.UpdatedAt = now
 	if err := s.taskStore.Upsert(ctx, t); err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{
+	return c.JSON(http.StatusOK, map[string]interface{}{
 		"data": t,
 	})
 }
@@ -145,13 +154,15 @@ func (s service) markAsDone(c echo.Context) error {
 		return fmt.Errorf("error storing event: %w", err)
 	}
 
-	task.Status = DONE
+	task.Status = TaskStatusDONE
 	task.UpdatedAt = time.Now()
 	if err := s.taskStore.Upsert(ctx, task); err != nil {
 		return fmt.Errorf("error updating task: %w", err)
 	}
 
-	return nil
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data": "ok",
+	})
 }
 
 func (s service) createProject(c echo.Context) error {
@@ -200,7 +211,7 @@ func (s service) createProject(c echo.Context) error {
 		return fmt.Errorf("error storing project: %w", err)
 	}
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{
+	return c.JSON(http.StatusOK, map[string]interface{}{
 		"data": project,
 	})
 }

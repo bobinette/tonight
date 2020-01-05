@@ -10,8 +10,8 @@ import (
 type TaskStatus string
 
 const (
-	TODO TaskStatus = "TODO"
-	DONE TaskStatus = "DONE"
+	TaskStatusTODO TaskStatus = "TODO"
+	TaskStatusDONE TaskStatus = "DONE"
 )
 
 // A Task is the basic object of Tonight.
