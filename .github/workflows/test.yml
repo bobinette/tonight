@@ -1,0 +1,46 @@
+name: test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_DATABASE: tonight_v2_test
+        ports:
+          - 33306:3306
+
+    steps:
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+
+      - name: Get dependencies
+        run: go get -v -t -d ./...
+
+      - name: Create the database
+        run: mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS tonight_v2_test"
+
+      - name: Install shmig
+        run: wget https://raw.githubusercontent.com/mbucc/shmig/master/shmig && chmod +x shmig
+
+      - name: Run migrations
+        run: ./shmig -t mysql -H 127.0.0.1 -P 3306 -l root -p root -d tonight_v2_test -m mysql/migrations up
+
+      - name: Test
+        run: go test -v ./...
