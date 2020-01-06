@@ -64,3 +64,25 @@ WHERE user_permission_on_project.user_id = ? AND tasks.uuid = ?
 	}
 	return t, nil
 }
+
+func (s TaskStore) Reorder(ctx context.Context, rankedUUIDs []uuid.UUID) (err error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		e := tx.Rollback()
+		if err == nil && e != sql.ErrTxDone {
+			err = e
+		}
+	}()
+
+	query := "UPDATE tasks SET rank = ? WHERE uuid = ?"
+	for rank, taskUUID := range rankedUUIDs {
+		if _, err := tx.ExecContext(ctx, query, rank, taskUUID); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}

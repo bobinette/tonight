@@ -14,7 +14,8 @@ const (
 	TaskCreate EventType = "TaskCreate"
 	TaskDone   EventType = "TaskDone"
 
-	ProjectCreate EventType = "ProjectCreate"
+	ProjectCreate       EventType = "ProjectCreate"
+	ProjectReorderTasks EventType = "ProjectReorderTasks"
 )
 
 // An Event is used to record every mutation requested
