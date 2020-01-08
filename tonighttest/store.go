@@ -37,7 +37,7 @@ func TestStores(
 		UpdatedAt: time.Now(),
 	}, user))
 
-	task := tonight.Task{
+	firstTask := tonight.Task{
 		UUID:      uuid.NewV1(),
 		Title:     "Test task",
 		Status:    tonight.TaskStatusTODO,
@@ -45,7 +45,7 @@ func TestStores(
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	require.NoError(t, taskStore.Upsert(ctx, task))
+	require.NoError(t, taskStore.Upsert(ctx, firstTask))
 
 	otherTask := tonight.Task{
 		UUID:      uuid.NewV1(),
@@ -66,14 +66,52 @@ func TestStores(
 		titles[i] = task.Title
 		require.Equal(t, tonight.TaskStatusTODO, task.Status)
 	}
-	require.Equal(t, []string{task.Title, otherTask.Title}, titles)
+	require.Equal(t, []string{firstTask.Title, otherTask.Title}, titles)
+
+	anotherTask := tonight.Task{
+		UUID:      uuid.NewV1(),
+		Title:     "Another task",
+		Status:    tonight.TaskStatusTODO,
+		Project:   project,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	require.NoError(t, taskStore.Upsert(ctx, anotherTask))
+	require.Equal(t, []string{firstTask.Title, otherTask.Title}, titles)
+
+	lastTask := tonight.Task{
+		UUID:      uuid.NewV1(),
+		Title:     "Last task",
+		Status:    tonight.TaskStatusTODO,
+		Project:   project,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	require.NoError(t, taskStore.Upsert(ctx, lastTask))
+
+	require.NoError(t, taskStore.Reorder(ctx, nil))
+	rankedUUIDs := []uuid.UUID{
+		otherTask.UUID,
+		firstTask.UUID,
+	}
+	require.NoError(t, taskStore.Reorder(ctx, rankedUUIDs))
+
+	ps, err = projectStore.List(ctx, user)
+	require.NoError(t, err)
+	require.Len(t, ps, 2)
+
+	titles = make([]string, len(ps[0].Tasks))
+	for i, task := range ps[0].Tasks {
+		titles[i] = task.Title
+	}
+	require.Equal(t, []string{otherTask.Title, firstTask.Title, anotherTask.Title, lastTask.Title}, titles)
 
 	ps, err = projectStore.List(ctx, tonight.User{ID: "unkown"})
 	require.NoError(t, err)
 	require.Len(t, ps, 0)
 
-	retrievedTask, err := taskStore.Get(ctx, task.UUID, user)
+	retrievedTask, err := taskStore.Get(ctx, firstTask.UUID, user)
 	require.NoError(t, err)
-	require.Equal(t, task.Title, retrievedTask.Title)
-	require.Equal(t, task.Status, retrievedTask.Status)
+	require.Equal(t, firstTask.Title, retrievedTask.Title)
+	require.Equal(t, firstTask.Status, retrievedTask.Status)
 }

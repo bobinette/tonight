@@ -32,6 +32,8 @@ type Task struct {
 type TaskStore interface {
 	Upsert(ctx context.Context, t Task) error
 	Get(ctx context.Context, uuid uuid.UUID, u User) (Task, error)
+
+	Reorder(ctx context.Context, rankedUUIDs []uuid.UUID) error
 }
 
 // A Project groups tasks.

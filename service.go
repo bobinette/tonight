@@ -29,6 +29,7 @@ func RegisterHTTP(
 
 	srv.POST("/projects", s.createProject)
 	srv.GET("/projects", s.listProjects)
+	srv.POST("/projects/:uuid/tasks/ranks", s.rankTasks)
 
 	return nil
 }
@@ -235,6 +236,64 @@ func (s service) listProjects(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"data": projects,
 	})
+}
+
+func (s service) rankTasks(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	projectUUID, err := uuid.FromString(c.Param("uuid"))
+	if err != nil {
+		return err
+	}
+
+	var body struct {
+		Ranks []uuid.UUID `json:"ranks"`
+	}
+	interceptor := payloadInterceptor{
+		v: &body,
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&interceptor); err != nil {
+		return fmt.Errorf("error deconding request: %w", err)
+	}
+
+	ctx := c.Request().Context()
+
+	user, err := userFromHeader(c)
+	if err != nil {
+		return err
+	}
+	if err := s.userStore.Ensure(ctx, &user); err != nil {
+		return fmt.Errorf("error ensuring user: %w", err)
+	}
+
+	perm, err := s.userStore.Permission(ctx, user, projectUUID.String())
+	if err != nil {
+		return err
+	}
+	if perm != "owner" {
+		return errors.New("insufficient permissions")
+	}
+
+	evt := Event{
+		UUID:       uuid.NewV1(),
+		Type:       ProjectReorderTasks,
+		EntityUUID: projectUUID,
+		UserID:     user.ID,
+		Payload:    interceptor.raw,
+		CreatedAt:  time.Now(),
+	}
+	if err := s.eventStore.Store(ctx, evt); err != nil {
+		return fmt.Errorf("error storing event: %w", err)
+	}
+
+	// Check that all uuids belong to the same project, at that all the uuids
+	// of todo tasks have been sent
+
+	if err := s.taskStore.Reorder(ctx, body.Ranks); err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{"data": "done"})
 }
 
 type payloadInterceptor struct {

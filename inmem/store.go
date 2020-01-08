@@ -95,6 +95,52 @@ func (s TaskStore) Get(ctx context.Context, uuid uuid.UUID, user tonight.User) (
 	return tonight.Task{}, nil
 }
 
+func (s TaskStore) Reorder(ctx context.Context, rankedUUIDs []uuid.UUID) error {
+	if len(rankedUUIDs) == 0 {
+		return nil
+	}
+
+	for user, ps := range s.store.db {
+		for j, p := range ps {
+			isThisOne := false
+			for _, task := range p.Tasks {
+				if task.UUID == rankedUUIDs[0] {
+					isThisOne = true
+				}
+			}
+
+			if isThisOne {
+				tasks := p.Tasks
+				tasksByUUID := make(map[uuid.UUID]tonight.Task)
+				for _, task := range p.Tasks {
+					tasksByUUID[task.UUID] = task
+				}
+
+				reorderedTasks := make([]tonight.Task, 0, len(tasks))
+				for _, uuid := range rankedUUIDs {
+					reorderedTasks = append(reorderedTasks, tasksByUUID[uuid])
+					delete(tasksByUUID, uuid)
+				}
+
+				for _, t := range tasks {
+					if _, ok := tasksByUUID[t.UUID]; ok {
+						// Still in the map, append it
+						reorderedTasks = append(reorderedTasks, t)
+					}
+				}
+
+				p.Tasks = reorderedTasks
+				ps[j] = p
+				s.store.db[user] = ps
+
+				return nil
+			}
+		}
+	}
+
+	return nil
+}
+
 type UserStore struct {
 	store *Store
 }

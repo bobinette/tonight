@@ -108,7 +108,7 @@ func (s ProjectStore) loadTasks(ctx context.Context, uuids []string) (map[string
 SELECT uuid, title, status, project_uuid, created_at, updated_at
 FROM tasks
 WHERE project_uuid IN %s
-ORDER BY created_at
+ORDER BY -rank DESC, created_at
 `, qArgs...)
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
