@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bobinette/tonight"
+	uuid "github.com/satori/go.uuid"
 )
 
 type ProjectStore struct {
@@ -24,23 +25,34 @@ func (s ProjectStore) Upsert(ctx context.Context, p tonight.Project, u tonight.U
 	defer tx.Rollback()
 
 	query := `
-INSERT INTO projects (uuid, name, slug, created_at, updated_at)
-VALUE (?, ?, ?, ?, ?)
+INSERT INTO projects (uuid, name, description, slug, created_at, updated_at)
+VALUE (?, ?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+	name = ?,
+	description = ?,
+	slug = ?,
+	updated_at = ?
 `
 	if _, err := tx.ExecContext(
 		ctx,
 		query,
 		p.UUID,
 		p.Name,
+		p.Description,
 		p.Slug,
 		p.CreatedAt,
+		p.UpdatedAt,
+		// update
+		p.Name,
+		p.Description,
+		p.Slug,
 		p.UpdatedAt,
 	); err != nil {
 		return err
 	}
 
 	query = `
-INSERT INTO user_permission_on_project (user_id, project_uuid, permission)
+INSERT IGNORE INTO user_permission_on_project (user_id, project_uuid, permission)
 VALUES (?, ?, ?)
 `
 	if _, err := tx.ExecContext(ctx, query, u.ID, p.UUID, "owner"); err != nil {
@@ -56,7 +68,7 @@ VALUES (?, ?, ?)
 
 func (s ProjectStore) List(ctx context.Context, u tonight.User) ([]tonight.Project, error) {
 	query := `
-SELECT projects.uuid, projects.name, projects.slug, projects.created_at, projects.updated_at
+SELECT projects.uuid, projects.name, projects.description, projects.slug, projects.created_at, projects.updated_at
 FROM projects
 JOIN user_permission_on_project ON user_permission_on_project.project_uuid = projects.uuid
 WHERE user_permission_on_project.user_id = ?
@@ -75,6 +87,7 @@ ORDER BY created_at
 		err := rows.Scan(
 			&p.UUID,
 			&p.Name,
+			&p.Description,
 			&p.Slug,
 			&p.CreatedAt,
 			&p.UpdatedAt,
@@ -109,6 +122,78 @@ ORDER BY created_at
 	}
 
 	return projects, nil
+}
+
+func (s ProjectStore) Get(ctx context.Context, uuid uuid.UUID, u tonight.User) (tonight.Project, error) {
+	query := `
+SELECT projects.uuid, projects.name, projects.description, projects.slug, projects.created_at, projects.updated_at
+FROM projects
+JOIN user_permission_on_project ON user_permission_on_project.project_uuid = projects.uuid
+WHERE projects.uuid = ? AND user_permission_on_project.user_id = ?
+ORDER BY created_at
+`
+
+	row := s.db.QueryRowContext(ctx, query, uuid, u.ID)
+	var p tonight.Project
+	err := row.Scan(
+		&p.UUID,
+		&p.Name,
+		&p.Description,
+		&p.Slug,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+	)
+	if err != nil {
+		return tonight.Project{}, err
+	}
+
+	tasks, err := s.loadTasks(ctx, []string{p.UUID.String()})
+	if err != nil {
+		return tonight.Project{}, err
+	}
+
+	p.Tasks = tasks[p.UUID.String()]
+	if p.Tasks == nil {
+		p.Tasks = make([]tonight.Task, 0)
+	}
+
+	return p, nil
+}
+
+func (s ProjectStore) Find(ctx context.Context, slug string, u tonight.User) (tonight.Project, error) {
+	query := `
+SELECT projects.uuid, projects.name, projects.description, projects.slug, projects.created_at, projects.updated_at
+FROM projects
+JOIN user_permission_on_project ON user_permission_on_project.project_uuid = projects.uuid
+WHERE projects.slug = ? AND user_permission_on_project.user_id = ?
+ORDER BY created_at
+`
+
+	row := s.db.QueryRowContext(ctx, query, slug, u.ID)
+	var p tonight.Project
+	err := row.Scan(
+		&p.UUID,
+		&p.Name,
+		&p.Description,
+		&p.Slug,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+	)
+	if err != nil {
+		return tonight.Project{}, err
+	}
+
+	tasks, err := s.loadTasks(ctx, []string{p.UUID.String()})
+	if err != nil {
+		return tonight.Project{}, err
+	}
+
+	p.Tasks = tasks[p.UUID.String()]
+	if p.Tasks == nil {
+		p.Tasks = make([]tonight.Task, 0)
+	}
+
+	return p, nil
 }
 
 func (s ProjectStore) loadTasks(ctx context.Context, uuids []string) (map[string][]tonight.Task, error) {

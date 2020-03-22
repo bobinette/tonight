@@ -48,6 +48,26 @@ func (s ProjectStore) List(ctx context.Context, u tonight.User) ([]tonight.Proje
 	return projects, nil
 }
 
+func (s ProjectStore) Get(ctx context.Context, uuid uuid.UUID, u tonight.User) (tonight.Project, error) {
+	projects := s.store.db[u.ID]
+	for _, p := range projects {
+		if p.UUID == uuid {
+			return p, nil
+		}
+	}
+	return tonight.Project{}, fmt.Errorf("project %s not found", uuid)
+}
+
+func (s ProjectStore) Find(ctx context.Context, slug string, u tonight.User) (tonight.Project, error) {
+	projects := s.store.db[u.ID]
+	for _, p := range projects {
+		if p.Slug == slug {
+			return p, nil
+		}
+	}
+	return tonight.Project{}, fmt.Errorf("project %s not found", slug)
+}
+
 type TaskStore struct {
 	store *Store
 }

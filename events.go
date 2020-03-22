@@ -15,6 +15,7 @@ const (
 	TaskDone   EventType = "TaskDone"
 
 	ProjectCreate       EventType = "ProjectCreate"
+	ProjectUpdate       EventType = "ProjectUpdate"
 	ProjectReorderTasks EventType = "ProjectReorderTasks"
 )
 
