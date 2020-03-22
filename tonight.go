@@ -41,6 +41,7 @@ type Project struct {
 	UUID uuid.UUID `json:"uuid"`
 
 	Name string `json:"name"`
+	Slug string `json:"slug"`
 
 	Tasks []Task `json:"tasks"`
 
