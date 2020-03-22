@@ -16,6 +16,7 @@
 tonight/bleve/index/*
 tonight/vendor/*/*
 
+build
 config.toml
 config.*.toml
 

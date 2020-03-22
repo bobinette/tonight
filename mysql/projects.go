@@ -24,10 +24,18 @@ func (s ProjectStore) Upsert(ctx context.Context, p tonight.Project, u tonight.U
 	defer tx.Rollback()
 
 	query := `
-INSERT INTO projects (uuid, name, created_at, updated_at)
-VALUE (?, ?, ?, ?)
+INSERT INTO projects (uuid, name, slug, created_at, updated_at)
+VALUE (?, ?, ?, ?, ?)
 `
-	if _, err := tx.ExecContext(ctx, query, p.UUID, p.Name, p.CreatedAt, p.UpdatedAt); err != nil {
+	if _, err := tx.ExecContext(
+		ctx,
+		query,
+		p.UUID,
+		p.Name,
+		p.Slug,
+		p.CreatedAt,
+		p.UpdatedAt,
+	); err != nil {
 		return err
 	}
 
@@ -48,7 +56,7 @@ VALUES (?, ?, ?)
 
 func (s ProjectStore) List(ctx context.Context, u tonight.User) ([]tonight.Project, error) {
 	query := `
-SELECT projects.uuid, projects.name, projects.created_at, projects.updated_at
+SELECT projects.uuid, projects.name, projects.slug, projects.created_at, projects.updated_at
 FROM projects
 JOIN user_permission_on_project ON user_permission_on_project.project_uuid = projects.uuid
 WHERE user_permission_on_project.user_id = ?
@@ -67,6 +75,7 @@ ORDER BY created_at
 		err := rows.Scan(
 			&p.UUID,
 			&p.Name,
+			&p.Slug,
 			&p.CreatedAt,
 			&p.UpdatedAt,
 		)

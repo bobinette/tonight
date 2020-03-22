@@ -25,6 +25,7 @@ func TestStores(
 	project := tonight.Project{
 		UUID:      uuid.NewV1(),
 		Name:      "Test project",
+		Slug:      "slug ",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -33,6 +34,7 @@ func TestStores(
 	require.NoError(t, projectStore.Upsert(ctx, tonight.Project{
 		UUID:      uuid.NewV1(),
 		Name:      "Test other project",
+		Slug:      "slug other",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}, user))
