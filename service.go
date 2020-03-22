@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gosimple/slug"
 	"github.com/labstack/echo"
 	uuid "github.com/satori/go.uuid"
 )
@@ -29,6 +30,9 @@ func RegisterHTTP(
 
 	srv.POST("/projects", s.createProject)
 	srv.GET("/projects", s.listProjects)
+	srv.GET("/projects/:uuid", s.getProject)
+	srv.GET("/projects/slug/:slug", s.findProject)
+	srv.POST("/projects/:uuid", s.updateProject)
 	srv.POST("/projects/:uuid/tasks/ranks", s.rankTasks)
 
 	return nil
@@ -206,10 +210,106 @@ func (s service) createProject(c echo.Context) error {
 	}
 
 	project.UUID = id
+	project.Slug = fmt.Sprintf("%s-%s", slug.Make(project.Name), id.String()[:8])
 	project.CreatedAt = now
 	project.UpdatedAt = now
 	if err := s.projectStore.Upsert(ctx, project, user); err != nil {
 		return fmt.Errorf("error storing project: %w", err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data": project,
+	})
+}
+
+func (s service) updateProject(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	id, err := uuid.FromString(c.Param("uuid"))
+	if err != nil {
+		return err
+	}
+
+	var project Project
+	interceptor := payloadInterceptor{
+		v: &project,
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&interceptor); err != nil {
+		return fmt.Errorf("error deconding request: %w", err)
+	}
+
+	if project.UUID.String() != id.String() {
+		return fmt.Errorf("invalid data: %w", errors.New("uuids should be the same"))
+	}
+
+	user, err := userFromHeader(c)
+	if err != nil {
+		return err
+	}
+
+	ctx := c.Request().Context()
+
+	_, err = s.projectStore.Get(ctx, id, user)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	evt := Event{
+		UUID:       uuid.NewV1(),
+		Type:       ProjectUpdate,
+		EntityUUID: id,
+		UserID:     user.ID,
+		Payload:    interceptor.raw,
+		CreatedAt:  now,
+	}
+	if err := s.eventStore.Store(ctx, evt); err != nil {
+		return fmt.Errorf("error storing event: %w", err)
+	}
+
+	project.UpdatedAt = now
+	if err := s.projectStore.Upsert(ctx, project, user); err != nil {
+		return fmt.Errorf("error storing project: %w", err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data": project,
+	})
+}
+
+func (s service) findProject(c echo.Context) error {
+	slug := c.Param("slug")
+	user, err := userFromHeader(c)
+	if err != nil {
+		return err
+	}
+
+	ctx := c.Request().Context()
+	project, err := s.projectStore.Find(ctx, slug, user)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data": project,
+	})
+}
+
+func (s service) getProject(c echo.Context) error {
+	id, err := uuid.FromString(c.Param("uuid"))
+	if err != nil {
+		return err
+	}
+
+	user, err := userFromHeader(c)
+	if err != nil {
+		return err
+	}
+
+	ctx := c.Request().Context()
+	project, err := s.projectStore.Get(ctx, id, user)
+	if err != nil {
+		return err
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{

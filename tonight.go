@@ -43,6 +43,8 @@ type Project struct {
 	Name string `json:"name"`
 	Slug string `json:"slug"`
 
+	Description string `json:"description"`
+
 	Tasks []Task `json:"tasks"`
 
 	CreatedAt time.Time `json:"created_at"`
@@ -54,7 +56,9 @@ type Project struct {
 type ProjectStore interface {
 	Upsert(ctx context.Context, p Project, u User) error
 	List(ctx context.Context, u User) ([]Project, error)
-	// Get(ctx context.Context, uuid uuid.UUID) (Project, error)
+	Get(ctx context.Context, uuid uuid.UUID, u User) (Project, error)
+
+	Find(ctx context.Context, slug string, u User) (Project, error)
 }
 
 type User struct {
