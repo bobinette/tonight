@@ -22,7 +22,8 @@ func (s TaskStore) Upsert(ctx context.Context, t tonight.Task) error {
 INSERT INTO tasks (uuid, title, status, project_uuid, created_at, updated_at)
 VALUE (?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
-	status = ?
+	status = ?,
+	title = ?
 `
 	_, err := s.db.ExecContext(
 		ctx,
@@ -34,6 +35,7 @@ ON DUPLICATE KEY UPDATE
 		t.CreatedAt,
 		t.UpdatedAt,
 		t.Status,
+		t.Title,
 	)
 	if err != nil {
 		return err

@@ -25,6 +25,7 @@ func RegisterHTTP(
 ) error {
 	s := newService(eventStore, taskStore, projectStore, userStore)
 
+	srv.POST("/tasks/:uuid", s.updateTask)
 	srv.POST("/tasks/:uuid/done", s.markAsDone)
 	srv.POST("/tasks", s.createTask)
 
@@ -119,6 +120,76 @@ func (s service) createTask(c echo.Context) error {
 	})
 }
 
+func (s service) updateTask(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	id, err := uuid.FromString(c.Param("uuid"))
+	if err != nil {
+		return err
+	}
+
+	var t Task
+	interceptor := payloadInterceptor{
+		v: &t,
+	}
+	if err := json.NewDecoder(c.Request().Body).Decode(&interceptor); err != nil {
+		return err
+	}
+
+	if t.UUID.String() != id.String() {
+		return fmt.Errorf("invalid data: %w", errors.New("uuids should be the same"))
+	}
+
+	ctx := c.Request().Context()
+
+	user, err := userFromHeader(c)
+	if err != nil {
+		return err
+	}
+	if err := s.userStore.Ensure(ctx, &user); err != nil {
+		return fmt.Errorf("error ensuring user: %w", err)
+	}
+
+	task, err := s.taskStore.Get(ctx, id, user)
+	if err != nil {
+		return fmt.Errorf("error retrieving task: %w", err)
+	}
+	if task.UUID.String() == emptyUUID {
+		return fmt.Errorf("task %s not found", id)
+	}
+
+	if _, err = s.projectStore.Get(ctx, task.Project.UUID, user); err != nil {
+		return err
+	}
+
+	if t.Title == "" {
+		return errors.New("title cannot be empty")
+	}
+
+	eventUUID := uuid.NewV1()
+	now := time.Now()
+	evt := Event{
+		UUID:       eventUUID,
+		Type:       TaskUpdate,
+		EntityUUID: id,
+		UserID:     user.ID,
+		Payload:    interceptor.raw,
+		CreatedAt:  now,
+	}
+	if err := s.eventStore.Store(ctx, evt); err != nil {
+		return fmt.Errorf("error storing event: %w", err)
+	}
+
+	t.UpdatedAt = time.Now()
+	if err := s.taskStore.Upsert(ctx, t); err != nil {
+		return fmt.Errorf("error updating task: %w", err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data": "ok",
+	})
+}
+
 func (s service) markAsDone(c echo.Context) error {
 	defer c.Request().Body.Close()
 
@@ -143,6 +214,10 @@ func (s service) markAsDone(c echo.Context) error {
 	}
 	if task.UUID.String() == emptyUUID {
 		return fmt.Errorf("task %s not found", id)
+	}
+
+	if _, err = s.projectStore.Get(ctx, task.Project.UUID, user); err != nil {
+		return err
 	}
 
 	eventUUID := uuid.NewV1()
