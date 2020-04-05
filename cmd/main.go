@@ -92,12 +92,14 @@ func main() {
 	eventStore := mysql.NewEventStore(db)
 	taskStore := mysql.NewTaskStore(db)
 	projectStore := mysql.NewProjectStore(db)
+	releaseStore := mysql.NewReleaseStore(db)
 	userStore := mysql.NewUserStore(db)
 	tonight.RegisterHTTP(
 		srv.Group("/api"),
 		eventStore,
 		taskStore,
 		projectStore,
+		releaseStore,
 		userStore,
 	)
 

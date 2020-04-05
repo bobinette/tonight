@@ -1,8 +1,9 @@
 package mysql
 
-import "fmt"
-
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 func prepareArgs(params ...interface{}) ([]interface{}, []interface{}) {
 	qArgs := make([]interface{}, 0)

@@ -21,13 +21,19 @@ func RegisterHTTP(
 	eventStore EventStore,
 	taskStore TaskStore,
 	projectStore ProjectStore,
+	releaseStore ReleaseStore,
 	userStore UserStore,
 ) error {
-	s := newService(eventStore, taskStore, projectStore, userStore)
+	s := newService(eventStore, taskStore, projectStore, releaseStore, userStore)
+	releaseSrv := releaseService{
+		store:      releaseStore,
+		eventStore: eventStore,
+		userStore:  userStore,
+	}
 
 	srv.POST("/tasks/:uuid", s.updateTask)
 	srv.POST("/tasks/:uuid/done", s.markAsDone)
-	srv.POST("/tasks", s.createTask)
+	// srv.POST("/tasks", s.createTask)
 
 	srv.POST("/projects", s.createProject)
 	srv.GET("/projects", s.listProjects)
@@ -36,6 +42,9 @@ func RegisterHTTP(
 	srv.POST("/projects/:uuid", s.updateProject)
 	srv.POST("/projects/:uuid/tasks/ranks", s.rankTasks)
 
+	srv.POST("/projects/:project_uuid/releases", releaseSrv.create)
+	srv.POST("/projects/:project_uuid/releases/:release_uuid/tasks", s.createTask)
+
 	return nil
 }
 
@@ -43,6 +52,7 @@ type service struct {
 	eventStore   EventStore
 	taskStore    TaskStore
 	projectStore ProjectStore
+	releaseStore ReleaseStore
 	userStore    UserStore
 }
 
@@ -50,12 +60,14 @@ func newService(
 	eventStore EventStore,
 	taskStore TaskStore,
 	projectStore ProjectStore,
+	releaseStore ReleaseStore,
 	userStore UserStore,
 ) service {
 	return service{
 		eventStore:   eventStore,
 		taskStore:    taskStore,
 		projectStore: projectStore,
+		releaseStore: releaseStore,
 		userStore:    userStore,
 	}
 }
@@ -85,12 +97,29 @@ func (s service) createTask(c echo.Context) error {
 		return fmt.Errorf("error ensuring user: %w", err)
 	}
 
-	perm, err := s.userStore.Permission(ctx, user, t.Project.UUID.String())
+	projectUUID, err := uuid.FromString(c.Param("project_uuid"))
+	if err != nil {
+		return err
+	}
+
+	perm, err := s.userStore.Permission(ctx, user, projectUUID.String())
 	if err != nil {
 		return err
 	}
 	if perm != "owner" {
 		return errors.New("insufficient permissions")
+	}
+
+	releaseUUID, err := uuid.FromString(c.Param("release_uuid"))
+	if err != nil {
+		return err
+	}
+	release, err := s.releaseStore.Get(ctx, releaseUUID)
+	if err != nil {
+		return err
+	}
+	if release.Project.UUID.String() != projectUUID.String() {
+		return errors.New("release not found")
 	}
 
 	id := uuid.NewV1()
@@ -109,6 +138,7 @@ func (s service) createTask(c echo.Context) error {
 
 	t.UUID = id
 	t.Status = TaskStatusTODO
+	t.Release.UUID = releaseUUID
 	t.CreatedAt = now
 	t.UpdatedAt = now
 	if err := s.taskStore.Upsert(ctx, t); err != nil {
@@ -158,7 +188,12 @@ func (s service) updateTask(c echo.Context) error {
 		return fmt.Errorf("task %s not found", id)
 	}
 
-	if _, err = s.projectStore.Get(ctx, task.Project.UUID, user); err != nil {
+	release, err := s.releaseStore.Get(ctx, task.Release.UUID)
+	if err != nil {
+		return err
+	}
+
+	if _, err = s.projectStore.Get(ctx, release.Project.UUID, user); err != nil {
 		return err
 	}
 
@@ -216,7 +251,12 @@ func (s service) markAsDone(c echo.Context) error {
 		return fmt.Errorf("task %s not found", id)
 	}
 
-	if _, err = s.projectStore.Get(ctx, task.Project.UUID, user); err != nil {
+	release, err := s.releaseStore.Get(ctx, task.Release.UUID)
+	if err != nil {
+		return err
+	}
+
+	if _, err = s.projectStore.Get(ctx, release.Project.UUID, user); err != nil {
 		return err
 	}
 

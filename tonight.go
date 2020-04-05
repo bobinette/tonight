@@ -21,7 +21,7 @@ type Task struct {
 	Title  string     `json:"title"`
 	Status TaskStatus `json:"status"`
 
-	Project Project `json:"project"`
+	Release Release `json:"release"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -45,7 +45,7 @@ type Project struct {
 
 	Description string `json:"description"`
 
-	Tasks []Task `json:"tasks"`
+	Releases []Release `json:"releases"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
