@@ -59,6 +59,14 @@ VALUES (?, ?, ?)
 		return err
 	}
 
+	query = `
+INSERT IGNORE INTO releases (uuid, title, description, project_uuid, created_at, updated_at)
+VALUE (?, ?, ?, ?, ?, ?)
+`
+	if _, err := tx.ExecContext(ctx, query, p.UUID, "Backlog", "", p.UUID, p.CreatedAt, p.UpdatedAt); err != nil {
+		return err
+	}
+
 	if err := tx.Commit(); err != nil {
 		return err
 	}
