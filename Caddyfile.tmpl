@@ -8,7 +8,7 @@ localhost:9090 {
     jwt {
         path /
         except /favicon.ico
-        redirect /login?backTo={rewrite_uri}
+        redirect /login
     }
 
     login {
