@@ -206,6 +206,12 @@ func (s ProjectStore) loadReleases(ctx context.Context, projectUUIDs []string) (
 SELECT uuid, title, description, project_uuid, created_at, updated_at
 FROM releases
 WHERE project_uuid IN %s
+ORDER BY
+	CASE WHEN project_uuid = uuid
+	THEN 1
+	ELSE 0
+	END ASC,
+	title ASC
 `, qArgs...)
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {

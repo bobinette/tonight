@@ -56,6 +56,13 @@ func (s ReleaseStore) List(ctx context.Context, projectUUID uuid.UUID) ([]tonigh
 SELECT uuid, title, description, project_uuid, created_at, updated_at
 FROM releases
 WHERE project_uuid = ?
+ORDER BY
+	CASE WHEN project_uuid = uuid
+	THEN 1
+	OTHER 0
+	END
+	ASC,
+	title ASC
 `
 	rows, err := s.db.QueryContext(ctx, query, projectUUID)
 	if err != nil {
