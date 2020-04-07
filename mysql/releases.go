@@ -146,7 +146,7 @@ func (s ReleaseStore) loadTasks(ctx context.Context, uuids []string) (map[string
 	query := fmt.Sprintf(`
 SELECT uuid, title, status, release_uuid, created_at, updated_at
 FROM tasks
-WHERE release_uuid IN %s
+WHERE release_uuid IN %s AND tasks.deleted = 0
 ORDER BY -rank DESC, created_at
 `, qArgs...)
 	rows, err := s.db.QueryContext(ctx, query, args...)

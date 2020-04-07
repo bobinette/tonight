@@ -14,6 +14,7 @@ const (
 	TaskCreate EventType = "TaskCreate"
 	TaskUpdate EventType = "TaskUpdate"
 	TaskDone   EventType = "TaskDone"
+	TaskDelete EventType = "TaskDelete"
 
 	ReleaseCreate EventType = "ReleaseCreate"
 

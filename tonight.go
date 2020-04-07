@@ -7,35 +7,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type TaskStatus string
-
-const (
-	TaskStatusTODO TaskStatus = "TODO"
-	TaskStatusDONE TaskStatus = "DONE"
-)
-
-// A Task is the basic object of Tonight.
-type Task struct {
-	UUID uuid.UUID `json:"uuid"`
-
-	Title  string     `json:"title"`
-	Status TaskStatus `json:"status"`
-
-	Release Release `json:"release"`
-
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-// A TaskStore is responsible for storing tasks, typically in a
-// database.
-type TaskStore interface {
-	Upsert(ctx context.Context, t Task) error
-	Get(ctx context.Context, uuid uuid.UUID, u User) (Task, error)
-
-	Reorder(ctx context.Context, rankedUUIDs []uuid.UUID) error
-}
-
 // A Project groups tasks.
 type Project struct {
 	UUID uuid.UUID `json:"uuid"`

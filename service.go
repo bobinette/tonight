@@ -30,10 +30,16 @@ func RegisterHTTP(
 		eventStore: eventStore,
 		userStore:  userStore,
 	}
+	taskSrv := taskService{
+		taskStore:    taskStore,
+		releaseStore: releaseStore,
+		eventStore:   eventStore,
+		userStore:    userStore,
+	}
 
 	srv.POST("/tasks/:uuid", s.updateTask)
+	srv.DELETE("/tasks/:uuid", taskSrv.delete)
 	srv.POST("/tasks/:uuid/done", s.markAsDone)
-	// srv.POST("/tasks", s.createTask)
 
 	srv.POST("/projects", s.createProject)
 	srv.GET("/projects", s.listProjects)

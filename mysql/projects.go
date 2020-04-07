@@ -280,7 +280,7 @@ func (s ProjectStore) loadTasks(ctx context.Context, uuids []string) (map[string
 SELECT tasks.uuid, tasks.title, tasks.status, tasks.release_uuid, tasks.created_at, tasks.updated_at
 FROM tasks
 JOIN releases ON releases.uuid = tasks.release_uuid
-WHERE releases.project_uuid IN %s
+WHERE releases.project_uuid IN %s AND tasks.deleted = 0
 ORDER BY -tasks.rank DESC, tasks.created_at
 `, qArgs...)
 	rows, err := s.db.QueryContext(ctx, query, args...)
