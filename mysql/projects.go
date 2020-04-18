@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/bobinette/tonight"
-	uuid "github.com/satori/go.uuid"
+	"github.com/bobinette/tonight/auth"
 )
 
 type ProjectStore struct {
@@ -17,7 +19,7 @@ func NewProjectStore(db *sql.DB) ProjectStore {
 	return ProjectStore{db: db}
 }
 
-func (s ProjectStore) Upsert(ctx context.Context, p tonight.Project, u tonight.User) error {
+func (s ProjectStore) Upsert(ctx context.Context, p tonight.Project, u auth.User) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -74,7 +76,7 @@ VALUE (?, ?, ?, ?, ?, ?)
 	return nil
 }
 
-func (s ProjectStore) List(ctx context.Context, u tonight.User) ([]tonight.Project, error) {
+func (s ProjectStore) List(ctx context.Context, u auth.User) ([]tonight.Project, error) {
 	query := `
 SELECT projects.uuid, projects.name, projects.description, projects.slug, projects.created_at, projects.updated_at
 FROM projects
@@ -132,7 +134,7 @@ ORDER BY created_at
 	return projects, nil
 }
 
-func (s ProjectStore) Get(ctx context.Context, uuid uuid.UUID, u tonight.User) (tonight.Project, error) {
+func (s ProjectStore) Get(ctx context.Context, uuid uuid.UUID, u auth.User) (tonight.Project, error) {
 	query := `
 SELECT projects.uuid, projects.name, projects.description, projects.slug, projects.created_at, projects.updated_at
 FROM projects
@@ -168,7 +170,7 @@ ORDER BY created_at
 	return p, nil
 }
 
-func (s ProjectStore) Find(ctx context.Context, slug string, u tonight.User) (tonight.Project, error) {
+func (s ProjectStore) Find(ctx context.Context, slug string, u auth.User) (tonight.Project, error) {
 	query := `
 SELECT projects.uuid, projects.name, projects.description, projects.slug, projects.created_at, projects.updated_at
 FROM projects

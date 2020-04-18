@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/bobinette/tonight"
+	"github.com/google/uuid"
+
+	"github.com/bobinette/tonight/auth"
 )
 
 type UserStore struct {
@@ -15,7 +17,7 @@ func NewUserStore(db *sql.DB) UserStore {
 	return UserStore{db: db}
 }
 
-func (s UserStore) Ensure(ctx context.Context, user *tonight.User) error {
+func (s UserStore) Ensure(ctx context.Context, user *auth.User) error {
 	query := `
 SELECT id, name FROM users
 WHERE id = ?
@@ -32,7 +34,7 @@ WHERE id = ?
 	return nil
 }
 
-func (s UserStore) insertUser(ctx context.Context, user *tonight.User) error {
+func (s UserStore) insertUser(ctx context.Context, user *auth.User) error {
 	query := `
 INSERT INTO users (id, name)
 VALUES (?, ?)
@@ -41,7 +43,7 @@ VALUES (?, ?)
 	return err
 }
 
-func (s UserStore) Permission(ctx context.Context, user tonight.User, projectUUID string) (string, error) {
+func (s UserStore) Permission(ctx context.Context, user auth.User, projectUUID uuid.UUID) (string, error) {
 	query := `
 SELECT permission
 FROM user_permission_on_project

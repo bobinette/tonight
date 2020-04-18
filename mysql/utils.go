@@ -3,6 +3,8 @@ package mysql
 import (
 	"fmt"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 func prepareArgs(params ...interface{}) ([]interface{}, []interface{}) {
@@ -15,6 +17,13 @@ func prepareArgs(params ...interface{}) ([]interface{}, []interface{}) {
 			for i, e := range p {
 				s[i] = "?"
 				args = append(args, e)
+			}
+			qArgs = append(qArgs, fmt.Sprintf("(%s)", strings.Join(s, ",")))
+		case []uuid.UUID:
+			s := make([]string, len(p))
+			for i, e := range p {
+				s[i] = "?"
+				args = append(args, e.String())
 			}
 			qArgs = append(qArgs, fmt.Sprintf("(%s)", strings.Join(s, ",")))
 		default:

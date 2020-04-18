@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bobinette/tonight"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 type ReleaseStore struct {

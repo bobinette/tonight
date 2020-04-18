@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+
+	"github.com/bobinette/tonight/auth"
 )
 
 type Release struct {
@@ -32,66 +34,47 @@ type ReleaseStore interface {
 	Upsert(ctx context.Context, release Release) error
 }
 
-type releaseService struct {
-	store      ReleaseStore
-	userStore  UserStore
-	eventStore EventStore
+type Permissioner interface {
+	HasPermission(ctx context.Context, user auth.User, projectUUID uuid.UUID, perm auth.Permission) error
 }
 
-func (s *releaseService) create(c echo.Context) error {
+type releaseCRUD struct {
+	store        ReleaseStore
+	permissioner Permissioner
+}
+
+func (s *releaseCRUD) create(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	var release Release
-	interceptor := payloadInterceptor{
-		v: &release,
-	}
-	if err := json.NewDecoder(c.Request().Body).Decode(&interceptor); err != nil {
+	if err := json.NewDecoder(c.Request().Body).Decode(&release); err != nil {
 		fmt.Println("trololo")
 		return err
 	}
 
-	if release.UUID.String() != "" && release.UUID.String() != emptyUUID {
-		return errors.New("uuid should be empty")
-	}
-
 	ctx := c.Request().Context()
 
-	user, err := userFromHeader(c)
-	if err != nil {
-		return err
-	}
-	if err := s.userStore.Ensure(ctx, &user); err != nil {
-		return fmt.Errorf("error ensuring user: %w", err)
-	}
-
-	projectUUID, err := uuid.FromString(c.Param("project_uuid"))
+	user, err := auth.ExtractUser(c)
 	if err != nil {
 		return err
 	}
 
-	perm, err := s.userStore.Permission(ctx, user, projectUUID.String())
+	projectUUID, err := uuid.Parse(c.Param("project_uuid"))
 	if err != nil {
 		return err
 	}
-	if perm != "owner" {
-		return errors.New("insufficient permissions")
-	}
 
-	id := uuid.NewV1()
-	now := time.Now()
-	evt := Event{
-		UUID:       id,
-		Type:       ReleaseCreate,
-		EntityUUID: id,
-		UserID:     user.ID,
-		Payload:    interceptor.raw,
-		CreatedAt:  now,
-	}
-	if err := s.eventStore.Store(ctx, evt); err != nil {
+	if err := s.permissioner.HasPermission(ctx, user, projectUUID, auth.ProjectEdit); err != nil {
 		return err
 	}
 
-	release.UUID = id
+	eventUUID, ok := c.Get("event_uuid").(uuid.UUID)
+	if !ok {
+		return errors.New("cannot set uuid")
+	}
+
+	now := time.Unix(eventUUID.Time().UnixTime())
+	release.UUID = eventUUID
 	release.Project.UUID = projectUUID
 	release.CreatedAt = now
 	release.UpdatedAt = now

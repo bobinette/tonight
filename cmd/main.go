@@ -12,10 +12,11 @@ import (
 	"github.com/BurntSushi/toml"
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/bobinette/tonight"
+	"github.com/bobinette/tonight/auth"
 	"github.com/bobinette/tonight/mysql"
 )
 
@@ -25,6 +26,11 @@ func main() {
 		Web struct {
 			Bind string `toml:"bind"`
 		} `toml:"web"`
+
+		Auth struct {
+			ID   string `toml:"id"`
+			Name string `toml:"name"`
+		} `toml:"auth"`
 
 		MySQL struct {
 			User     string `toml:"user"`
@@ -94,13 +100,22 @@ func main() {
 	projectStore := mysql.NewProjectStore(db)
 	releaseStore := mysql.NewReleaseStore(db)
 	userStore := mysql.NewUserStore(db)
+
+	authMiddleware := auth.CaddyMiddleware(userStore)
+	if cfg.Auth.ID != "" {
+		authMiddleware = auth.DevMiddleware(cfg.Auth.ID, cfg.Auth.Name, userStore)
+	}
+
+	apiGroup := srv.Group("api", authMiddleware)
+	permissioner := auth.NewPermissioner(userStore)
 	tonight.RegisterHTTP(
-		srv.Group("/api"),
+		apiGroup,
 		eventStore,
 		taskStore,
 		projectStore,
 		releaseStore,
 		userStore,
+		permissioner,
 	)
 
 	// @TODO: not prod ready. Use the config to determine what should be used

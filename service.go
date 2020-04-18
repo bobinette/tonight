@@ -7,9 +7,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gosimple/slug"
-	"github.com/labstack/echo"
-	uuid "github.com/satori/go.uuid"
+	"github.com/labstack/echo/v4"
+
+	"github.com/bobinette/tonight/auth"
+	"github.com/bobinette/tonight/events"
 )
 
 const (
@@ -18,28 +21,18 @@ const (
 
 func RegisterHTTP(
 	srv *echo.Group,
-	eventStore EventStore,
+	eventStore events.Store,
 	taskStore TaskStore,
 	projectStore ProjectStore,
 	releaseStore ReleaseStore,
 	userStore UserStore,
+	permissioner auth.Permissioner,
 ) error {
 	s := newService(eventStore, taskStore, projectStore, releaseStore, userStore)
-	releaseSrv := releaseService{
-		store:      releaseStore,
-		eventStore: eventStore,
-		userStore:  userStore,
-	}
-	taskSrv := taskService{
-		taskStore:    taskStore,
-		releaseStore: releaseStore,
-		eventStore:   eventStore,
-		userStore:    userStore,
-	}
 
-	srv.POST("/tasks/:uuid", s.updateTask)
-	srv.DELETE("/tasks/:uuid", taskSrv.delete)
-	srv.POST("/tasks/:uuid/done", s.markAsDone)
+	withEvent := func(t events.EventType) echo.MiddlewareFunc {
+		return events.Middleware(t, eventStore)
+	}
 
 	srv.POST("/projects", s.createProject)
 	srv.GET("/projects", s.listProjects)
@@ -48,14 +41,29 @@ func RegisterHTTP(
 	srv.POST("/projects/:uuid", s.updateProject)
 	srv.POST("/projects/:uuid/tasks/ranks", s.rankTasks)
 
-	srv.POST("/projects/:project_uuid/releases", releaseSrv.create)
-	srv.POST("/projects/:project_uuid/releases/:release_uuid/tasks", s.createTask)
+	// releases.go
+	r := releaseCRUD{
+		store:        releaseStore,
+		permissioner: permissioner,
+	}
+	srv.POST("/projects/:project_uuid/releases", r.create, withEvent(events.ReleaseCreate))
+
+	// tasks.go
+	t := taskCRUD{
+		taskStore:    taskStore,
+		permissioner: permissioner,
+	}
+	srv.POST("/tasks", t.create, withEvent(events.TaskCreate))
+	srv.POST("/tasks/:uuid", t.update, withEvent(events.TaskUpdate))
+	srv.DELETE("/tasks/:uuid", t.delete, withEvent(events.TaskDelete))
+	srv.POST("/tasks/:uuid/done", t.markAsDone, withEvent(events.TaskDone))
+	srv.POST("/tasks/ranks", t.reorder, withEvent(events.TasksReorder))
 
 	return nil
 }
 
 type service struct {
-	eventStore   EventStore
+	eventStore   events.Store
 	taskStore    TaskStore
 	projectStore ProjectStore
 	releaseStore ReleaseStore
@@ -63,7 +71,7 @@ type service struct {
 }
 
 func newService(
-	eventStore EventStore,
+	eventStore events.Store,
 	taskStore TaskStore,
 	projectStore ProjectStore,
 	releaseStore ReleaseStore,
@@ -95,7 +103,7 @@ func (s service) createTask(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	user, err := userFromHeader(c)
+	user, err := auth.ExtractUser(c)
 	if err != nil {
 		return err
 	}
@@ -103,12 +111,12 @@ func (s service) createTask(c echo.Context) error {
 		return fmt.Errorf("error ensuring user: %w", err)
 	}
 
-	projectUUID, err := uuid.FromString(c.Param("project_uuid"))
+	projectUUID, err := uuid.Parse(c.Param("project_uuid"))
 	if err != nil {
 		return err
 	}
 
-	perm, err := s.userStore.Permission(ctx, user, projectUUID.String())
+	perm, err := s.userStore.Permission(ctx, user, projectUUID)
 	if err != nil {
 		return err
 	}
@@ -116,7 +124,7 @@ func (s service) createTask(c echo.Context) error {
 		return errors.New("insufficient permissions")
 	}
 
-	releaseUUID, err := uuid.FromString(c.Param("release_uuid"))
+	releaseUUID, err := uuid.Parse(c.Param("release_uuid"))
 	if err != nil {
 		return err
 	}
@@ -128,12 +136,16 @@ func (s service) createTask(c echo.Context) error {
 		return errors.New("release not found")
 	}
 
-	id := uuid.NewV1()
-	now := time.Now()
-	evt := Event{
-		UUID:       id,
-		Type:       TaskCreate,
-		EntityUUID: id,
+	eventUUID, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+
+	now := time.Unix(eventUUID.Time().UnixTime())
+	evt := events.Event{
+		UUID:       eventUUID,
+		Type:       events.TaskCreate,
+		EntityUUID: eventUUID,
 		UserID:     user.ID,
 		Payload:    interceptor.raw,
 		CreatedAt:  now,
@@ -142,7 +154,7 @@ func (s service) createTask(c echo.Context) error {
 		return err
 	}
 
-	t.UUID = id
+	t.UUID = eventUUID
 	t.Status = TaskStatusTODO
 	t.Release.UUID = releaseUUID
 	t.CreatedAt = now
@@ -153,141 +165,6 @@ func (s service) createTask(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"data": t,
-	})
-}
-
-func (s service) updateTask(c echo.Context) error {
-	defer c.Request().Body.Close()
-
-	id, err := uuid.FromString(c.Param("uuid"))
-	if err != nil {
-		return err
-	}
-
-	var t Task
-	interceptor := payloadInterceptor{
-		v: &t,
-	}
-	if err := json.NewDecoder(c.Request().Body).Decode(&interceptor); err != nil {
-		return err
-	}
-
-	if t.UUID.String() != id.String() {
-		return fmt.Errorf("invalid data: %w", errors.New("uuids should be the same"))
-	}
-
-	ctx := c.Request().Context()
-
-	user, err := userFromHeader(c)
-	if err != nil {
-		return err
-	}
-	if err := s.userStore.Ensure(ctx, &user); err != nil {
-		return fmt.Errorf("error ensuring user: %w", err)
-	}
-
-	task, err := s.taskStore.Get(ctx, id, user)
-	if err != nil {
-		return fmt.Errorf("error retrieving task: %w", err)
-	}
-	if task.UUID.String() == emptyUUID {
-		return fmt.Errorf("task %s not found", id)
-	}
-
-	release, err := s.releaseStore.Get(ctx, task.Release.UUID)
-	if err != nil {
-		return err
-	}
-
-	if _, err = s.projectStore.Get(ctx, release.Project.UUID, user); err != nil {
-		return err
-	}
-
-	if t.Title == "" {
-		return errors.New("title cannot be empty")
-	}
-
-	eventUUID := uuid.NewV1()
-	now := time.Now()
-	evt := Event{
-		UUID:       eventUUID,
-		Type:       TaskUpdate,
-		EntityUUID: id,
-		UserID:     user.ID,
-		Payload:    interceptor.raw,
-		CreatedAt:  now,
-	}
-	if err := s.eventStore.Store(ctx, evt); err != nil {
-		return fmt.Errorf("error storing event: %w", err)
-	}
-
-	t.UpdatedAt = time.Now()
-	if err := s.taskStore.Upsert(ctx, t); err != nil {
-		return fmt.Errorf("error updating task: %w", err)
-	}
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"data": "ok",
-	})
-}
-
-func (s service) markAsDone(c echo.Context) error {
-	defer c.Request().Body.Close()
-
-	id, err := uuid.FromString(c.Param("uuid"))
-	if err != nil {
-		return err
-	}
-
-	ctx := c.Request().Context()
-
-	user, err := userFromHeader(c)
-	if err != nil {
-		return err
-	}
-	if err := s.userStore.Ensure(ctx, &user); err != nil {
-		return fmt.Errorf("error ensuring user: %w", err)
-	}
-
-	task, err := s.taskStore.Get(ctx, id, user)
-	if err != nil {
-		return fmt.Errorf("error retrieving task: %w", err)
-	}
-	if task.UUID.String() == emptyUUID {
-		return fmt.Errorf("task %s not found", id)
-	}
-
-	release, err := s.releaseStore.Get(ctx, task.Release.UUID)
-	if err != nil {
-		return err
-	}
-
-	if _, err = s.projectStore.Get(ctx, release.Project.UUID, user); err != nil {
-		return err
-	}
-
-	eventUUID := uuid.NewV1()
-	now := time.Now()
-	evt := Event{
-		UUID:       eventUUID,
-		Type:       TaskDone,
-		EntityUUID: id,
-		UserID:     user.ID,
-		Payload:    []byte("{}"),
-		CreatedAt:  now,
-	}
-	if err := s.eventStore.Store(ctx, evt); err != nil {
-		return fmt.Errorf("error storing event: %w", err)
-	}
-
-	task.Status = TaskStatusDONE
-	task.UpdatedAt = time.Now()
-	if err := s.taskStore.Upsert(ctx, task); err != nil {
-		return fmt.Errorf("error updating task: %w", err)
-	}
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"data": "ok",
 	})
 }
 
@@ -308,7 +185,7 @@ func (s service) createProject(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	user, err := userFromHeader(c)
+	user, err := auth.ExtractUser(c)
 	if err != nil {
 		return err
 	}
@@ -316,12 +193,16 @@ func (s service) createProject(c echo.Context) error {
 		return fmt.Errorf("error ensuring user: %w", err)
 	}
 
-	id := uuid.NewV1()
-	now := time.Now()
-	evt := Event{
-		UUID:       id,
-		Type:       ProjectCreate,
-		EntityUUID: id,
+	eventUUID, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+
+	now := time.Unix(eventUUID.Time().UnixTime())
+	evt := events.Event{
+		UUID:       eventUUID,
+		Type:       events.ProjectCreate,
+		EntityUUID: eventUUID,
 		UserID:     user.ID,
 		Payload:    interceptor.raw,
 		CreatedAt:  now,
@@ -330,8 +211,8 @@ func (s service) createProject(c echo.Context) error {
 		return fmt.Errorf("error storing event: %w", err)
 	}
 
-	project.UUID = id
-	project.Slug = fmt.Sprintf("%s-%s", slug.Make(project.Name), id.String()[:8])
+	project.UUID = eventUUID
+	project.Slug = fmt.Sprintf("%s-%s", slug.Make(project.Name), eventUUID.String()[:8])
 	project.CreatedAt = now
 	project.UpdatedAt = now
 	if err := s.projectStore.Upsert(ctx, project, user); err != nil {
@@ -346,7 +227,7 @@ func (s service) createProject(c echo.Context) error {
 func (s service) updateProject(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	id, err := uuid.FromString(c.Param("uuid"))
+	id, err := uuid.Parse(c.Param("uuid"))
 	if err != nil {
 		return err
 	}
@@ -363,7 +244,7 @@ func (s service) updateProject(c echo.Context) error {
 		return fmt.Errorf("invalid data: %w", errors.New("uuids should be the same"))
 	}
 
-	user, err := userFromHeader(c)
+	user, err := auth.ExtractUser(c)
 	if err != nil {
 		return err
 	}
@@ -375,10 +256,15 @@ func (s service) updateProject(c echo.Context) error {
 		return err
 	}
 
-	now := time.Now()
-	evt := Event{
-		UUID:       uuid.NewV1(),
-		Type:       ProjectUpdate,
+	eventUUID, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+
+	now := time.Unix(eventUUID.Time().UnixTime())
+	evt := events.Event{
+		UUID:       eventUUID,
+		Type:       events.ProjectUpdate,
 		EntityUUID: id,
 		UserID:     user.ID,
 		Payload:    interceptor.raw,
@@ -400,7 +286,7 @@ func (s service) updateProject(c echo.Context) error {
 
 func (s service) findProject(c echo.Context) error {
 	slug := c.Param("slug")
-	user, err := userFromHeader(c)
+	user, err := auth.ExtractUser(c)
 	if err != nil {
 		return err
 	}
@@ -417,12 +303,12 @@ func (s service) findProject(c echo.Context) error {
 }
 
 func (s service) getProject(c echo.Context) error {
-	id, err := uuid.FromString(c.Param("uuid"))
+	id, err := uuid.Parse(c.Param("uuid"))
 	if err != nil {
 		return err
 	}
 
-	user, err := userFromHeader(c)
+	user, err := auth.ExtractUser(c)
 	if err != nil {
 		return err
 	}
@@ -441,7 +327,7 @@ func (s service) getProject(c echo.Context) error {
 func (s service) listProjects(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	user, err := userFromHeader(c)
+	user, err := auth.ExtractUser(c)
 	if err != nil {
 		return err
 	}
@@ -462,7 +348,7 @@ func (s service) listProjects(c echo.Context) error {
 func (s service) rankTasks(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	projectUUID, err := uuid.FromString(c.Param("uuid"))
+	projectUUID, err := uuid.Parse(c.Param("uuid"))
 	if err != nil {
 		return err
 	}
@@ -479,7 +365,7 @@ func (s service) rankTasks(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	user, err := userFromHeader(c)
+	user, err := auth.ExtractUser(c)
 	if err != nil {
 		return err
 	}
@@ -487,7 +373,7 @@ func (s service) rankTasks(c echo.Context) error {
 		return fmt.Errorf("error ensuring user: %w", err)
 	}
 
-	perm, err := s.userStore.Permission(ctx, user, projectUUID.String())
+	perm, err := s.userStore.Permission(ctx, user, projectUUID)
 	if err != nil {
 		return err
 	}
@@ -495,13 +381,18 @@ func (s service) rankTasks(c echo.Context) error {
 		return errors.New("insufficient permissions")
 	}
 
-	evt := Event{
-		UUID:       uuid.NewV1(),
-		Type:       ProjectReorderTasks,
+	eventUUID, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+
+	evt := events.Event{
+		UUID:       eventUUID,
+		Type:       events.ProjectReorderTasks,
 		EntityUUID: projectUUID,
 		UserID:     user.ID,
 		Payload:    interceptor.raw,
-		CreatedAt:  time.Now(),
+		CreatedAt:  time.Unix(eventUUID.Time().UnixTime()),
 	}
 	if err := s.eventStore.Store(ctx, evt); err != nil {
 		return fmt.Errorf("error storing event: %w", err)
@@ -530,18 +421,4 @@ func (i *payloadInterceptor) UnmarshalJSON(b []byte) error {
 
 	i.raw = b
 	return nil
-}
-
-func userFromHeader(c echo.Context) (User, error) {
-	id := c.Request().Header.Get("Token-Claim-Sub")
-	if id == "" {
-		return User{}, errors.New("no user")
-	}
-
-	name := c.Request().Header.Get("Token-Claim-Name")
-
-	return User{
-		ID:   id,
-		Name: name,
-	}, nil
 }

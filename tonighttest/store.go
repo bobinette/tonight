@@ -18,7 +18,7 @@ func TestStores(
 	// require.NoError(t, userStore.Ensure(ctx, &user))
 
 	// project := tonight.Project{
-	// 	UUID:      uuid.NewV1(),
+	// 	UUID:      uuid.NewUUID(),
 	// 	Name:      "Test project",
 	// 	Slug:      "slug ",
 	// 	CreatedAt: time.Now(),
@@ -27,7 +27,7 @@ func TestStores(
 	// require.NoError(t, projectStore.Upsert(ctx, project, user))
 	// // Create another project to make sure it is retrieved as well
 	// require.NoError(t, projectStore.Upsert(ctx, tonight.Project{
-	// 	UUID:      uuid.NewV1(),
+	// 	UUID:      uuid.NewUUID(),
 	// 	Name:      "Test other project",
 	// 	Slug:      "slug other",
 	// 	CreatedAt: time.Now(),
@@ -35,7 +35,7 @@ func TestStores(
 	// }, user))
 
 	// firstTask := tonight.Task{
-	// 	UUID:      uuid.NewV1(),
+	// 	UUID:      uuid.NewUUID(),
 	// 	Title:     "Test task",
 	// 	Status:    tonight.TaskStatusTODO,
 	// 	Project:   project,
@@ -45,7 +45,7 @@ func TestStores(
 	// require.NoError(t, taskStore.Upsert(ctx, firstTask))
 
 	// otherTask := tonight.Task{
-	// 	UUID:      uuid.NewV1(),
+	// 	UUID:      uuid.NewUUID(),
 	// 	Title:     "Test task other",
 	// 	Status:    tonight.TaskStatusTODO,
 	// 	Project:   project,
@@ -66,7 +66,7 @@ func TestStores(
 	// require.Equal(t, []string{firstTask.Title, otherTask.Title}, titles)
 
 	// anotherTask := tonight.Task{
-	// 	UUID:      uuid.NewV1(),
+	// 	UUID:      uuid.NewUUID(),
 	// 	Title:     "Another task",
 	// 	Status:    tonight.TaskStatusTODO,
 	// 	Project:   project,
@@ -77,7 +77,7 @@ func TestStores(
 	// require.Equal(t, []string{firstTask.Title, otherTask.Title}, titles)
 
 	// lastTask := tonight.Task{
-	// 	UUID:      uuid.NewV1(),
+	// 	UUID:      uuid.NewUUID(),
 	// 	Title:     "Last task",
 	// 	Status:    tonight.TaskStatusTODO,
 	// 	Project:   project,

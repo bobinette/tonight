@@ -29,7 +29,6 @@ jobs:
         uses: actions/setup-go@v1
         with:
           go-version: 1.13
-        id: go
 
       - name: Create the database
         run: mysql --host 127.0.0.1 --port ${{ job.services.mysql.ports[3306] }} -uroot -ppwd -e "CREATE DATABASE IF NOT EXISTS tonight_v2_test"
