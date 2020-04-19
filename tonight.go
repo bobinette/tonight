@@ -2,38 +2,20 @@ package tonight
 
 import (
 	"context"
-	"time"
 
 	"github.com/bobinette/tonight/auth"
 	"github.com/google/uuid"
 )
 
-// A Project groups tasks.
-type Project struct {
-	UUID uuid.UUID `json:"uuid"`
+// The Permissioner is used to control the permissions on projects for users.
+type Permissioner interface {
+	// AllowProject should register the perm permission for user on the project defined by projectUUID.
+	AllowProject(ctx context.Context, user auth.User, projectUUID uuid.UUID, perm auth.Permission) error
 
-	Name string `json:"name"`
-	Slug string `json:"slug"`
+	// AllowedProjects should return the list of all the project on which user has the perm permission.
+	AllowedProjects(ctx context.Context, user auth.User, perm auth.Permission) ([]uuid.UUID, error)
 
-	Description string `json:"description"`
-
-	Releases []Release `json:"releases"`
-
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-// A ProjectStore is responsible for storing projects, typically in a
-// database.
-type ProjectStore interface {
-	Upsert(ctx context.Context, p Project, u auth.User) error
-	List(ctx context.Context, u auth.User) ([]Project, error)
-	Get(ctx context.Context, uuid uuid.UUID, u auth.User) (Project, error)
-
-	Find(ctx context.Context, slug string, u auth.User) (Project, error)
-}
-
-type UserStore interface {
-	Ensure(ctx context.Context, user *auth.User) error
-	Permission(ctx context.Context, user auth.User, projectUUID uuid.UUID) (string, error)
+	// HasPermission should return an error if user does not have the perm permission on the project defined
+	// by projectUUID, and nil otherwise.
+	HasPermission(ctx context.Context, user auth.User, projectUUID uuid.UUID, perm auth.Permission) error
 }

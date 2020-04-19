@@ -114,7 +114,6 @@ func main() {
 		taskStore,
 		projectStore,
 		releaseStore,
-		userStore,
 		permissioner,
 	)
 

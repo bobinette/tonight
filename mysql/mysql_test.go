@@ -21,7 +21,7 @@ func orString(s, def string) string {
 
 func setUp(t *testing.T) (*sql.DB, func()) {
 	host := orString(os.Getenv("MYSQL_HOST"), "127.0.0.1")
-	port := orString(os.Getenv("MYSQL_PORT"), "3306")
+	port := orString(os.Getenv("MYSQL_PORT"), "3307")
 	user := orString(os.Getenv("MYSQL_USER"), "root")
 	password := orString(os.Getenv("MYSQL_PASSWORD"), "root")
 	database := orString(os.Getenv("MYSQL_DB"), "tonight_v2_test")
@@ -51,6 +51,5 @@ func TestStores(t *testing.T) {
 
 	projectStore := NewProjectStore(db)
 	taskStore := NewTaskStore(db)
-	userStore := NewUserStore(db)
-	tonighttest.TestStores(t, projectStore, taskStore, userStore)
+	tonighttest.TestStores(t, projectStore, taskStore)
 }

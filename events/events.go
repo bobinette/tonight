@@ -18,9 +18,8 @@ const (
 
 	ReleaseCreate EventType = "ReleaseCreate"
 
-	ProjectCreate       EventType = "ProjectCreate"
-	ProjectUpdate       EventType = "ProjectUpdate"
-	ProjectReorderTasks EventType = "ProjectReorderTasks"
+	ProjectCreate EventType = "ProjectCreate"
+	ProjectUpdate EventType = "ProjectUpdate"
 )
 
 // An Event is used to record every mutation requested

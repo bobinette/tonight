@@ -10,7 +10,6 @@ func TestStores(
 	t *testing.T,
 	projectStore tonight.ProjectStore,
 	taskStore tonight.TaskStore,
-	userStore tonight.UserStore,
 ) {
 	// ctx := context.Background()
 

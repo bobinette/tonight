@@ -34,10 +34,6 @@ type ReleaseStore interface {
 	Upsert(ctx context.Context, release Release) error
 }
 
-type Permissioner interface {
-	HasPermission(ctx context.Context, user auth.User, projectUUID uuid.UUID, perm auth.Permission) error
-}
-
 type releaseCRUD struct {
 	store        ReleaseStore
 	permissioner Permissioner

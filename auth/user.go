@@ -1,10 +1,8 @@
 package auth
 
 import (
-	"context"
 	"errors"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -40,9 +38,4 @@ func ExtractUser(c echo.Context) (User, error) {
 	}
 
 	return user, nil
-}
-
-type Store interface {
-	Ensure(ctx context.Context, user *User) error
-	Permission(ctx context.Context, user User, projectUUID uuid.UUID) (string, error)
 }

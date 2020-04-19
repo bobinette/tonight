@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,6 +42,7 @@ func withTimeout(t *testing.T, f func(), d time.Duration) {
 // It will use user ids "events.user-1", "events.user-2" and "events.user-3". Make sure
 // to add those in your database to avoid foreign key issues.
 func TestStore(t *testing.T, store Store) {
+	assert := assert.New(t)
 	require := require.New(t)
 
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -55,7 +57,7 @@ func TestStore(t *testing.T, store Store) {
 			EntityUUID: uuid.Must(uuid.NewUUID()),
 			UserID:     fmt.Sprintf("events.user-%d", i%3+1),
 			Payload:    []byte(body),
-			CreatedAt:  time.Unix(eventUUID.Time().UnixTime()),
+			CreatedAt:  time.Unix(eventUUID.Time().UnixTime()).Round(time.Second),
 		}
 
 		events[i] = evt
@@ -80,8 +82,7 @@ func TestStore(t *testing.T, store Store) {
 	withTimeout(t, func() {
 		i := 0
 		for evt := range ch {
-			events[i].CreatedAt = events[i].CreatedAt.Truncate(time.Second)
-			require.Equal(events[i], evt)
+			assert.Equal(events[i], evt)
 			i++
 		}
 	}, 2000*time.Millisecond)

@@ -43,14 +43,14 @@ VALUES (?, ?)
 	return err
 }
 
-func (s UserStore) Permission(ctx context.Context, user auth.User, projectUUID uuid.UUID) (string, error) {
+func (s UserStore) Permission(ctx context.Context, user auth.User, projectUUID uuid.UUID) (auth.Permission, error) {
 	query := `
 SELECT permission
 FROM user_permission_on_project
 WHERE user_id = ? AND project_uuid = ?
 `
 	row := s.db.QueryRowContext(ctx, query, user.ID, projectUUID)
-	var perm string
+	var perm auth.Permission
 	if err := row.Scan(&perm); err != nil {
 		if err == sql.ErrNoRows {
 			return "", nil
@@ -58,4 +58,46 @@ WHERE user_id = ? AND project_uuid = ?
 		return "", err
 	}
 	return perm, nil
+}
+
+func (s UserStore) SetPermission(ctx context.Context, user auth.User, projectUUID uuid.UUID, perm auth.Permission) error {
+	query := `
+INSERT IGNORE INTO user_permission_on_project (user_id, project_uuid, permission)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE
+	perm = ?
+`
+	if _, err := s.db.ExecContext(ctx, query, user.ID, projectUUID, perm); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s UserStore) AllPermissions(ctx context.Context, user auth.User) (map[uuid.UUID]auth.Permission, error) {
+	query := `
+SELECT project_uuid, permission
+FROM user_permission_on_project
+WHERE user_id = ?
+`
+	rows, err := s.db.QueryContext(ctx, query, user.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	perms := make(map[uuid.UUID]auth.Permission)
+	for rows.Next() {
+		var u uuid.UUID
+		var perm auth.Permission
+		if err := rows.Scan(&u, &perm); err != nil {
+			return nil, err
+		}
+		perms[u] = perm
+	}
+
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	return perms, nil
 }
